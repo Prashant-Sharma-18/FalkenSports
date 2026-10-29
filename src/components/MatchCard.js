@@ -4,7 +4,7 @@ import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
 import TeamLogo from "./TeamLogo";
 import StarButton from "./StarButton";
-import { Star, MapPin } from "./Icons";
+import { MapPin } from "./Icons";
 
 export function MatchStatus({ match }) {
   if (match.state === "in") {
@@ -56,10 +56,8 @@ export default function MatchCard({ match }) {
         </div>
         <div className="team-info">
           <div className="team-identity">
-            <span className={`team-name ${fav ? "fav" : ""}`}>
-              {team.name}
-              {fav && <Star size={12} filled />}
-            </span>
+            {/* The star button beside the name already shows favourite state. */}
+            <span className={`team-name ${fav ? "fav" : ""}`}>{team.name}</span>
             <StarButton team={team} size={14} />
           </div>
           <Scorers goals={goals} />

@@ -1,9 +1,10 @@
 import React from "react";
 
 // Small inline icon set (paths from Lucide, ISC license) so we don't ship a whole icon package.
-function Icon({ size = 18, children }) {
+function Icon({ size = 18, className, children }) {
   return (
     <svg
+      className={className}
       width={size}
       height={size}
       viewBox="0 0 24 24"

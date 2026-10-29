@@ -69,7 +69,9 @@ export default function Standings({ league }) {
                     const zoneClass = row.zone ? `zone-${row.zone}` : "";
                     const fav = isFavorite(row.id);
                     const gdNum = parseInt(row.gd, 10);
-                    const gdDisplay = !isNaN(gdNum) && gdNum > 0 ? `+${row.gd}` : row.gd;
+                    // ESPN already sends "+11" for positive differences.
+                    const gdDisplay =
+                      gdNum > 0 && !String(row.gd).startsWith("+") ? `+${row.gd}` : row.gd;
 
                     return (
                       <tr

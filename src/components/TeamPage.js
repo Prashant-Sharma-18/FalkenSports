@@ -11,8 +11,8 @@ import { ArrowLeft, ExternalLink } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
 import "./Team.css";
 
-const shortDate = (d) =>
-  d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+// "29 Oct": fits the narrow date column on phones without wrapping.
+const shortDate = (d) => d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
 // One match from this team's point of view: opponent, home/away, score or kick-off.
 function MatchRow({ match, teamId }) {

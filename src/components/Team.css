@@ -249,7 +249,7 @@ a.team-link:hover .team-name-cell {
   }
 
   .match-row {
-    grid-template-columns: 76px minmax(0, 1fr) auto;
+    grid-template-columns: 58px minmax(0, 1fr) auto;
     gap: 8px;
   }
 

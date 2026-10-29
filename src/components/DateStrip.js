@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { addDays, fromKey, todayKey } from "../dates";
 import { CalendarDays, ChevronLeft, ChevronRight } from "./Icons";
 
-const OFFSETS = [-3, -2, -1, 0, 1, 2, 3];
+// Two weeks around the selected day. Wide screens show the middle seven;
+// phones get all of them in a swipeable row (see .day.far in App.css).
+const OFFSETS = Array.from({ length: 15 }, (_, i) => i - 7);
 
 function nextMatchDay(date, matchDays, direction) {
   if (matchDays?.size) {
@@ -26,6 +28,22 @@ function shortDayLabel(d, todayStr) {
 export default function DateStrip({ date, matchDays, onChange }) {
   const today = todayKey();
   const stepTitle = matchDays?.size ? "match day" : "day";
+  const daysRef = useRef(null);
+  const firstScroll = useRef(true);
+  // "Today" is already in the swipeable row unless the picked day is far away.
+  const daysFromToday = Math.abs(Math.round((fromKey(date) - fromKey(today)) / 86400000));
+
+  // Keep the selected day centred in the swipeable row.
+  useEffect(() => {
+    const row = daysRef.current;
+    const active = row?.querySelector(".day.active");
+    if (!row || !active || row.scrollWidth <= row.clientWidth) return;
+    row.scrollTo({
+      left: active.offsetLeft - row.offsetLeft - (row.clientWidth - active.offsetWidth) / 2,
+      behavior: firstScroll.current ? "auto" : "smooth",
+    });
+    firstScroll.current = false;
+  }, [date]);
 
   return (
     <div className="date-strip-wrapper">
@@ -39,7 +57,7 @@ export default function DateStrip({ date, matchDays, onChange }) {
           <ChevronLeft size={16} />
         </button>
 
-        <div className="days" role="tablist" aria-label="Choose a day">
+        <div className="days" role="tablist" aria-label="Choose a day" ref={daysRef}>
           {OFFSETS.map((offset) => {
             const key = addDays(date, offset);
             const d = fromKey(key);
@@ -53,8 +71,8 @@ export default function DateStrip({ date, matchDays, onChange }) {
                 role="tab"
                 aria-selected={offset === 0}
                 className={`day ${offset === 0 ? "active" : ""} ${Math.abs(offset) === 3 ? "edge" : ""} ${
-                  isToday ? "is-today" : ""
-                }`}
+                  Math.abs(offset) > 3 ? "far" : ""
+                } ${isToday ? "is-today" : ""}`}
                 onClick={() => onChange(key)}
               >
                 <span className="day-name">{label}</span>
@@ -90,7 +108,10 @@ export default function DateStrip({ date, matchDays, onChange }) {
         </label>
 
         {date !== today && (
-          <button className="today-badge-btn" onClick={() => onChange(today)}>
+          <button
+            className={`today-badge-btn ${daysFromToday <= 7 ? "near" : ""}`}
+            onClick={() => onChange(today)}
+          >
             <span className="today-dot" />
             <span>Today</span>
           </button>
