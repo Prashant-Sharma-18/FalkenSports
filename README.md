@@ -1,70 +1,64 @@
-# Getting Started with Create React App
+# Kickoff — free football scores & news
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A free, installable web app for live football scores, match centres, team pages,
+league tables and news. No accounts, no API keys: data comes from ESPN's public
+JSON feeds, called directly from the browser.
 
-## Available Scripts
+**Competitions:** Premier League, LaLiga, Bundesliga, Serie A, Ligue 1,
+Champions League, MLS (team pages also include domestic cups and friendlies).
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- **Matches** — every competition for a day, or one league; live badges with the
+  match minute, goal scorers, a day strip that jumps between match days, live filter.
+- **Match centre** — goals/cards/subs timeline, team stats, line-ups, commentary,
+  recent form. Refreshes every 30 s while live.
+- **Team pages** — results and fixtures across all competitions, form, next match,
+  league position.
+- **Tables** — ESPN's real qualification and relegation zones, last-five form.
+- **Favourites** — star teams to pin their matches; stored in the browser only.
+- **Shareable links** — every screen has a URL (`#/match/eng.1/401879254`,
+  `#/team/eng.1/382`, `#/table/esp.1`).
+- **Installable / offline** — add to home screen; the last loaded scores stay
+  available offline.
+- Light, dark and system themes.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Development
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+npm install
+npm start          # http://localhost:3000
+npm test           # unit + component tests
+npm run build      # production build in build/
+```
 
-### `npm test`
+The offline service worker is only registered in production builds. To try it
+locally: `npm run build && npx serve -s build`.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Project layout
 
-### `npm run build`
+| Path | What it does |
+| --- | --- |
+| `src/api.js` | All ESPN requests and the normalised data shapes |
+| `src/router.js` | Hash routes (`#/matches`, `#/table`, `#/match`, `#/team`, …) |
+| `src/useRemoteData.js` | Loading, polling (paused in hidden tabs) and refresh |
+| `src/favorites.js`, `src/theme.js` | Favourite teams and theme, persisted locally |
+| `src/components/` | Screens (`Scores`, `MatchDetail`, `TeamPage`, `Standings`, `News`) and UI pieces |
+| `src/service-worker.js` | Offline caching (built by Workbox) |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Data source caveats
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+ESPN's feeds are public but **unofficial and undocumented**, so they can change
+without notice. Known quirks handled in `src/api.js`:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- The team info endpoint (`/teams/{id}`) sends no CORS header, so team details are
+  read from the schedule feed instead.
+- Days follow US Eastern time, so late kick-offs in Asia may appear under the
+  previous day.
 
-### `npm run eject`
+## Deploying
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+The repo includes `netlify.toml`: create a site on [Netlify](https://app.netlify.com)
+from this GitHub repo and it builds and deploys with no further settings. Any
+static host works (Vercel, Cloudflare Pages, GitHub Pages) since routing is
+hash-based and there is no server.
