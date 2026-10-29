@@ -18,6 +18,8 @@ import {
   Shield,
 } from "./Icons";
 import { BoxScore, Leaders, Linescore, PlayByPlay } from "./BasketballDetail";
+import { CricketScore, CricketSummary, Scorecard } from "./CricketDetail";
+import { hasTeamPages } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 
 const LIVE_REFRESH = 30 * 1000;
@@ -220,25 +222,38 @@ function Header({ match }) {
       .filter((e) => e.kind === "goal" && e.teamId === team.id)
       .map((e) => `${e.player} ${e.minute}${e.penalty ? " (pen)" : ""}${e.ownGoal ? " (og)" : ""}`);
 
+  const cricket = match.sport === "cricket";
+  const linkTeams = hasTeamPages(match.sport);
+  const teamHref = (team) => routeHref({ view: "team", league: match.league, id: team.id });
+
   const side = (team, align) => (
     <div className={`hero-team hero-team-${align}`}>
-      <a
-        className="hero-logo-box"
-        href={routeHref({ view: "team", league: match.league, id: team.id })}
-        aria-hidden="true"
-        tabIndex={-1}
-      >
-        <TeamLogo src={team.logo} name={team.name} size={64} />
-      </a>
-      <div className="hero-name">
-        <a
-          className="hero-team-label team-link"
-          href={routeHref({ view: "team", league: match.league, id: team.id })}
-        >
-          {team.name}
+      {linkTeams ? (
+        <a className="hero-logo-box" href={teamHref(team)} aria-hidden="true" tabIndex={-1}>
+          <TeamLogo src={team.logo} name={team.name} size={64} />
         </a>
+      ) : (
+        <span className="hero-logo-box">
+          <TeamLogo src={team.logo} name={team.name} size={64} />
+        </span>
+      )}
+      <div className="hero-name">
+        {linkTeams ? (
+          <a className="hero-team-label team-link" href={teamHref(team)}>
+            {team.name}
+          </a>
+        ) : (
+          <span className="hero-team-label">{team.name}</span>
+        )}
         <StarButton team={team} size={18} />
       </div>
+      {/* Cricket scores are innings text, shown under each team rather than as digits. */}
+      {cricket && started &&
+        (team.score ? (
+          <CricketScore score={team.score} className="hero-cricket-score" />
+        ) : (
+          <span className="hero-cricket-score muted">Yet to bat</span>
+        ))}
       {match.sport === "basketball" && team.record && <span className="hero-record">{team.record}</span>}
       <ul className="hero-scorers">
         {scorers(team).map((s, i) => (
@@ -272,7 +287,11 @@ function Header({ match }) {
       <div className="hero-main">
         {side(left, "left")}
         <div className="hero-score">
-          {started ? (
+          {cricket ? (
+            <span className="big-score kickoff cricket-format">
+              {started ? match.format || "Live" : match.date ? formatTime(match.date) : "TBD"}
+            </span>
+          ) : started ? (
             <div className="big-score-board">
               <span className="big-score-digit">{left.score ?? 0}</span>
               <span className="big-score-divider">:</span>
@@ -287,6 +306,8 @@ function Header({ match }) {
         </div>
         {side(right, "right")}
       </div>
+
+      {cricket && match.summary && <p className="hero-summary">{match.summary}</p>}
 
       <div className="hero-info">
         {match.venue && (
@@ -320,9 +341,11 @@ export default function MatchDetail({ league, id, onBack }) {
   );
 
   const basketball = match?.sport === "basketball";
+  const cricket = match?.sport === "cricket";
   const tabs = match
     ? [
         { id: "summary", label: "Summary", show: true },
+        { id: "scorecard", label: "Scorecard", show: cricket && match.innings?.length > 0 },
         { id: "stats", label: "Stats", show: match.stats.length > 0 },
         { id: "box", label: "Box score", show: basketball && match.box?.length > 0 },
         { id: "lineups", label: "Line-ups", show: match.lineups.length > 0 },
@@ -336,11 +359,14 @@ export default function MatchDetail({ league, id, onBack }) {
   useEffect(() => {
     if (!match) return;
     const score = match.state === "pre" ? "vs" : `${match.home.score}–${match.away.score}`;
-    // Basketball lists the away team first, as scoreboards do.
-    document.title = basketball
+    // Basketball lists the away team first, as scoreboards do; cricket has no
+    // single score, so it shows the result or situation instead.
+    document.title = cricket
+      ? `${match.home.name} v ${match.away.name}${match.summary ? `: ${match.summary}` : ""} – FalkenSports`
+      : basketball
       ? `${match.away.name} ${match.state === "pre" ? "at" : `${match.away.score}–${match.home.score}`} ${match.home.name} – FalkenSports`
       : `${match.home.name} ${score} ${match.away.name} – FalkenSports`;
-  }, [match, basketball]);
+  }, [match, basketball, cricket]);
 
   return (
     <section className="match-detail">
@@ -375,7 +401,9 @@ export default function MatchDetail({ league, id, onBack }) {
                 <Leaders match={match} />
               </>
             )}
-            {activeTab === "summary" && !basketball && (
+            {activeTab === "summary" && cricket && <CricketSummary match={match} />}
+            {activeTab === "scorecard" && <Scorecard match={match} />}
+            {activeTab === "summary" && !basketball && !cricket && (
               <>
                 <Timeline match={match} />
                 {(match.form[match.home.id]?.length > 0 ||

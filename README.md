@@ -1,13 +1,16 @@
 # FalkenSports — free live scores & news
 
 A free, installable, multi-sport web app for live scores, game centres, team
-pages, standings and news. Football and basketball today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
+pages, standings and news. Football, basketball and cricket today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
 JSON feeds, called directly from the browser.
 
 **Football:** Premier League, LaLiga, Bundesliga, Serie A, Ligue 1, Champions
 League, MLS (team pages also include domestic cups and friendlies).
 
 **Basketball:** NBA, WNBA, NCAA Men, NCAA Women.
+
+**Cricket:** every series being played (internationals, tours, domestic), plus
+IPL, Big Bash, WBBL, PSL, Ranji Trophy, Sheffield Shield, County Championship.
 
 ## Features
 
@@ -17,6 +20,8 @@ League, MLS (team pages also include domestic cups and friendlies).
   commentary, recent form. Refreshes every 30 s while live.
 - **Game centre (basketball)** — score by quarter, game leaders, team stats,
   box score per team, play-by-play with scoring plays highlighted.
+- **Cricket centre** — innings scores, result or match situation, toss and match
+  facts, full batting and bowling scorecards for every innings.
 - **Team pages** — results and fixtures across all competitions, form, next match,
   league position.
 - **Tables** — ESPN's real qualification and relegation zones, last-five form;
@@ -60,6 +65,9 @@ without notice. Known quirks handled in `src/api.js`:
 
 - The team info endpoint (`/teams/{id}`) sends no CORS header (in every sport), so
   team details are read from the schedule feed instead.
+- Cricket competitions are numeric series ids; tours get a new id each time, so
+  "All" uses the cross-series score panel. ESPN has no cricket team schedules
+  (no team pages) and only partial points tables (shown only when complete).
 - ESPN reuses team ids across sports, so favourites are stored with a sport
   prefix for non-football teams (`basketball:13`).
 - Days follow US Eastern time, so late kick-offs in Asia may appear under the

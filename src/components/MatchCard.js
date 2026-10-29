@@ -5,6 +5,7 @@ import { routeHref } from "../router";
 import TeamLogo from "./TeamLogo";
 import StarButton from "./StarButton";
 import { Football, MapPin } from "./Icons";
+import { CricketScore } from "./CricketDetail";
 
 export function MatchStatus({ match }) {
   if (match.state === "in") {
@@ -13,7 +14,7 @@ export function MatchStatus({ match }) {
         <span className="pulse" />
         {/* Football shows the minute; basketball's detail already reads "Q3 5:32". */}
         <span className="live-text">
-          {match.sport === "basketball" || match.detail === "HT" ? match.detail : match.clock}
+          {match.sport !== "football" || match.detail === "HT" ? match.detail : match.clock}
         </span>
       </span>
     );
@@ -73,8 +74,19 @@ export default function MatchCard({ match }) {
             </div>
           )}
         </div>
-        <span className={`score ${started ? "score-started" : "score-upcoming"}`}>
-          {started ? (team.score ?? "-") : "-"}
+        {/* Cricket scores are innings text ("406/5d & 79/6 (29 ov)"); empty until a side bats. */}
+        <span
+          className={`score ${started ? "score-started" : "score-upcoming"} ${
+            match.sport === "cricket" ? "score-cricket" : ""
+          }`}
+        >
+          {started && match.sport === "cricket" && team.score ? (
+            <CricketScore score={team.score} />
+          ) : started ? (
+            team.score || "-"
+          ) : (
+            "-"
+          )}
         </span>
       </div>
     );
@@ -87,7 +99,9 @@ export default function MatchCard({ match }) {
     >
       <header className="match-head">
         <MatchStatus match={match} />
-        {match.venue && (
+        {match.sport === "cricket" && (match.format || match.label) ? (
+          <span className="match-format">{[match.format, match.label].filter(Boolean).join(" · ")}</span>
+        ) : match.venue && (
           <span className="venue" title={match.venue}>
             <MapPin size={11} />
             <span>{match.venue}</span>
@@ -108,6 +122,7 @@ export default function MatchCard({ match }) {
           </>
         )}
       </div>
+      {match.summary && <p className="match-summary">{match.summary}</p>}
     </a>
   );
 }

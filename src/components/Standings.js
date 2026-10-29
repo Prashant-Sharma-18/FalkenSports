@@ -6,12 +6,16 @@ import useRemoteData from "../useRemoteData";
 import FormPills from "./FormPills";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
-import { sportOfLeague } from "../sports";
+import { hasForm, hasTeamPages, sportOfLeague } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 import { Trophy } from "./Icons";
 
 export default function Standings({ league }) {
-  const basketball = sportOfLeague(league) === "basketball";
+  const sport = sportOfLeague(league);
+  const basketball = sport === "basketball";
+  const cricket = sport === "cricket";
+  const showForm = hasForm(sport);
+  const linkTeams = hasTeamPages(sport);
   const { isFavorite } = useFavorites();
   const { data, error, loading, refresh } = useRemoteData(
     (signal) => fetchStandings(league, signal),
@@ -20,15 +24,24 @@ export default function Standings({ league }) {
   );
   // Loaded separately so the table shows straight away; the column fills in.
   const { data: form } = useRemoteData(
-    (signal) => fetchLeagueForm(league, signal),
-    [league],
+    (signal) => (showForm ? fetchLeagueForm(league, signal) : Promise.resolve(null)),
+    [league, showForm],
     10 * 60 * 1000
   );
 
   if (loading) return <Loading label="Loading table…" />;
   if (error && !data) return <ErrorState message={error} onRetry={refresh} />;
   if (!data?.length || !data.some((g) => g.rows.length)) {
-    return <Empty label="No table available for this competition yet." />;
+    return (
+      <Empty
+        label="No table available for this competition yet."
+        hint={
+          cricket
+            ? "Points tables appear once the data source publishes a complete ranking (not for group stages)."
+            : undefined
+        }
+      />
+    );
   }
 
   return (
@@ -55,7 +68,9 @@ export default function Standings({ league }) {
                   <tr>
                     <th className="col-rank">#</th>
                     <th className="left col-team">Team</th>
-                    {basketball ? (
+                    {cricket ? (
+                      <th className="pts" title="Points">Pts</th>
+                    ) : basketball ? (
                       <>
                         <th title="Won">W</th>
                         <th title="Lost">L</th>
@@ -73,9 +88,11 @@ export default function Standings({ league }) {
                         <th className="pts" title="Points">Pts</th>
                       </>
                     )}
-                    <th className="col-form" title="Last five league matches, oldest first">
-                      Form
-                    </th>
+                    {showForm && (
+                      <th className="col-form" title="Last five league matches, oldest first">
+                        Form
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -99,18 +116,28 @@ export default function Standings({ league }) {
                         </td>
                         <td className="left">
                           <span className="table-team">
-                            <a
-                              className="table-team team-link"
-                              href={routeHref({ view: "team", league, id: row.id })}
-                            >
-                              <TeamLogo src={row.logo} name={row.name} size={24} />
-                              <span className="full team-name-cell">{row.name}</span>
-                              <span className="abbr">{row.short}</span>
-                            </a>
+                            {linkTeams ? (
+                              <a
+                                className="table-team team-link"
+                                href={routeHref({ view: "team", league, id: row.id })}
+                              >
+                                <TeamLogo src={row.logo} name={row.name} size={24} />
+                                <span className="full team-name-cell">{row.name}</span>
+                                <span className="abbr">{row.short}</span>
+                              </a>
+                            ) : (
+                              <span className="table-team">
+                                <TeamLogo src={row.logo} name={row.name} size={24} />
+                                <span className="full team-name-cell">{row.name}</span>
+                                <span className="abbr">{row.short}</span>
+                              </span>
+                            )}
                             <StarButton team={row} size={14} />
                           </span>
                         </td>
-                        {basketball ? (
+                        {cricket ? (
+                          <td className="pts">{row.points}</td>
+                        ) : basketball ? (
                           <>
                             <td className="num-w">{row.won}</td>
                             <td className="num-l">{row.lost}</td>
@@ -136,9 +163,11 @@ export default function Standings({ league }) {
                             <td className="pts">{row.points}</td>
                           </>
                         )}
-                        <td className="col-form">
-                          {form && <FormPills games={form[row.id]} />}
-                        </td>
+                        {showForm && (
+                          <td className="col-form">
+                            {form && <FormPills games={form[row.id]} />}
+                          </td>
+                        )}
                       </tr>
                     );
                   })}

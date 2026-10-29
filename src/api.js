@@ -1,5 +1,5 @@
 // Free, keyless ESPN endpoints (CORS-enabled, so they can be called from the browser).
-import { SPORTS, leagueName, leaguesOf, sportOfLeague, teamKey } from "./sports";
+import { SPORTS, hasTeamPages, leagueName, leaguesOf, sportOfLeague, teamKey } from "./sports";
 
 const API = "https://site.api.espn.com/apis";
 
@@ -21,7 +21,11 @@ const apiDate = (dayKey) => dayKey.replace(/-/g, "");
 
 function normalizeTeam(c = {}, sport) {
   const id = c.team?.id;
-  const topScorer = c.leaders?.find((l) => l.name === "points")?.leaders?.[0];
+  // Basketball sends a list of leader categories; cricket sends an object, so check.
+  const topScorer = Array.isArray(c.leaders)
+    ? c.leaders.find((l) => l.name === "points")?.leaders?.[0]
+    : null;
+  const records = c.records || c.record;
   return {
     id,
     key: teamKey(sport, id),
@@ -31,9 +35,10 @@ function normalizeTeam(c = {}, sport) {
     logo: c.team?.logo || c.team?.logos?.[0]?.href,
     // Scoreboards send "2"; team schedules send { displayValue: "2" }.
     score: typeof c.score === "object" ? c.score?.displayValue : c.score,
-    winner: c.winner,
+    // Cricket sends "true"/"false" strings.
+    winner: c.winner === true || c.winner === "true",
     // Season record ("12-4"): scoreboards use `records`, game summaries `record`.
-    record: (c.records || c.record)?.[0]?.summary,
+    record: Array.isArray(records) ? records[0]?.summary : undefined,
     // Basketball: the team's top scorer, e.g. "L. James 28".
     leader: topScorer ? `${topScorer.athlete?.shortName} ${topScorer.displayValue}` : null,
   };
@@ -50,6 +55,13 @@ export function resultFor(match, teamId) {
   // Level after extra time: the shootout winner is flagged on the competitor.
   if (diff === 0) return us.winner ? "W" : them.winner ? "L" : "D";
   return diff > 0 ? "W" : "L";
+}
+
+// Cricket's live status is more useful than "Live": "Stumps", "Lunch", "Rain delay".
+function statusDetail(sport, status) {
+  const type = status?.type || {};
+  if (sport === "cricket" && type.state !== "pre") return type.description || type.shortDetail || "";
+  return type.shortDetail || "";
 }
 
 function normalizeMatch(event, league) {
@@ -78,9 +90,13 @@ function normalizeMatch(event, league) {
     date: new Date(event.date),
     // Scoreboards put status on the event, team schedules on the competition.
     state: status?.type?.state, // "pre" | "in" | "post"
-    detail: status?.type?.shortDetail || "",
+    detail: statusDetail(sport, status),
     clock: status?.displayClock,
     venue: comp.venue?.fullName,
+    // Cricket: "Jersey won by 123 runs", "T20" / "First-class", "7th Match".
+    summary: comp.status?.summary || null,
+    format: comp.class?.generalClassCard || null,
+    label: comp.description || null,
     home,
     away,
     goals: {
@@ -109,6 +125,7 @@ export async function fetchMatches(league, dayKey, signal) {
 // Every competition of one sport for one day, fetched in parallel.
 // One failing league doesn't hide the others.
 export async function fetchAllMatches(sport, dayKey, signal) {
+  if (sport === "cricket") return fetchCricketPanel(dayKey, signal);
   const results = await Promise.allSettled(
     leaguesOf(sport).map((l) => fetchMatches(l.id, dayKey, signal))
   );
@@ -143,6 +160,25 @@ function statRows(s, home, away, rows) {
       home: parseFloat(hs[name]) || 0,
       away: parseFloat(as[name]) || 0,
     }));
+}
+
+// Every cricket series in play around a day (internationals, tours, leagues),
+// one group per series.
+async function fetchCricketPanel(dayKey, signal) {
+  const data = await getJson(`${API}/site/v2/sports/cricket/scorepanel?dates=${apiDate(dayKey)}`, signal);
+  const groups = (data.scores || [])
+    .map((g) => {
+      const lg = g.leagues?.[0] || {};
+      const league = String(lg.id || lg.slug || "");
+      const name = leagueName(league) !== league ? leagueName(league) : lg.name || lg.abbreviation;
+      return {
+        league,
+        name,
+        matches: (g.events || []).map((e) => ({ ...normalizeMatch(e, league), competition: name })),
+      };
+    })
+    .filter((g) => g.matches.length);
+  return { groups, matchDays: null };
 }
 
 const FOOTBALL_STATS = [
@@ -206,9 +242,12 @@ export async function fetchMatch(league, id, signal) {
     competition: leagueName(league) !== league ? leagueName(league) : s.header?.league?.name || league,
     date: comp.date ? new Date(comp.date) : null,
     state: comp.status?.type?.state,
-    detail: comp.status?.type?.shortDetail || "",
+    detail: statusDetail(sport, comp.status),
     clock: comp.status?.displayClock,
     venue: s.gameInfo?.venue?.fullName,
+    summary: comp.status?.summary || null,
+    format: comp.class?.generalClassCard || null,
+    label: comp.description || null,
     attendance: s.gameInfo?.attendance || null,
     referee: official?.displayName || official?.fullName,
     home,
@@ -221,6 +260,7 @@ export async function fetchMatch(league, id, signal) {
     link: s.header?.links?.find((l) => l.rel?.includes("summary"))?.href || s.header?.links?.[0]?.href,
   };
 
+  if (sport === "cricket") return { ...base, ...cricketDetail(s, homeRaw, awayRaw) };
   return sport === "basketball"
     ? { ...base, ...basketballDetail(s, league, home, away, homeRaw, awayRaw) }
     : { ...base, ...footballDetail(s, home, away), link: base.link || `https://www.espn.com/soccer/match/_/gameId/${id}` };
@@ -369,6 +409,101 @@ function basketballDetail(s, league, home, away, homeRaw, awayRaw) {
   };
 }
 
+// Stats for one innings of one player, as a { name: displayValue } map.
+function inningsStats(player, period) {
+  const entry = (player.linescores || []).find((l) => Number(l.period) === Number(period));
+  const stats = entry?.linescores?.[0]?.statistics?.categories?.[0]?.stats || [];
+  return Object.fromEntries(stats.map((st) => [st.name, st.displayValue]));
+}
+
+// Full scorecard: innings order and totals come from the header; batting and
+// bowling come from the rosters (every innings), with dismissal text from the
+// match cards where ESPN includes them (often only the latest innings).
+function cricketDetail(s, homeRaw, awayRaw) {
+  const sides = [homeRaw, awayRaw].filter(Boolean);
+  const rosterOf = (teamId) => s.rosters?.find((r) => r.team?.id === teamId)?.roster || [];
+  const battingCard = (period, name) =>
+    (s.matchcards || []).find(
+      (c) => c.headline === "Batting" && Number(c.inningsNumber) === Number(period) && c.teamName === name
+    );
+
+  const innings = sides
+    .flatMap((raw) =>
+      (raw.linescores || [])
+        .filter((l) => l.isBatting)
+        .map((l) => ({ period: Number(l.period), raw, line: l }))
+    )
+    .sort((a, b) => a.period - b.period)
+    .map(({ period, raw, line }) => {
+      const teamId = raw.team?.id;
+      const other = sides.find((x) => x !== raw);
+      const card = battingCard(period, raw.team?.displayName);
+      const dismissalOf = (playerId) =>
+        card?.playerDetails?.find((d) => d.playerID === playerId)?.dismissal || null;
+
+      const batters = rosterOf(teamId)
+        .map((p) => ({ p, st: inningsStats(p, period) }))
+        .filter(({ st }) => st.batted === "1")
+        .sort((a, b) => Number(a.st.battingPosition) - Number(b.st.battingPosition))
+        .map(({ p, st }) => ({
+          id: p.athlete?.id,
+          name: p.athlete?.displayName,
+          captain: p.captain,
+          out: st.outs === "1",
+          dismissal: dismissalOf(p.athlete?.id) || (st.outs === "1" ? "out" : "not out"),
+          runs: st.runs,
+          balls: st.ballsFaced,
+          fours: st.fours,
+          sixes: st.sixes,
+          strikeRate: st.strikeRate,
+        }));
+      const battedIds = new Set(batters.map((b) => b.id));
+      const yetToBat = rosterOf(teamId)
+        .filter((p) => !battedIds.has(p.athlete?.id))
+        .map((p) => p.athlete?.displayName)
+        .filter(Boolean);
+
+      const bowlers = rosterOf(other?.team?.id)
+        .map((p) => ({ p, st: inningsStats(p, period) }))
+        .filter(({ st }) => Number(st.overs) > 0 || Number(st.balls) > 0)
+        .sort((a, b) => Number(a.st.bowlingPosition) - Number(b.st.bowlingPosition))
+        .map(({ p, st }) => ({
+          id: p.athlete?.id,
+          name: p.athlete?.displayName,
+          overs: st.overs,
+          maidens: st.maidens,
+          runs: st.conceded,
+          wickets: st.wickets,
+          economy: st.economyRate,
+          wides: st.wides,
+          noballs: st.noballs,
+        }));
+
+      return {
+        period,
+        teamId,
+        team: raw.team?.displayName,
+        short: raw.team?.abbreviation,
+        logo: raw.team?.logo || raw.team?.logos?.[0]?.href,
+        runs: line.runs,
+        wickets: line.wickets,
+        overs: line.overs,
+        status: line.description || "",
+        extras: card?.extras || null,
+        batters,
+        yetToBat,
+        bowlers,
+      };
+    });
+
+  // Match facts worth showing: toss, playing days, points awarded.
+  const notes = (s.notes || [])
+    .filter((n) => ["toss", "matchdays", "points"].includes(n.type) && n.text)
+    .map((n) => ({ type: n.type, text: n.text.replace(/\s+,/g, ",") }));
+
+  return { innings, notes };
+}
+
 // Basketball leagues without ESPN zone notes: their fixed post-season formats.
 const BASKETBALL_ZONES = {
   nba: [
@@ -378,8 +513,32 @@ const BASKETBALL_ZONES = {
   wnba: [{ upTo: 8, label: "Playoffs", kind: "ucl" }],
 };
 
+// Cricket points table, from the competition scoreboard (ESPN's standings feed
+// is empty for cricket). Only a clean 1..n ranking is shown: group stages share
+// one list with repeated ranks, and early in a season ESPN lists only some
+// teams (ranks 3-6 of 8), and either would mislead as a table.
+async function fetchCricketTable(league, signal) {
+  const data = await getJson(`${site(league)}/scoreboard`, signal);
+  const stat = (e, name) => e.stats?.find((x) => x.name === name);
+  const rows = (Array.isArray(data.standings) ? data.standings : []).map((e) => ({
+    id: e.team?.id,
+    key: teamKey("cricket", e.team?.id),
+    sport: "cricket",
+    rank: Number(stat(e, "rank")?.value) || 0,
+    name: e.team?.displayName,
+    short: e.team?.abbreviation,
+    logo: e.team?.logos?.[0]?.href,
+    points: stat(e, "matchPoints")?.displayValue ?? "",
+    zone: null,
+  }));
+  rows.sort((a, b) => a.rank - b.rank);
+  if (!rows.length || rows.some((r, i) => r.rank !== i + 1)) return [];
+  return [{ name: leagueName(league), rows, zones: [] }];
+}
+
 export async function fetchStandings(league, signal) {
   const sport = sportOfLeague(league);
+  if (sport === "cricket") return fetchCricketTable(league, signal);
   const data = await getJson(standingsUrl(league), signal);
   const stat = (entry, name) =>
     entry.stats?.find((s) => s.name === name)?.displayValue ?? "";
@@ -485,6 +644,9 @@ export async function fetchLeagueForm(league, signal) {
 // response: ESPN's /teams/{id} endpoint sends no CORS header, so browsers block it.
 export async function fetchTeam(league, teamId, signal) {
   const sport = sportOfLeague(league);
+  if (!hasTeamPages(sport)) {
+    throw new Error(`Team pages are not available for ${SPORTS[sport].name.toLowerCase()}`);
+  }
   let responses;
   if (sport === "football") {
     // Football clubs play in several competitions; "all" covers every one of them.

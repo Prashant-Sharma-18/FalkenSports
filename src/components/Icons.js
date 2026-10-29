@@ -246,6 +246,18 @@ export const ArrowDown = (props) => (
   </Icon>
 );
 
+export const Cricket = (props) => (
+  <Icon {...props}>
+    <path d="M6.6 17.4 16 8l3 3-9.4 9.4a1.4 1.4 0 0 1-2 0l-1-1a1.4 1.4 0 0 1 0-2z" />
+    <path d="m17.5 9.5 3-3" />
+    <circle cx="7" cy="7" r="2.5" />
+  </Icon>
+);
+
+const SPORT_ICONS = { football: Football, basketball: Basketball, cricket: Cricket };
+
 // Icon for a sport id from sports.js.
-export const SportIcon = ({ sport, ...props }) =>
-  sport === "basketball" ? <Basketball {...props} /> : <Football {...props} />;
+export const SportIcon = ({ sport, ...props }) => {
+  const Mark = SPORT_ICONS[sport] || Football;
+  return <Mark {...props} />;
+};

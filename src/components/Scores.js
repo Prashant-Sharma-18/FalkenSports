@@ -6,7 +6,7 @@ import { routeHref } from "../router";
 import useRemoteData from "../useRemoteData";
 import DateStrip from "./DateStrip";
 import MatchCard from "./MatchCard";
-import { SPORTS } from "../sports";
+import { SPORTS, isLeagueOf } from "../sports";
 import { RefreshCw, Star, Trophy, Search, SearchX, SportIcon, X } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
 
@@ -62,7 +62,7 @@ export default function Scores({ sport, league, date, onDateChange }) {
     if (!query) return true;
     const homeName = m.home.name.toLowerCase();
     const awayName = m.away.name.toLowerCase();
-    const lName = leagueName(m.league).toLowerCase();
+    const lName = (m.competition || leagueName(m.league)).toLowerCase();
     return homeName.includes(query) || awayName.includes(query) || lName.includes(query);
   };
 
@@ -221,12 +221,13 @@ export default function Scores({ sport, league, date, onDateChange }) {
                 <span className="league-icon-pill">
                   <Trophy size={13} />
                 </span>
-                {all ? (
-                  <a href={routeHref({ view: "matches", league: g.league, date })}>
-                    {leagueName(g.league)}
+                {/* Only configured competitions have their own page; cricket tours don't. */}
+                {all && isLeagueOf(sport, g.league) ? (
+                  <a href={routeHref({ sport, view: "matches", league: g.league, date })}>
+                    {g.name || leagueName(g.league)}
                   </a>
                 ) : (
-                  <span>{leagueName(g.league)}</span>
+                  <span>{g.name || leagueName(g.league)}</span>
                 )}
               </h2>
               <span className="group-count-pill">{g.matches.length}</span>
