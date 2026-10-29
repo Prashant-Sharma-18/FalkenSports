@@ -1,18 +1,14 @@
 // Free, keyless ESPN endpoints (CORS-enabled, so they can be called from the browser).
-const SITE = "https://site.api.espn.com/apis/site/v2/sports/soccer";
-const STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer";
+import { SPORTS, leagueName, leaguesOf, sportOfLeague, teamKey } from "./sports";
 
-export const LEAGUES = [
-  { id: "eng.1", name: "Premier League" },
-  { id: "esp.1", name: "LaLiga" },
-  { id: "ger.1", name: "Bundesliga" },
-  { id: "ita.1", name: "Serie A" },
-  { id: "fra.1", name: "Ligue 1" },
-  { id: "uefa.champions", name: "Champions League" },
-  { id: "usa.1", name: "MLS" },
-];
+const API = "https://site.api.espn.com/apis";
 
-export const leagueName = (id) => LEAGUES.find((l) => l.id === id)?.name || id;
+export { leagueName };
+
+// Base URLs for a league, e.g. .../sports/soccer/eng.1 or .../sports/basketball/nba.
+const espnSport = (league) => SPORTS[sportOfLeague(league)].espn;
+const site = (league) => `${API}/site/v2/sports/${espnSport(league)}/${league}`;
+const standingsUrl = (league) => `${API}/v2/sports/${espnSport(league)}/${league}/standings`;
 
 async function getJson(url, signal) {
   const res = await fetch(url, { signal });
@@ -23,15 +19,23 @@ async function getJson(url, signal) {
 // "2026-10-29" -> "20261029"
 const apiDate = (dayKey) => dayKey.replace(/-/g, "");
 
-function normalizeTeam(c = {}) {
+function normalizeTeam(c = {}, sport) {
+  const id = c.team?.id;
+  const topScorer = c.leaders?.find((l) => l.name === "points")?.leaders?.[0];
   return {
-    id: c.team?.id,
+    id,
+    key: teamKey(sport, id),
+    sport,
     name: c.team?.displayName || "TBD",
     short: c.team?.abbreviation || "",
     logo: c.team?.logo || c.team?.logos?.[0]?.href,
     // Scoreboards send "2"; team schedules send { displayValue: "2" }.
     score: typeof c.score === "object" ? c.score?.displayValue : c.score,
     winner: c.winner,
+    // Season record ("12-4"): scoreboards use `records`, game summaries `record`.
+    record: (c.records || c.record)?.[0]?.summary,
+    // Basketball: the team's top scorer, e.g. "L. James 28".
+    leader: topScorer ? `${topScorer.athlete?.shortName} ${topScorer.displayValue}` : null,
   };
 }
 
@@ -49,11 +53,12 @@ export function resultFor(match, teamId) {
 }
 
 function normalizeMatch(event, league) {
+  const sport = sportOfLeague(league);
   const comp = event.competitions?.[0] || {};
   const status = event.status || comp.status;
   const teams = comp.competitors || [];
-  const home = normalizeTeam(teams.find((c) => c.homeAway === "home"));
-  const away = normalizeTeam(teams.find((c) => c.homeAway === "away"));
+  const home = normalizeTeam(teams.find((c) => c.homeAway === "home"), sport);
+  const away = normalizeTeam(teams.find((c) => c.homeAway === "away"), sport);
 
   const goals = (comp.details || [])
     .filter((d) => d.scoringPlay)
@@ -67,6 +72,7 @@ function normalizeMatch(event, league) {
 
   return {
     id: event.id,
+    sport,
     league,
     competition: event.league?.shortName || event.league?.name || leagueName(league),
     date: new Date(event.date),
@@ -93,18 +99,18 @@ function matchDaysOf(data) {
 }
 
 export async function fetchMatches(league, dayKey, signal) {
-  const data = await getJson(`${SITE}/${league}/scoreboard?dates=${apiDate(dayKey)}`, signal);
+  const data = await getJson(`${site(league)}/scoreboard?dates=${apiDate(dayKey)}`, signal);
   return {
     groups: [{ league, matches: (data.events || []).map((e) => normalizeMatch(e, league)) }],
     matchDays: matchDaysOf(data),
   };
 }
 
-// Every supported competition for one day, fetched in parallel.
+// Every competition of one sport for one day, fetched in parallel.
 // One failing league doesn't hide the others.
-export async function fetchAllMatches(dayKey, signal) {
+export async function fetchAllMatches(sport, dayKey, signal) {
   const results = await Promise.allSettled(
-    LEAGUES.map((l) => fetchMatches(l.id, dayKey, signal))
+    leaguesOf(sport).map((l) => fetchMatches(l.id, dayKey, signal))
   );
   const ok = results.filter((r) => r.status === "fulfilled").map((r) => r.value);
   if (!ok.length) throw results[0].reason;
@@ -117,7 +123,29 @@ export async function fetchAllMatches(dayKey, signal) {
   };
 }
 
-const STAT_ROWS = [
+// Pick named team statistics as comparison rows: [name, label, suffix].
+function statRows(s, home, away, rows) {
+  const box = s.boxscore?.teams || [];
+  const statsFor = (teamId) =>
+    Object.fromEntries(
+      (box.find((t) => t.team?.id === teamId)?.statistics || []).map((st) => [
+        st.name,
+        st.displayValue,
+      ])
+    );
+  const hs = statsFor(home.id);
+  const as = statsFor(away.id);
+  return rows
+    .filter(([name]) => hs[name] != null && as[name] != null)
+    .map(([name, label, suffix = ""]) => ({
+      label,
+      suffix,
+      home: parseFloat(hs[name]) || 0,
+      away: parseFloat(as[name]) || 0,
+    }));
+}
+
+const FOOTBALL_STATS = [
   ["possessionPct", "Possession", "%"],
   ["totalShots", "Shots"],
   ["shotsOnTarget", "Shots on target"],
@@ -129,6 +157,24 @@ const STAT_ROWS = [
   ["yellowCards", "Yellow cards"],
   ["redCards", "Red cards"],
 ];
+
+const BASKETBALL_STATS = [
+  ["fieldGoalPct", "Field goal", "%"],
+  ["threePointFieldGoalPct", "Three-point", "%"],
+  ["freeThrowPct", "Free throw", "%"],
+  ["totalRebounds", "Rebounds"],
+  ["offensiveRebounds", "Offensive rebounds"],
+  ["assists", "Assists"],
+  ["steals", "Steals"],
+  ["blocks", "Blocks"],
+  ["turnovers", "Turnovers"],
+  ["pointsInPaint", "Points in paint"],
+  ["fastBreakPoints", "Fast break points"],
+  ["largestLead", "Largest lead"],
+];
+
+// Box score columns shown, in order (ESPN sends more).
+const BOX_COLUMNS = ["MIN", "PTS", "REB", "AST", "FG", "3PT", "FT", "STL", "BLK", "TO", "+/-"];
 
 function eventKind(e) {
   const type = e.type?.type || "";
@@ -142,12 +188,45 @@ function eventKind(e) {
 }
 
 export async function fetchMatch(league, id, signal) {
-  const s = await getJson(`${SITE}/${league}/summary?event=${id}`, signal);
+  const sport = sportOfLeague(league);
+  const s = await getJson(`${site(league)}/summary?event=${id}`, signal);
   const comp = s.header?.competitions?.[0] || {};
   const teams = comp.competitors || [];
-  const home = normalizeTeam(teams.find((c) => c.homeAway === "home"));
-  const away = normalizeTeam(teams.find((c) => c.homeAway === "away"));
+  const homeRaw = teams.find((c) => c.homeAway === "home");
+  const awayRaw = teams.find((c) => c.homeAway === "away");
+  const home = normalizeTeam(homeRaw, sport);
+  const away = normalizeTeam(awayRaw, sport);
+  const official = s.gameInfo?.officials?.[0];
 
+  const base = {
+    id,
+    sport,
+    league,
+    // Our short name ("NBA", "Premier League") when we know the league; ESPN's for cups.
+    competition: leagueName(league) !== league ? leagueName(league) : s.header?.league?.name || league,
+    date: comp.date ? new Date(comp.date) : null,
+    state: comp.status?.type?.state,
+    detail: comp.status?.type?.shortDetail || "",
+    clock: comp.status?.displayClock,
+    venue: s.gameInfo?.venue?.fullName,
+    attendance: s.gameInfo?.attendance || null,
+    referee: official?.displayName || official?.fullName,
+    home,
+    away,
+    events: [],
+    stats: [],
+    lineups: [],
+    form: {},
+    commentary: [],
+    link: s.header?.links?.find((l) => l.rel?.includes("summary"))?.href || s.header?.links?.[0]?.href,
+  };
+
+  return sport === "basketball"
+    ? { ...base, ...basketballDetail(s, league, home, away, homeRaw, awayRaw) }
+    : { ...base, ...footballDetail(s, home, away), link: base.link || `https://www.espn.com/soccer/match/_/gameId/${id}` };
+}
+
+function footballDetail(s, home, away) {
   const events = (s.keyEvents || [])
     .map((e) => ({ e, kind: eventKind(e) }))
     .filter(({ kind }) => kind)
@@ -166,25 +245,6 @@ export async function fetchMatch(league, id, signal) {
         penalty: (e.type?.type || "").includes("penalty"),
       };
     });
-
-  const box = s.boxscore?.teams || [];
-  const statsFor = (teamId) =>
-    Object.fromEntries(
-      (box.find((t) => t.team?.id === teamId)?.statistics || []).map((st) => [
-        st.name,
-        st.displayValue,
-      ])
-    );
-  const hs = statsFor(home.id);
-  const as = statsFor(away.id);
-  const stats = STAT_ROWS.filter(([name]) => hs[name] != null && as[name] != null).map(
-    ([name, label, suffix = ""]) => ({
-      label,
-      suffix,
-      home: parseFloat(hs[name]) || 0,
-      away: parseFloat(as[name]) || 0,
-    })
-  );
 
   const lineups = (s.rosters || [])
     .filter((r) => r.roster?.length)
@@ -227,52 +287,139 @@ export async function fetchMatch(league, id, signal) {
     .map((c) => ({ id: c.sequence, minute: c.time?.displayValue || "", text: c.text }))
     .reverse();
 
-  const official = s.gameInfo?.officials?.[0];
+  return { events, stats: statRows(s, home, away, FOOTBALL_STATS), lineups, form, commentary };
+}
+
+// Period names: college men play halves, everyone else quarters.
+function periodLabel(league, index) {
+  const regular = league === "mens-college-basketball" ? 2 : 4;
+  if (index < regular) return regular === 2 ? `H${index + 1}` : `Q${index + 1}`;
+  const ot = index - regular + 1;
+  return ot === 1 ? "OT" : `${ot}OT`;
+}
+
+function basketballDetail(s, league, home, away, homeRaw, awayRaw) {
+  const scores = (raw) => (raw?.linescores || []).map((l) => l.displayValue ?? l.value);
+  const homeLines = scores(homeRaw);
+  const awayLines = scores(awayRaw);
+  const periods = Math.max(homeLines.length, awayLines.length);
+  const linescore = {
+    labels: Array.from({ length: periods }, (_, i) => periodLabel(league, i)),
+    home: homeLines,
+    away: awayLines,
+  };
+
+  const box = (s.boxscore?.players || []).map((t) => {
+    const group = t.statistics?.[0] || {};
+    const labels = group.labels || group.names || [];
+    const pick = BOX_COLUMNS.map((c) => labels.indexOf(c)).filter((i) => i >= 0);
+    return {
+      teamId: t.team?.id,
+      columns: pick.map((i) => labels[i]),
+      players: (group.athletes || []).map((a) => ({
+        id: a.athlete?.id,
+        name: a.athlete?.displayName,
+        short: a.athlete?.shortName || a.athlete?.displayName,
+        position: a.athlete?.position?.abbreviation,
+        jersey: a.athlete?.jersey,
+        starter: a.starter,
+        dnp: a.didNotPlay || !a.stats?.length,
+        reason: a.reason,
+        stats: pick.map((i) => a.stats?.[i] ?? ""),
+      })),
+      totals: group.totals?.length ? pick.map((i) => group.totals[i] ?? "") : null,
+    };
+  });
+
+  const leaders = (s.leaders || []).map((t) => ({
+    teamId: t.team?.id,
+    items: (t.leaders || [])
+      .map((cat) => {
+        const top = cat.leaders?.[0];
+        return top && {
+          category: cat.displayName || cat.name,
+          player: top.athlete?.displayName,
+          headshot: top.athlete?.headshot?.href,
+          value: top.displayValue,
+        };
+      })
+      .filter(Boolean)
+      .slice(0, 3),
+  }));
+
+  const plays = (s.plays || [])
+    .filter((p) => p.text)
+    .slice(-300)
+    .reverse()
+    .map((p) => ({
+      id: p.id,
+      minute: `${periodLabel(league, (p.period?.number || 1) - 1)} ${p.clock?.displayValue || ""}`.trim(),
+      text: p.text,
+      scoring: p.scoringPlay,
+      teamId: p.team?.id,
+      score: p.scoringPlay ? `${p.awayScore}-${p.homeScore}` : null,
+    }));
 
   return {
-    id,
-    league,
-    competition: s.header?.league?.name || leagueName(league),
-    date: comp.date ? new Date(comp.date) : null,
-    state: comp.status?.type?.state,
-    detail: comp.status?.type?.shortDetail || "",
-    clock: comp.status?.displayClock,
-    venue: s.gameInfo?.venue?.fullName,
-    attendance: s.gameInfo?.attendance || null,
-    referee: official?.displayName || official?.fullName,
-    home,
-    away,
-    events,
-    stats,
-    lineups,
-    form,
-    commentary,
-    link: `https://www.espn.com/soccer/match/_/gameId/${id}`,
+    stats: statRows(s, home, away, BASKETBALL_STATS),
+    linescore,
+    box,
+    leaders,
+    plays,
   };
 }
 
+// Basketball leagues without ESPN zone notes: their fixed post-season formats.
+const BASKETBALL_ZONES = {
+  nba: [
+    { upTo: 6, label: "Playoffs", kind: "ucl" },
+    { upTo: 10, label: "Play-In Tournament", kind: "uel" },
+  ],
+  wnba: [{ upTo: 8, label: "Playoffs", kind: "ucl" }],
+};
+
 export async function fetchStandings(league, signal) {
-  const data = await getJson(`${STANDINGS}/${league}/standings`, signal);
+  const sport = sportOfLeague(league);
+  const data = await getJson(standingsUrl(league), signal);
   const stat = (entry, name) =>
     entry.stats?.find((s) => s.name === name)?.displayValue ?? "";
+  const num = (entry, name) => Number(entry.stats?.find((s) => s.name === name)?.value);
 
   return (data.children || []).map((group) => {
-    const rows = (group.standings?.entries || [])
-      .map((entry) => ({
-        id: entry.team?.id,
-        rank: Number(stat(entry, "rank")) || 0,
-        name: entry.team?.displayName,
-        short: entry.team?.abbreviation,
-        logo: entry.team?.logos?.[0]?.href,
-        played: stat(entry, "gamesPlayed"),
-        won: stat(entry, "wins"),
-        drawn: stat(entry, "ties"),
-        lost: stat(entry, "losses"),
-        gd: stat(entry, "pointDifferential"),
-        points: stat(entry, "points"),
-        zoneLabel: entry.note?.description || null,
-      }))
-      .sort((a, b) => a.rank - b.rank);
+    const entries = group.standings?.entries || [];
+    const rows = entries.map((entry) => ({
+      id: entry.team?.id,
+      key: teamKey(sport, entry.team?.id),
+      sport,
+      rank: Number(stat(entry, sport === "basketball" ? "playoffSeed" : "rank")) || 0,
+      name: entry.team?.displayName,
+      short: entry.team?.abbreviation,
+      logo: entry.team?.logos?.[0]?.href,
+      played: stat(entry, "gamesPlayed"),
+      won: stat(entry, "wins"),
+      drawn: stat(entry, "ties"),
+      lost: stat(entry, "losses"),
+      gd: stat(entry, "pointDifferential"),
+      points: stat(entry, "points"),
+      pct: stat(entry, "winPercent"),
+      gb: stat(entry, "gamesBehind"),
+      streak: stat(entry, "streak"),
+      winPct: num(entry, "winPercent") || 0,
+      zoneLabel: entry.note?.description || null,
+    }));
+
+    if (sport === "basketball") {
+      // Seeds where ESPN has them (pro leagues), win percentage otherwise (college).
+      const seeded = rows.every((r) => r.rank > 0);
+      rows.sort((a, b) => (seeded ? a.rank - b.rank : b.winPct - a.winPct || Number(b.won) - Number(a.won)));
+      rows.forEach((r, i) => {
+        if (!seeded) r.rank = i + 1;
+        const zone = !r.zoneLabel && BASKETBALL_ZONES[league]?.find((z) => r.rank <= z.upTo);
+        if (zone) r.zoneLabel = zone.label;
+      });
+    } else {
+      rows.sort((a, b) => a.rank - b.rank);
+    }
 
     // ESPN's zone colours are inconsistent (some are malformed), so zones map
     // onto the app's own badges: bad outcomes are "rel", the rest go
@@ -303,7 +450,7 @@ export async function fetchLeagueForm(league, signal) {
     return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
   const results = await Promise.allSettled(
-    months.map((m) => getJson(`${SITE}/${league}/scoreboard?dates=${m}&limit=300`, signal))
+    months.map((m) => getJson(`${site(league)}/scoreboard?dates=${m}&limit=300`, signal))
   );
 
   const seen = new Set();
@@ -334,37 +481,47 @@ export async function fetchLeagueForm(league, signal) {
   return form;
 }
 
-// Club info plus results and fixtures across every competition it plays in.
-// Club info comes from the schedule response: ESPN's /teams/{id} endpoint
-// sends no CORS header, so browsers block it.
+// Club info plus results and fixtures. Club info comes from the schedule
+// response: ESPN's /teams/{id} endpoint sends no CORS header, so browsers block it.
 export async function fetchTeam(league, teamId, signal) {
-  const [results, fixtures] = await Promise.all([
-    getJson(`${SITE}/all/teams/${teamId}/schedule`, signal),
-    getJson(`${SITE}/all/teams/${teamId}/schedule?fixture=true`, signal).catch(() => ({
-      events: [],
-    })),
-  ]);
-  const t = results.team || fixtures.team || {};
+  const sport = sportOfLeague(league);
+  let responses;
+  if (sport === "football") {
+    // Football clubs play in several competitions; "all" covers every one of them.
+    const soccer = `${API}/site/v2/sports/soccer/all/teams/${teamId}/schedule`;
+    responses = await Promise.all([
+      getJson(soccer, signal),
+      getJson(`${soccer}?fixture=true`, signal).catch(() => ({ events: [] })),
+    ]);
+  } else {
+    // A basketball schedule already holds the whole season, played and upcoming.
+    responses = [await getJson(`${site(league)}/teams/${teamId}/schedule`, signal)];
+  }
+  const t = responses.find((r) => r.team)?.team || {};
   const toMatch = (e) => normalizeMatch(e, e.league?.slug || league);
 
   const seen = new Set();
-  const all = [...(results.events || []), ...(fixtures.events || [])]
+  const all = responses
+    .flatMap((r) => r.events || [])
     .filter((e) => !seen.has(e.id) && seen.add(e.id))
     .map(toMatch)
     .sort((a, b) => a.date - b.date);
 
-  // The club's domestic league (for the table snippet), even when the page was
+  // The club's main league (for the table snippet), even when the page was
   // opened from a cup match: the supported league it plays most often in.
   const counts = {};
   all.forEach((m) => {
-    if (LEAGUES.some((l) => l.id === m.league)) counts[m.league] = (counts[m.league] || 0) + 1;
+    if (leaguesOf(sport).some((l) => l.id === m.league)) counts[m.league] = (counts[m.league] || 0) + 1;
   });
-  const homeLeague = LEAGUES.some((l) => l.id === league)
+  const homeLeague = leaguesOf(sport).some((l) => l.id === league)
     ? league
     : Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] || league;
 
+  const id = t.id || teamId;
   return {
-    id: t.id || teamId,
+    id,
+    key: teamKey(sport, id),
+    sport,
     league,
     homeLeague,
     name: t.displayName || "Team",
@@ -372,6 +529,7 @@ export async function fetchTeam(league, teamId, signal) {
     logo: t.logo || t.logos?.[0]?.href,
     color: /^[0-9a-f]{6}$/i.test(t.color || "") ? `#${t.color}` : null,
     standing: t.standingSummary,
+    record: t.recordSummary,
     link: t.clubhouse,
     results: all.filter(isPlayed).reverse(),
     live: all.filter((m) => m.state === "in"),
@@ -380,7 +538,7 @@ export async function fetchTeam(league, teamId, signal) {
 }
 
 export async function fetchNews(league, signal) {
-  const data = await getJson(`${SITE}/${league}/news?limit=24`, signal);
+  const data = await getJson(`${site(league)}/news?limit=24`, signal);
   return (data.articles || [])
     .filter((a) => a.links?.web?.href)
     .map((a) => ({

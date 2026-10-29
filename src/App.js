@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Newspaper, Table2, Timer, Monitor, Smartphone } from "./components/Icons";
-import { LEAGUES, leagueName } from "./api";
+import { Newspaper, Table2, Timer, Monitor, Smartphone, SportIcon } from "./components/Icons";
+import { leagueName } from "./api";
 import { todayKey } from "./dates";
 import { FavoritesProvider } from "./favorites";
 import { ThemeProvider } from "./theme";
+import { DEFAULT_SPORT, SPORTS, SPORT_IDS, isLeagueOf, leaguesOf } from "./sports";
 import ThemeToggle from "./components/ThemeToggle";
 import BottomNav from "./components/BottomNav";
 import { navigate, routeHref, useRoute } from "./router";
@@ -14,29 +15,52 @@ import MatchDetail from "./components/MatchDetail";
 import TeamPage from "./components/TeamPage";
 import "./App.css";
 
-const TABS = [
-  { id: "matches", label: "Matches", icon: Timer },
+const tabsFor = (sport) => [
+  { id: "matches", label: SPORTS[sport].games, icon: Timer },
   { id: "table", label: "Table", icon: Table2 },
   { id: "news", label: "News", icon: Newspaper },
 ];
 
-function readLastLeague() {
-  try {
-    const saved = localStorage.getItem("league");
-    if (LEAGUES.some((l) => l.id === saved)) return saved;
-  } catch {}
-  return LEAGUES[0].id;
+// Table and News need a single competition; remember the last one picked per sport.
+// Football keeps the original "league" key so returning visitors keep their choice.
+const storageKey = (sport) => (sport === DEFAULT_SPORT ? "league" : `league:${sport}`);
+
+function readLastLeagues() {
+  return Object.fromEntries(
+    SPORT_IDS.map((sport) => {
+      let saved = null;
+      try {
+        saved = localStorage.getItem(storageKey(sport));
+      } catch {}
+      return [sport, isLeagueOf(sport, saved) ? saved : leaguesOf(sport)[0].id];
+    })
+  );
 }
 
-// Match and team pages can belong to cups that have no tabs of their own.
-const isMainLeague = (id) => LEAGUES.some((l) => l.id === id);
+// FalkenSports mark: an angular, wing-like "F" on a red tile.
+function BrandMark() {
+  return (
+    <svg className="brand-logo-svg" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="brand-grad" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#f43f5e" />
+          <stop offset="1" stopColor="#b91c1c" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="28" height="28" rx="8" fill="url(#brand-grad)" />
+      <path d="M10 7.5h14l-3.2 4.2H14.6v3.1h7.2l-3.2 4.2h-4v5.5L10 27.5z" fill="#fff" />
+    </svg>
+  );
+}
 
 function Shell() {
   const route = useRoute();
+  const sport = route.sport;
   const detailView = route.view === "match" || route.view === "team";
-  const lastLeague = useRef(readLastLeague());
+  const lastLeagues = useRef(readLastLeagues());
   const navigatedInApp = useRef(false);
   const firstRoute = useRef(true);
+  const tabs = tabsFor(sport);
 
   // Layout mode: standard responsive desktop dashboard (default) vs mobile-phone preview mode
   const [isAppMode, setIsAppMode] = useState(() => {
@@ -62,95 +86,70 @@ function Shell() {
     if (firstRoute.current) firstRoute.current = false;
     else navigatedInApp.current = true;
 
-    if (isMainLeague(route.league)) {
-      lastLeague.current = route.league;
+    // Match and team pages can belong to cups that have no tabs of their own.
+    if (isLeagueOf(sport, route.league)) {
+      lastLeagues.current[sport] = route.league;
       try {
-        localStorage.setItem("league", route.league);
+        localStorage.setItem(storageKey(sport), route.league);
       } catch {}
     }
     window.scrollTo(0, 0);
-  }, [route.view, route.league, route.id]);
+  }, [sport, route.view, route.league, route.id]);
 
   useEffect(() => {
     if (detailView) return; // match and team pages set their own title
-    const where = route.league === "all" ? "Live scores" : leagueName(route.league);
-    const what = TABS.find((t) => t.id === route.view)?.label;
-    document.title = `${where} · ${what} – Kickoff`;
-  }, [route.view, route.league, detailView]);
+    const where = route.league === "all" ? `${SPORTS[sport].name} scores` : leagueName(route.league);
+    const what = tabsFor(sport).find((t) => t.id === route.view)?.label;
+    document.title = `${where} · ${what} – FalkenSports`;
+  }, [sport, route.view, route.league, detailView]);
 
   const date = route.date || todayKey();
-  const singleLeague = isMainLeague(route.league) ? route.league : lastLeague.current;
+  const singleLeague = isLeagueOf(sport, route.league) ? route.league : lastLeagues.current[sport];
 
   const tabHref = (id) =>
     routeHref(
       id === "matches"
-        ? { view: "matches", league: route.league === "all" ? "all" : singleLeague }
-        : { view: id, league: singleLeague }
+        ? { sport, view: "matches", league: route.league === "all" ? "all" : singleLeague }
+        : { sport, view: id, league: singleLeague }
     );
 
+  // Switching sport keeps the current section (scores, table or news).
+  const sportHref = (s) =>
+    routeHref(
+      route.view === "table" || route.view === "news"
+        ? { sport: s, view: route.view, league: lastLeagues.current[s] }
+        : { sport: s, view: "matches", league: "all" }
+    );
+
+  const leagues = leaguesOf(sport);
   const chips =
-    route.view === "matches" ? [{ id: "all", name: "All" }, ...LEAGUES] : detailView ? [] : LEAGUES;
+    route.view === "matches" ? [{ id: "all", name: "All" }, ...leagues] : detailView ? [] : leagues;
 
   const goBack = () => {
     if (navigatedInApp.current) window.history.back();
-    else navigate({ view: "matches", league: singleLeague });
+    else navigate({ sport, view: "matches", league: singleLeague });
   };
 
   return (
     <div className={`app ${isAppMode ? "mode-app-shell" : "mode-dashboard"}`}>
       <div className="ambient-mesh" aria-hidden="true" />
-      
+
       {/* App Header */}
       <header className="site-header">
         <div className="app-container header-inner">
-          <a className="brand" href="#/matches/all">
+          <a className="brand" href={routeHref({ sport, view: "matches", league: "all" })}>
             <span className="brand-mark-wrapper">
-              <svg
-                className="brand-logo-svg"
-                viewBox="0 0 32 32"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <circle cx="16" cy="16" r="14" fill="url(#brand-grad)" />
-                <path
-                  d="M16 5L20.5 8.5L19 14H13L11.5 8.5L16 5Z"
-                  fill="#ffffff"
-                  fillOpacity="0.9"
-                />
-                <path
-                  d="M13 14L8 15.5L6.5 21L10.5 24.5L14.5 20.5L13 14Z"
-                  fill="#ffffff"
-                  fillOpacity="0.8"
-                />
-                <path
-                  d="M19 14L24 15.5L25.5 21L21.5 24.5L17.5 20.5L19 14Z"
-                  fill="#ffffff"
-                  fillOpacity="0.8"
-                />
-                <path
-                  d="M14.5 20.5L16 27L17.5 20.5H14.5Z"
-                  fill="#ffffff"
-                  fillOpacity="0.95"
-                />
-                <circle cx="25" cy="7" r="3" fill="#10b981" />
-                <defs>
-                  <linearGradient id="brand-grad" x1="4" y1="4" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#10b981" />
-                    <stop offset="1" stopColor="#047857" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <BrandMark />
             </span>
             <div className="brand-text">
-              <span className="brand-name">KICKOFF</span>
+              <span className="brand-name">FalkenSports</span>
               <span className="brand-live-dot" title="Live sports active" />
             </div>
           </a>
 
           {/* Desktop Navigation Tabs */}
           <nav className="desktop-tabs tabs" aria-label="Sections">
-            {TABS.map(({ id, label, icon: Icon }) => {
+            {tabs.map(({ id, label, icon: Icon }) => {
               const active = route.view === id;
               return (
                 <a
@@ -181,16 +180,34 @@ function Shell() {
           </div>
         </div>
 
-        {chips.length > 0 && (
+        {!detailView && (
           <div className="leagues-bar">
-            <div className="app-container">
+            <div className="app-container leagues-bar-inner">
+              <nav className="sport-switch" aria-label="Sport">
+                {SPORT_IDS.map((s) => {
+                  const active = s === sport;
+                  return (
+                    <a
+                      key={s}
+                      href={sportHref(s)}
+                      className={`sport-tab ${active ? "active" : ""}`}
+                      aria-current={active ? "page" : undefined}
+                      title={SPORTS[s].name}
+                    >
+                      <SportIcon sport={s} size={16} />
+                      <span className="sport-tab-label">{SPORTS[s].name}</span>
+                    </a>
+                  );
+                })}
+              </nav>
+
               <nav className="leagues" aria-label="Competitions">
                 {chips.map((l) => {
                   const active = route.league === l.id;
                   return (
                     <a
                       key={l.id}
-                      href={routeHref({ view: route.view, league: l.id, date: route.date })}
+                      href={routeHref({ sport, view: route.view, league: l.id, date: route.date })}
                       className={`chip ${active ? "active" : ""}`}
                       aria-current={active ? "page" : undefined}
                     >
@@ -210,20 +227,21 @@ function Shell() {
         {!detailView && (
           <div className="page-header">
             <h1 className="page-title">
-              {route.league === "all" ? "All Competitions" : leagueName(route.league)}{" "}
-              <span className="title-section-badge">{TABS.find((t) => t.id === route.view).label}</span>
+              {route.league === "all" ? SPORTS[sport].name : leagueName(route.league)}{" "}
+              <span className="title-section-badge">{tabs.find((t) => t.id === route.view).label}</span>
             </h1>
           </div>
         )}
 
         {route.view === "matches" && (
           <Scores
-            key={route.league}
+            key={`${sport}:${route.league}`}
+            sport={sport}
             league={route.league}
             date={date}
             onDateChange={(key) =>
               navigate(
-                { view: "matches", league: route.league, date: key === todayKey() ? null : key },
+                { sport, view: "matches", league: route.league, date: key === todayKey() ? null : key },
                 { replace: true }
               )
             }

@@ -187,3 +187,65 @@ export const Smartphone = (props) => (
 
 
 
+
+// Sport marks, drawn in the same 24px line style as the rest of the set.
+export const Football = (props) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="m12 7 4.5 3.3-1.7 5.2H9.2l-1.7-5.2z" />
+    <path d="M12 7V2.5M16.5 10.3l4.3-1.4M14.8 15.5l2.7 3.7M9.2 15.5l-2.7 3.7M7.5 10.3 3.2 8.9" />
+  </Icon>
+);
+
+export const Basketball = (props) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M12 2v20M2 12h20" />
+    <path d="M4.9 4.9A10 10 0 0 1 7.5 12a10 10 0 0 1-2.6 7.1" />
+    <path d="M19.1 4.9A10 10 0 0 0 16.5 12a10 10 0 0 0 2.6 7.1" />
+  </Icon>
+);
+
+export const AlertTriangle = (props) => (
+  <Icon {...props}>
+    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+    <path d="M12 9v4" />
+    <path d="M12 17h.01" />
+  </Icon>
+);
+
+export const SearchX = (props) => (
+  <Icon {...props}>
+    <path d="m13.5 8.5-5 5" />
+    <path d="m8.5 8.5 5 5" />
+    <circle cx="11" cy="11" r="8" />
+    <path d="m21 21-4.3-4.3" />
+  </Icon>
+);
+
+export const ArrowLeftRight = (props) => (
+  <Icon {...props}>
+    <path d="M8 3 4 7l4 4" />
+    <path d="M4 7h16" />
+    <path d="m16 21 4-4-4-4" />
+    <path d="M20 17H4" />
+  </Icon>
+);
+
+export const ArrowUp = (props) => (
+  <Icon {...props}>
+    <path d="m5 12 7-7 7 7" />
+    <path d="M12 19V5" />
+  </Icon>
+);
+
+export const ArrowDown = (props) => (
+  <Icon {...props}>
+    <path d="M12 5v14" />
+    <path d="m19 12-7 7-7-7" />
+  </Icon>
+);
+
+// Icon for a sport id from sports.js.
+export const SportIcon = ({ sport, ...props }) =>
+  sport === "basketball" ? <Basketball {...props} /> : <Football {...props} />;

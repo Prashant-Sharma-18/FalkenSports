@@ -5,7 +5,7 @@ import { Star } from "./Icons";
 export default function StarButton({ team, size = 16 }) {
   const { isFavorite, toggle } = useFavorites();
   if (!team?.id) return null;
-  const on = isFavorite(team.id);
+  const on = isFavorite(team);
 
   return (
     <button

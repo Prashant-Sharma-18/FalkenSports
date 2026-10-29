@@ -63,9 +63,9 @@ test('team links open the team page', async () => {
 });
 
 test('parses shareable routes', () => {
-  expect(parseRoute('#/match/eng.1/401879254')).toEqual({ view: 'match', league: 'eng.1', id: '401879254' });
-  expect(parseRoute('#/matches/esp.1/2026-10-25')).toEqual({ view: 'matches', league: 'esp.1', date: '2026-10-25' });
-  expect(parseRoute('#/table/ita.1')).toEqual({ view: 'table', league: 'ita.1' });
-  expect(parseRoute('#/table/nope')).toEqual({ view: 'matches', league: 'all', date: null });
-  expect(parseRoute('')).toEqual({ view: 'matches', league: 'all', date: null });
+  expect(parseRoute('#/match/eng.1/401879254')).toEqual({ sport: 'football', view: 'match', league: 'eng.1', id: '401879254' });
+  expect(parseRoute('#/matches/esp.1/2026-10-25')).toEqual({ sport: 'football', view: 'matches', league: 'esp.1', date: '2026-10-25' });
+  expect(parseRoute('#/table/ita.1')).toEqual({ sport: 'football', view: 'table', league: 'ita.1' });
+  expect(parseRoute('#/table/nope')).toEqual({ sport: 'football', view: 'matches', league: 'all', date: null });
+  expect(parseRoute('')).toEqual({ sport: 'football', view: 'matches', league: 'all', date: null });
 });

@@ -6,7 +6,8 @@ import { routeHref } from "../router";
 import useRemoteData from "../useRemoteData";
 import DateStrip from "./DateStrip";
 import MatchCard from "./MatchCard";
-import { RefreshCw, Star, Trophy, Search, X } from "./Icons";
+import { SPORTS } from "../sports";
+import { RefreshCw, Star, Trophy, Search, SearchX, SportIcon, X } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
 
 const LIVE_REFRESH = 30 * 1000;
@@ -27,7 +28,8 @@ function MatchGrid({ matches }) {
   );
 }
 
-export default function Scores({ league, date, onDateChange }) {
+export default function Scores({ sport, league, date, onDateChange }) {
+  const games = SPORTS[sport].games; // "Matches" / "Games"
   const [filterMode, setFilterMode] = useState("all"); // "all" | "live" | "favs"
   const [searchQuery, setSearchQuery] = useState("");
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -35,8 +37,8 @@ export default function Scores({ league, date, onDateChange }) {
   const all = league === "all";
 
   const { data, error, loading, updatedAt, refresh } = useRemoteData(
-    (signal) => (all ? fetchAllMatches(date, signal) : fetchMatches(league, date, signal)),
-    [league, date],
+    (signal) => (all ? fetchAllMatches(sport, date, signal) : fetchMatches(league, date, signal)),
+    [sport, league, date],
     (d) =>
       d?.groups.some((g) => g.matches.some((m) => m.state === "in")) ? LIVE_REFRESH : IDLE_REFRESH
   );
@@ -64,7 +66,7 @@ export default function Scores({ league, date, onDateChange }) {
     return homeName.includes(query) || awayName.includes(query) || lName.includes(query);
   };
 
-  const isFavMatch = (m) => isFavorite(m.home.id) || isFavorite(m.away.id);
+  const isFavMatch = (m) => isFavorite(m.home) || isFavorite(m.away);
 
   // Filter mode logic
   const matchesMode = (m) => {
@@ -98,7 +100,7 @@ export default function Scores({ league, date, onDateChange }) {
           <input
             type="text"
             className="app-search-input"
-            placeholder="Search teams or matches..."
+            placeholder={`Search teams or ${games.toLowerCase()}...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -131,7 +133,7 @@ export default function Scores({ league, date, onDateChange }) {
           className={`filter-pill ${filterMode === "all" ? "active" : ""}`}
           onClick={() => setFilterMode("all")}
         >
-          <span>All Matches</span>
+          <span>All {games}</span>
           {data && <span className="pill-count">{allMatches.length}</span>}
         </button>
 
@@ -171,7 +173,8 @@ export default function Scores({ league, date, onDateChange }) {
 
       {data && allMatches.length === 0 && (
         <Empty
-          label={`No matches ${emptyLabel(date)}${all ? " in these competitions" : ""}.`}
+          label={`No ${games.toLowerCase()} ${emptyLabel(date)}${all ? " in these competitions" : ""}.`}
+          icon={<SportIcon sport={sport} size={22} />}
           hint={
             data.matchDays?.size
               ? "Days with a dot have fixtures. Use the arrows to jump to the next match day."
@@ -183,8 +186,10 @@ export default function Scores({ league, date, onDateChange }) {
       {/* Search empty results */}
       {data && allMatches.length > 0 && totalFilteredCount === 0 && (
         <div className="state-card empty-search-card">
-          <div className="empty-icon-circle">🔍</div>
-          <p className="empty-label">No matches matching "{searchQuery}"</p>
+          <div className="empty-icon-circle" aria-hidden="true">
+            <SearchX size={22} />
+          </div>
+          <p className="empty-label">No {games.toLowerCase()} matching "{searchQuery}"</p>
           <button className="text-btn" onClick={() => { setSearchQuery(""); setFilterMode("all"); }}>
             Clear search filter
           </button>
@@ -237,7 +242,7 @@ export default function Scores({ league, date, onDateChange }) {
             <Star size={16} />
           </div>
           <p className="hint muted small">
-            Tip: tap ☆ next to any team to pin its games to the top of your feed.
+            Tip: tap <Star size={12} className="inline-icon" /> next to any team to pin its games to the top of your feed.
           </p>
         </div>
       )}

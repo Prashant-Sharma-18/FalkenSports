@@ -1,5 +1,5 @@
 import React from "react";
-import { RefreshCw } from "./Icons";
+import { AlertTriangle, CalendarDays, RefreshCw } from "./Icons";
 
 export function Loading({ label }) {
   return (
@@ -16,7 +16,9 @@ export function Loading({ label }) {
 export function ErrorState({ message, onRetry }) {
   return (
     <div className="state-card error-state" role="alert">
-      <div className="error-icon-circle" aria-hidden="true">⚠️</div>
+      <div className="error-icon-circle" aria-hidden="true">
+        <AlertTriangle size={22} />
+      </div>
       <h3 className="error-title">Unable to load data</h3>
       <p className="error-message">{message}</p>
       {onRetry && (
@@ -28,10 +30,13 @@ export function ErrorState({ message, onRetry }) {
   );
 }
 
-export function Empty({ label, hint }) {
+// `icon` is an icon element; defaults to a calendar (most empty states are "nothing on this day").
+export function Empty({ label, hint, icon }) {
   return (
     <div className="state-card empty-state">
-      <div className="empty-icon-circle" aria-hidden="true">⚽</div>
+      <div className="empty-icon-circle" aria-hidden="true">
+        {icon || <CalendarDays size={22} />}
+      </div>
       <p className="empty-label">{label}</p>
       {hint && <p className="empty-hint">{hint}</p>}
     </div>

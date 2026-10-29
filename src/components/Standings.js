@@ -6,10 +6,12 @@ import useRemoteData from "../useRemoteData";
 import FormPills from "./FormPills";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
+import { sportOfLeague } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 import { Trophy } from "./Icons";
 
 export default function Standings({ league }) {
+  const basketball = sportOfLeague(league) === "basketball";
   const { isFavorite } = useFavorites();
   const { data, error, loading, refresh } = useRemoteData(
     (signal) => fetchStandings(league, signal),
@@ -53,12 +55,24 @@ export default function Standings({ league }) {
                   <tr>
                     <th className="col-rank">#</th>
                     <th className="left col-team">Team</th>
-                    <th title="Played">P</th>
-                    <th title="Won">W</th>
-                    <th title="Drawn">D</th>
-                    <th title="Lost">L</th>
-                    <th title="Goal Difference">GD</th>
-                    <th className="pts" title="Points">Pts</th>
+                    {basketball ? (
+                      <>
+                        <th title="Won">W</th>
+                        <th title="Lost">L</th>
+                        <th className="pts" title="Win percentage">PCT</th>
+                        <th title="Games behind">GB</th>
+                        <th className="col-streak" title="Current streak">STRK</th>
+                      </>
+                    ) : (
+                      <>
+                        <th title="Played">P</th>
+                        <th title="Won">W</th>
+                        <th title="Drawn">D</th>
+                        <th title="Lost">L</th>
+                        <th title="Goal Difference">GD</th>
+                        <th className="pts" title="Points">Pts</th>
+                      </>
+                    )}
                     <th className="col-form" title="Last five league matches, oldest first">
                       Form
                     </th>
@@ -67,7 +81,7 @@ export default function Standings({ league }) {
                 <tbody>
                   {group.rows.map((row) => {
                     const zoneClass = row.zone ? `zone-${row.zone}` : "";
-                    const fav = isFavorite(row.id);
+                    const fav = isFavorite(row);
                     const gdNum = parseInt(row.gd, 10);
                     // ESPN already sends "+11" for positive differences.
                     const gdDisplay =
@@ -96,14 +110,32 @@ export default function Standings({ league }) {
                             <StarButton team={row} size={14} />
                           </span>
                         </td>
-                        <td>{row.played}</td>
-                        <td className="num-w">{row.won}</td>
-                        <td className="num-d">{row.drawn}</td>
-                        <td className="num-l">{row.lost}</td>
-                        <td className={`gd-cell ${gdNum > 0 ? "gd-pos" : gdNum < 0 ? "gd-neg" : ""}`}>
-                          {gdDisplay}
-                        </td>
-                        <td className="pts">{row.points}</td>
+                        {basketball ? (
+                          <>
+                            <td className="num-w">{row.won}</td>
+                            <td className="num-l">{row.lost}</td>
+                            <td className="pts">{row.pct}</td>
+                            <td>{row.gb}</td>
+                            <td
+                              className={`col-streak ${
+                                /^W/.test(row.streak) ? "gd-pos" : /^L/.test(row.streak) ? "gd-neg" : ""
+                              }`}
+                            >
+                              {row.streak}
+                            </td>
+                          </>
+                        ) : (
+                          <>
+                            <td>{row.played}</td>
+                            <td className="num-w">{row.won}</td>
+                            <td className="num-d">{row.drawn}</td>
+                            <td className="num-l">{row.lost}</td>
+                            <td className={`gd-cell ${gdNum > 0 ? "gd-pos" : gdNum < 0 ? "gd-neg" : ""}`}>
+                              {gdDisplay}
+                            </td>
+                            <td className="pts">{row.points}</td>
+                          </>
+                        )}
                         <td className="col-form">
                           {form && <FormPills games={form[row.id]} />}
                         </td>

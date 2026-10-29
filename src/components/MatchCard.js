@@ -4,14 +4,17 @@ import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
 import TeamLogo from "./TeamLogo";
 import StarButton from "./StarButton";
-import { MapPin } from "./Icons";
+import { Football, MapPin } from "./Icons";
 
 export function MatchStatus({ match }) {
   if (match.state === "in") {
     return (
       <span className="badge live">
         <span className="pulse" />
-        <span className="live-text">{match.detail === "HT" ? "HT" : match.clock}</span>
+        {/* Football shows the minute; basketball's detail already reads "Q3 5:32". */}
+        <span className="live-text">
+          {match.sport === "basketball" || match.detail === "HT" ? match.detail : match.clock}
+        </span>
       </span>
     );
   }
@@ -31,7 +34,9 @@ function Scorers({ goals }) {
     <ul className="scorers">
       {goals.map((g, i) => (
         <li key={i} className="scorer-item">
-          <span className="scorer-icon" aria-hidden="true">⚽</span>
+          <span className="scorer-icon" aria-hidden="true">
+            <Football size={11} />
+          </span>
           <span className="scorer-name">{g.player}</span>
           <span className="scorer-minute">{g.minute}</span>
           {g.penalty && <span className="tag-penalty">(pen)</span>}
@@ -47,7 +52,7 @@ export default function MatchCard({ match }) {
   const started = match.state !== "pre";
 
   const row = (team, goals) => {
-    const fav = isFavorite(team.id);
+    const fav = isFavorite(team);
     const isWinner = match.state === "post" && team.winner;
     return (
       <div className={`team-row ${isWinner ? "winner" : ""}`}>
@@ -61,6 +66,12 @@ export default function MatchCard({ match }) {
             <StarButton team={team} size={14} />
           </div>
           <Scorers goals={goals} />
+          {match.sport === "basketball" && (team.record || (started && team.leader)) && (
+            <div className="team-meta">
+              {team.record && <span>{team.record}</span>}
+              {started && team.leader && <span>{team.leader} pts</span>}
+            </div>
+          )}
         </div>
         <span className={`score ${started ? "score-started" : "score-upcoming"}`}>
           {started ? (team.score ?? "-") : "-"}
@@ -84,8 +95,18 @@ export default function MatchCard({ match }) {
         )}
       </header>
       <div className="match-teams-list">
-        {row(match.home, match.goals.home)}
-        {row(match.away, match.goals.away)}
+        {/* Basketball scoreboards list the away team first ("Heat at Hawks"). */}
+        {match.sport === "basketball" ? (
+          <>
+            {row(match.away, match.goals.away)}
+            {row(match.home, match.goals.home)}
+          </>
+        ) : (
+          <>
+            {row(match.home, match.goals.home)}
+            {row(match.away, match.goals.away)}
+          </>
+        )}
       </div>
     </a>
   );

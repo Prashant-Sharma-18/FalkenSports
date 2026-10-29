@@ -6,7 +6,18 @@ import useRemoteData from "../useRemoteData";
 import { MatchStatus } from "./MatchCard";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
-import { ArrowLeft, ExternalLink, MapPin, Users, Shield } from "./Icons";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowLeftRight,
+  ArrowUp,
+  ExternalLink,
+  Football,
+  MapPin,
+  Users,
+  Shield,
+} from "./Icons";
+import { BoxScore, Leaders, Linescore, PlayByPlay } from "./BasketballDetail";
 import { ErrorState, Loading, Empty } from "./Status";
 
 const LIVE_REFRESH = 30 * 1000;
@@ -45,8 +56,8 @@ function Timeline({ match }) {
             <span className="tl-minute">{e.minute}</span>
             <div className="tl-body">
               <span className={`tl-icon ${e.kind}`} aria-label={e.label}>
-                {isGoal && "⚽"}
-                {isSub && "⇄"}
+                {isGoal && <Football size={14} />}
+                {isSub && <ArrowLeftRight size={14} />}
                 {isYellow && <span className="card-graphic yellow-card-graphic" />}
                 {isRed && <span className="card-graphic red-card-graphic" />}
               </span>
@@ -90,33 +101,36 @@ function Form({ team, games }) {
 }
 
 function Stats({ match }) {
+  // Same left/right order as the header: basketball puts the away team first.
+  const awayFirst = match.sport === "basketball";
   return (
     <div className="stats">
       {match.stats.map((s) => {
-        const total = s.home + s.away;
-        const homeShare = total ? (s.home / total) * 100 : 50;
-        const lead = s.home === s.away ? "" : s.home > s.away ? "home" : "away";
+        const [left, right] = awayFirst ? [s.away, s.home] : [s.home, s.away];
+        const total = left + right;
+        const leftShare = total ? (left / total) * 100 : 50;
+        const lead = left === right ? "" : left > right ? "left" : "right";
         return (
           <div className="stat" key={s.label}>
             <div className="stat-values">
-              <span className={`stat-val-home ${lead === "home" ? "strong stat-lead" : ""}`}>
-                {s.home}
+              <span className={`stat-val-home ${lead === "left" ? "strong stat-lead" : ""}`}>
+                {left}
                 {s.suffix}
               </span>
               <span className="stat-label muted">{s.label}</span>
-              <span className={`stat-val-away ${lead === "away" ? "strong stat-lead" : ""}`}>
-                {s.away}
+              <span className={`stat-val-away ${lead === "right" ? "strong stat-lead" : ""}`}>
+                {right}
                 {s.suffix}
               </span>
             </div>
             <div className="stat-bar" aria-hidden="true">
               <span
-                className={`home ${lead === "home" ? "lead" : ""}`}
-                style={{ width: `${homeShare}%` }}
+                className={`home ${lead === "left" ? "lead" : ""}`}
+                style={{ width: `${leftShare}%` }}
               />
               <span
-                className={`away ${lead === "away" ? "lead" : ""}`}
-                style={{ width: `${100 - homeShare}%` }}
+                className={`away ${lead === "right" ? "lead" : ""}`}
+                style={{ width: `${100 - leftShare}%` }}
               />
             </div>
           </div>
@@ -136,12 +150,12 @@ function PlayerList({ players, bench }) {
           {p.position && <span className="position-tag">{p.position}</span>}
           {!bench && p.subbedOut && (
             <span className="sub-mark out" title="Substituted off">
-              ↓
+              <ArrowDown size={13} />
             </span>
           )}
           {bench && p.subbedIn && (
             <span className="sub-mark in" title="Came on">
-              ↑
+              <ArrowUp size={13} />
             </span>
           )}
         </li>
@@ -199,6 +213,8 @@ function Commentary({ match }) {
 
 function Header({ match }) {
   const started = match.state !== "pre";
+  // Basketball convention is "away at home", so the away team goes on the left.
+  const [left, right] = match.sport === "basketball" ? [match.away, match.home] : [match.home, match.away];
   const scorers = (team) =>
     match.events
       .filter((e) => e.kind === "goal" && e.teamId === team.id)
@@ -223,10 +239,13 @@ function Header({ match }) {
         </a>
         <StarButton team={team} size={18} />
       </div>
+      {match.sport === "basketball" && team.record && <span className="hero-record">{team.record}</span>}
       <ul className="hero-scorers">
         {scorers(team).map((s, i) => (
           <li key={i} className="hero-scorer-item">
-            <span className="scorer-icon" aria-hidden="true">⚽</span>
+            <span className="scorer-icon" aria-hidden="true">
+              <Football size={11} />
+            </span>
             <span>{s}</span>
           </li>
         ))}
@@ -251,13 +270,13 @@ function Header({ match }) {
       </div>
 
       <div className="hero-main">
-        {side(match.home, "left")}
+        {side(left, "left")}
         <div className="hero-score">
           {started ? (
             <div className="big-score-board">
-              <span className="big-score-digit">{match.home.score ?? 0}</span>
+              <span className="big-score-digit">{left.score ?? 0}</span>
               <span className="big-score-divider">:</span>
-              <span className="big-score-digit">{match.away.score ?? 0}</span>
+              <span className="big-score-digit">{right.score ?? 0}</span>
             </div>
           ) : (
             <span className="big-score kickoff">
@@ -266,7 +285,7 @@ function Header({ match }) {
           )}
           <MatchStatus match={match} />
         </div>
-        {side(match.away, "right")}
+        {side(right, "right")}
       </div>
 
       <div className="hero-info">
@@ -300,12 +319,15 @@ export default function MatchDetail({ league, id, onBack }) {
     (m) => (m?.state === "in" ? LIVE_REFRESH : m?.state === "pre" ? 5 * 60 * 1000 : null)
   );
 
+  const basketball = match?.sport === "basketball";
   const tabs = match
     ? [
         { id: "summary", label: "Summary", show: true },
         { id: "stats", label: "Stats", show: match.stats.length > 0 },
+        { id: "box", label: "Box score", show: basketball && match.box?.length > 0 },
         { id: "lineups", label: "Line-ups", show: match.lineups.length > 0 },
         { id: "commentary", label: "Commentary", show: match.commentary.length > 0 },
+        { id: "plays", label: "Plays", show: basketball && match.plays?.length > 0 },
       ].filter((t) => t.show)
     : [];
   const [tab, setTab] = useState("summary");
@@ -314,13 +336,16 @@ export default function MatchDetail({ league, id, onBack }) {
   useEffect(() => {
     if (!match) return;
     const score = match.state === "pre" ? "vs" : `${match.home.score}–${match.away.score}`;
-    document.title = `${match.home.name} ${score} ${match.away.name} – Kickoff`;
-  }, [match]);
+    // Basketball lists the away team first, as scoreboards do.
+    document.title = basketball
+      ? `${match.away.name} ${match.state === "pre" ? "at" : `${match.away.score}–${match.home.score}`} ${match.home.name} – FalkenSports`
+      : `${match.home.name} ${score} ${match.away.name} – FalkenSports`;
+  }, [match, basketball]);
 
   return (
     <section className="match-detail">
       <button className="text-btn back" onClick={onBack}>
-        <ArrowLeft size={16} /> <span>Back to matches</span>
+        <ArrowLeft size={16} /> <span>Back</span>
       </button>
 
       {loading && <Loading label="Loading match details…" />}
@@ -344,7 +369,13 @@ export default function MatchDetail({ league, id, onBack }) {
           </nav>
 
           <div className="card panel">
-            {activeTab === "summary" && (
+            {activeTab === "summary" && basketball && (
+              <>
+                <Linescore match={match} />
+                <Leaders match={match} />
+              </>
+            )}
+            {activeTab === "summary" && !basketball && (
               <>
                 <Timeline match={match} />
                 {(match.form[match.home.id]?.length > 0 ||
@@ -365,10 +396,12 @@ export default function MatchDetail({ league, id, onBack }) {
             {activeTab === "stats" && <Stats match={match} />}
             {activeTab === "lineups" && <Lineups match={match} />}
             {activeTab === "commentary" && <Commentary match={match} />}
+            {activeTab === "box" && <BoxScore match={match} />}
+            {activeTab === "plays" && <PlayByPlay match={match} />}
           </div>
 
           <a className="match-link" href={match.link} target="_blank" rel="noreferrer">
-            <span>Full match centre on ESPN</span>
+            <span>{basketball ? "Full game centre on ESPN" : "Full match centre on ESPN"}</span>
             <ExternalLink size={14} />
           </a>
         </>

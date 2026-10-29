@@ -1,8 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-// Favourite teams live in this browser only (no accounts). ESPN team ids are
-// shared across competitions, so a starred club is matched in every league.
+// Favourite teams live in this browser only (no accounts). Teams are matched by
+// `key` (see teamKey in sports.js): one key per club across all its competitions,
+// but distinct between sports, which reuse ESPN ids.
 const KEY = "favoriteTeams";
+const keyOf = (team) => (team && typeof team === "object" ? team.key || team.id : team);
 const FavoritesContext = createContext(null);
 
 function load() {
@@ -31,16 +33,18 @@ export function FavoritesProvider({ children }) {
   }, []);
 
   const toggle = useCallback((team) => {
+    const key = keyOf(team);
     setTeams((current) =>
-      current.some((t) => t.id === team.id)
-        ? current.filter((t) => t.id !== team.id)
-        : [...current, { id: team.id, name: team.name, logo: team.logo }]
+      current.some((t) => t.id === key)
+        ? current.filter((t) => t.id !== key)
+        : [...current, { id: key, name: team.name, logo: team.logo, sport: team.sport }]
     );
   }, []);
 
   const value = useMemo(() => {
     const ids = new Set(teams.map((t) => t.id));
-    return { teams, toggle, isFavorite: (id) => ids.has(id) };
+    // Takes a team object (preferred) or a ready-made key.
+    return { teams, toggle, isFavorite: (team) => ids.has(keyOf(team)) };
   }, [teams, toggle]);
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;

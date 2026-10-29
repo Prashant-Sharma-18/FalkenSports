@@ -1,0 +1,206 @@
+import React, { useState } from "react";
+import TeamLogo from "./TeamLogo";
+import { Empty } from "./Status";
+
+// Score by quarter (or half, in men's college) plus the total.
+export function Linescore({ match }) {
+  const { labels, home, away } = match.linescore || {};
+  if (!labels?.length) {
+    return <Empty label={match.state === "pre" ? "The game hasn't started yet." : "No scoring yet."} />;
+  }
+  const row = (team, scores) => (
+    <tr className={match.state === "post" && team.winner ? "winner" : ""}>
+      <td className="left">
+        <span className="ls-team">
+          <TeamLogo src={team.logo} name={team.name} size={20} />
+          {team.short || team.name}
+        </span>
+      </td>
+      {labels.map((l, i) => (
+        <td key={l}>{scores[i] ?? "-"}</td>
+      ))}
+      <td className="ls-total">{team.score ?? "-"}</td>
+    </tr>
+  );
+  return (
+    <div className="table-scroll">
+      <table className="linescore">
+        <thead>
+          <tr>
+            <th className="left">Team</th>
+            {labels.map((l) => (
+              <th key={l}>{l}</th>
+            ))}
+            <th>T</th>
+          </tr>
+        </thead>
+        <tbody>
+          {row(match.away, away)}
+          {row(match.home, home)}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Each team's top performers: points, rebounds, assists.
+export function Leaders({ match }) {
+  const teams = [match.away, match.home]
+    .map((team) => ({ team, items: match.leaders?.find((l) => l.teamId === team.id)?.items || [] }))
+    .filter((t) => t.items.length);
+  if (!teams.length) return null;
+
+  return (
+    <div className="leaders-block">
+      <h3 className="panel-title">Game leaders</h3>
+      <div className="leaders-grid">
+        {teams.map(({ team, items }) => (
+          <div className="leaders-team" key={team.id}>
+            <div className="leaders-head">
+              <TeamLogo src={team.logo} name={team.name} size={20} />
+              <span>{team.name}</span>
+            </div>
+            {items.map((it) => (
+              <div className="leader-row" key={it.category}>
+                {it.headshot ? (
+                  <img className="leader-photo" src={it.headshot} alt="" loading="lazy" />
+                ) : (
+                  <span className="leader-photo" aria-hidden="true" />
+                )}
+                <div className="leader-text">
+                  <span className="leader-name">{it.player}</span>
+                  <span className="muted small">{it.category}</span>
+                </div>
+                <span className="leader-value">{it.value}</span>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Player stats per team, starters first; a team switcher keeps it readable on phones.
+export function BoxScore({ match }) {
+  const teams = [match.away, match.home].filter((t) => match.box?.some((b) => b.teamId === t.id));
+  const [teamId, setTeamId] = useState(teams[0]?.id);
+  const box = match.box?.find((b) => b.teamId === teamId) || match.box?.[0];
+  if (!box) return <Empty label="Box score appears once the game starts." />;
+
+  const starters = box.players.filter((p) => p.starter && !p.dnp);
+  const bench = box.players.filter((p) => !p.starter && !p.dnp);
+  const dnp = box.players.filter((p) => p.dnp);
+  const rows = (players) =>
+    players.map((p) => (
+      <tr key={p.id || p.name}>
+        <td className="left box-player">
+          <span className="box-name">{p.short}</span>
+          {p.position && <span className="muted small">{p.position}</span>}
+        </td>
+        {p.stats.map((v, i) => (
+          <td key={i} className={box.columns[i] === "PTS" ? "box-pts" : ""}>
+            {v}
+          </td>
+        ))}
+      </tr>
+    ));
+
+  return (
+    <div>
+      <div className="box-switch" role="tablist" aria-label="Team">
+        {teams.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={t.id === box.teamId}
+            className={`subtab ${t.id === box.teamId ? "active" : ""}`}
+            onClick={() => setTeamId(t.id)}
+          >
+            <TeamLogo src={t.logo} name={t.name} size={18} />
+            {t.short || t.name}
+          </button>
+        ))}
+      </div>
+      <div className="table-scroll">
+        <table className="boxscore">
+          <thead>
+            <tr>
+              <th className="left">Starters</th>
+              {box.columns.map((c) => (
+                <th key={c}>{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>{rows(starters)}</tbody>
+          {bench.length > 0 && (
+            <tbody>
+              <tr className="box-subhead">
+                <th className="left" colSpan={box.columns.length + 1}>
+                  Bench
+                </th>
+              </tr>
+              {rows(bench)}
+            </tbody>
+          )}
+          {box.totals && (
+            <tfoot>
+              <tr>
+                <td className="left">Team</td>
+                {box.totals.map((v, i) => (
+                  <td key={i}>{v}</td>
+                ))}
+              </tr>
+            </tfoot>
+          )}
+        </table>
+      </div>
+      {dnp.length > 0 && (
+        <p className="muted small box-dnp">
+          Did not play: {dnp.map((p) => p.short + (p.reason ? ` (${p.reason.toLowerCase()})` : "")).join(", ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+// Latest plays first; scoring plays carry the running score.
+export function PlayByPlay({ match }) {
+  const [scoringOnly, setScoringOnly] = useState(false);
+  const plays = scoringOnly ? match.plays.filter((p) => p.scoring) : match.plays;
+  const logoOf = (teamId) => [match.home, match.away].find((t) => t.id === teamId);
+
+  return (
+    <div>
+      <div className="pbp-filter">
+        <button
+          type="button"
+          className={`filter-pill ${scoringOnly ? "" : "active"}`}
+          onClick={() => setScoringOnly(false)}
+        >
+          All plays
+        </button>
+        <button
+          type="button"
+          className={`filter-pill ${scoringOnly ? "active" : ""}`}
+          onClick={() => setScoringOnly(true)}
+        >
+          Scoring plays
+        </button>
+      </div>
+      <ol className="commentary pbp">
+        {plays.map((p) => {
+          const team = logoOf(p.teamId);
+          return (
+            <li key={p.id} className={`commentary-item ${p.scoring ? "pbp-scoring" : ""}`}>
+              <span className="tl-minute commentary-minute">{p.minute}</span>
+              {team ? <TeamLogo src={team.logo} name={team.name} size={18} /> : <span className="pbp-logo-gap" />}
+              <p className="commentary-text">{p.text}</p>
+              {p.score && <span className="pbp-score">{p.score}</span>}
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}

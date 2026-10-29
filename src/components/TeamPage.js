@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { fetchStandings, fetchTeam, resultFor } from "../api";
 import { formatTime } from "../dates";
 import { routeHref } from "../router";
+import { SPORTS, sportOfLeague } from "../sports";
 import useRemoteData from "../useRemoteData";
 import MatchCard from "./MatchCard";
 import FormPills from "./FormPills";
@@ -52,6 +53,7 @@ function MatchRow({ match, teamId }) {
 
 // Five rows of the league table centred on this team.
 function TablePosition({ league, teamId }) {
+  const basketball = sportOfLeague(league) === "basketball";
   const { data } = useRemoteData((signal) => fetchStandings(league, signal), [league], null);
   const group = data?.find((g) => g.rows.some((r) => r.id === teamId));
   if (!group) return null;
@@ -73,9 +75,19 @@ function TablePosition({ league, teamId }) {
           <tr>
             <th>#</th>
             <th className="left">Team</th>
-            <th>P</th>
-            <th>GD</th>
-            <th>Pts</th>
+            {basketball ? (
+              <>
+                <th>W</th>
+                <th>L</th>
+                <th>PCT</th>
+              </>
+            ) : (
+              <>
+                <th>P</th>
+                <th>GD</th>
+                <th>Pts</th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -90,9 +102,19 @@ function TablePosition({ league, teamId }) {
                   <span>{r.name}</span>
                 </a>
               </td>
-              <td>{r.played}</td>
-              <td>{r.gd}</td>
-              <td className="pts">{r.points}</td>
+              {basketball ? (
+                <>
+                  <td>{r.won}</td>
+                  <td>{r.lost}</td>
+                  <td className="pts">{r.pct}</td>
+                </>
+              ) : (
+                <>
+                  <td>{r.played}</td>
+                  <td>{r.gd}</td>
+                  <td className="pts">{r.points}</td>
+                </>
+              )}
             </tr>
           ))}
         </tbody>
@@ -109,7 +131,7 @@ export default function TeamPage({ league, id, onBack }) {
   );
 
   useEffect(() => {
-    if (team) document.title = `${team.name} – Kickoff`;
+    if (team) document.title = `${team.name} – FalkenSports`;
   }, [team]);
 
   const form = team
@@ -144,7 +166,11 @@ export default function TeamPage({ league, id, onBack }) {
                 {team.name}
                 <StarButton team={team} size={18} />
               </h1>
-              {team.standing && <p className="muted">{team.standing}</p>}
+              {(team.standing || team.record) && (
+                <p className="muted">
+                  {[team.sport === "basketball" && team.record, team.standing].filter(Boolean).join(" · ")}
+                </p>
+              )}
               {form.length > 0 && (
                 <div className="team-form">
                   <span className="muted small">Form</span>
@@ -158,7 +184,7 @@ export default function TeamPage({ league, id, onBack }) {
             <div className="team-main">
               {(team.live.length > 0 || next) && (
                 <div className="team-section">
-                  <h2 className="panel-title">{team.live.length ? "Live now" : "Next match"}</h2>
+                  <h2 className="panel-title">{team.live.length ? "Live now" : `Next ${SPORTS[team.sport].game}`}</h2>
                   <div className="grid">
                     {(team.live.length ? team.live : [next]).map((m) => (
                       <MatchCard key={m.id} match={m} />

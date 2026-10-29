@@ -96,7 +96,7 @@ test('team info comes from the CORS-enabled schedule feed, not /teams/{id}', asy
 });
 
 test('team and cup-match routes', () => {
-  expect(parseRoute('#/team/eng.1/382')).toEqual({ view: 'team', league: 'eng.1', id: '382' });
-  expect(parseRoute('#/match/eng.league_cup/401')).toEqual({ view: 'match', league: 'eng.league_cup', id: '401' });
+  expect(parseRoute('#/team/eng.1/382')).toEqual({ sport: 'football', view: 'team', league: 'eng.1', id: '382' });
+  expect(parseRoute('#/match/eng.league_cup/401')).toEqual({ sport: 'football', view: 'match', league: 'eng.league_cup', id: '401' });
   expect(parseRoute('#/team/eng.1/abc').view).toBe('matches');
 });

@@ -1,7 +1,7 @@
 {
-  "short_name": "Kickoff",
-  "name": "Kickoff – Football Scores & News",
-  "description": "Free live football scores, match centre, team pages, league tables and news.",
+  "short_name": "FalkenSports",
+  "name": "FalkenSports – Live Scores & News",
+  "description": "Free live scores, game centres, team pages, standings and news for football and basketball.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -36,7 +36,10 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "categories": ["sports", "news"],
-  "theme_color": "#059669",
+  "categories": [
+    "sports",
+    "news"
+  ],
+  "theme_color": "#dc2626",
   "background_color": "#f8fafc"
 }

@@ -1,48 +1,55 @@
 import { useEffect, useState } from "react";
-import { LEAGUES } from "./api";
+import { DEFAULT_SPORT, isLeagueOf, isSport, sportOfLeague } from "./sports";
 import { isDayKey } from "./dates";
 
 /*
  * Hash routes, so every view has a shareable link and the app works on any
- * static host without server rewrites:
- *   #/matches/all[/YYYY-MM-DD]      every competition
- *   #/matches/eng.1[/YYYY-MM-DD]    one competition
- *   #/table/eng.1
- *   #/news/eng.1
- *   #/match/eng.1/401879254
- *   #/team/eng.1/382
+ * static host without server rewrites. Football routes have no prefix (so
+ * links shared before other sports existed keep working); other sports do:
+ *   #/matches/all[/YYYY-MM-DD]             every football competition
+ *   #/matches/eng.1[/YYYY-MM-DD]           one competition
+ *   #/table/eng.1   #/news/eng.1
+ *   #/match/eng.1/401879254   #/team/eng.1/382
+ *   #/basketball/matches/all   #/basketball/match/nba/401909881   ...
  */
 
-const isLeague = (id) => LEAGUES.some((l) => l.id === id);
-// Matches and teams can belong to competitions outside LEAGUES (cups, friendlies).
-const isSlug = (id) => /^[a-z0-9_]+(\.[a-z0-9_]+)*$/.test(id || "");
+// Matches and teams can belong to competitions outside the configured ones (cups, friendlies).
+const isSlug = (id) => /^[a-z0-9_-]+(\.[a-z0-9_-]+)*$/.test(id || "");
 const isId = (id) => /^\d+$/.test(id || "");
 
 export function parseRoute(hash) {
-  const [view, league, extra] = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  const prefixed = isSport(parts[0]);
+  const prefix = prefixed ? parts.shift() : null;
+  const [view, league, extra] = parts;
+  // Without a prefix, a known league still tells us its sport.
+  const sport = prefix || (league && league !== "all" ? sportOfLeague(league) : DEFAULT_SPORT);
 
   if ((view === "match" || view === "team") && isSlug(league) && isId(extra)) {
-    return { view, league, id: extra };
+    return { sport, view, league, id: extra };
   }
-  if ((view === "table" || view === "news") && isLeague(league)) {
-    return { view, league };
+  if ((view === "table" || view === "news") && isLeagueOf(sport, league)) {
+    return { sport, view, league };
   }
-  if (view === "matches" && (league === "all" || isLeague(league))) {
-    return { view, league, date: isDayKey(extra) ? extra : null };
+  if (view === "matches" && (league === "all" || isLeagueOf(sport, league))) {
+    return { sport, view, league, date: isDayKey(extra) ? extra : null };
   }
-  return { view: "matches", league: "all", date: null };
+  return { sport: prefix || DEFAULT_SPORT, view: "matches", league: "all", date: null };
 }
 
 export function routeHref(route) {
+  const sport =
+    route.sport || (route.league && route.league !== "all" ? sportOfLeague(route.league) : DEFAULT_SPORT);
+  const prefix = sport === DEFAULT_SPORT ? "" : `/${sport}`;
   switch (route.view) {
     case "match":
     case "team":
-      return `#/${route.view}/${route.league}/${route.id}`;
+      return `#${prefix}/${route.view}/${route.league}/${route.id}`;
     case "table":
     case "news":
-      return `#/${route.view}/${route.league}`;
+      return `#${prefix}/${route.view}/${route.league}`;
     default:
-      return `#/matches/${route.league || "all"}${route.date ? `/${route.date}` : ""}`;
+      return `#${prefix}/matches/${route.league || "all"}${route.date ? `/${route.date}` : ""}`;
   }
 }
 
