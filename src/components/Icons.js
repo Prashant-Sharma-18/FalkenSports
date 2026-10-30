@@ -1,15 +1,15 @@
 import React from "react";
-import footballImg from "../assets/sports/football.svg";
-import basketballImg from "../assets/sports/basketball.svg";
-import cricketImg from "../assets/sports/cricket.svg";
-import rugbyImg from "../assets/sports/rugby.svg";
-import americanFootballImg from "../assets/sports/american-football.svg";
-import hockeyImg from "../assets/sports/hockey.svg";
-import baseballImg from "../assets/sports/baseball.svg";
-import tennisImg from "../assets/sports/tennis.svg";
-import f1Img from "../assets/sports/f1.svg";
-import golfImg from "../assets/sports/golf.svg";
-import mmaImg from "../assets/sports/mma.svg";
+import footballImg from "../assets/sports/football.png";
+import basketballImg from "../assets/sports/basketball.png";
+import cricketImg from "../assets/sports/cricket.png";
+import rugbyImg from "../assets/sports/rugby.png";
+import americanFootballImg from "../assets/sports/american-football.png";
+import hockeyImg from "../assets/sports/hockey.png";
+import baseballImg from "../assets/sports/baseball.png";
+import tennisImg from "../assets/sports/tennis.png";
+import f1Img from "../assets/sports/f1.png";
+import golfImg from "../assets/sports/golf.png";
+import mmaImg from "../assets/sports/mma.png";
 
 // Small inline icon set (paths from Lucide, ISC license) so we don't ship a whole icon package.
 function Icon({ size = 18, className, children }) {
@@ -262,7 +262,7 @@ export const Bell = ({ off, ...props }) => (
   </Icon>
 );
 
-// Airbnb-style sports image assets
+// 3D sport icons, cut from one icon sheet (transparent PNGs, 96px).
 export const SPORT_ICONS = {
   football: footballImg,
   basketball: basketballImg,
@@ -295,7 +295,16 @@ export const SportIcon = ({ sport, size = 18, className = "", alt = "", ...props
   );
 };
 
-export const Football = (props) => <SportIcon sport="football" {...props} />;
+// Goal markers: a plain line-drawn ball, crisp at 11px (the sport images are
+// full scenes, too busy at that size).
+export const Football = (props) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="m12 7 4.5 3.3-1.7 5.2H9.2l-1.7-5.2z" />
+    <path d="M12 7V2.5M16.5 10.3l4.3-1.4M14.8 15.5l2.7 3.7M9.2 15.5l-2.7 3.7M7.5 10.3 3.2 8.9" />
+  </Icon>
+);
+
 export const Basketball = (props) => <SportIcon sport="basketball" {...props} />;
 export const Cricket = (props) => <SportIcon sport="cricket" {...props} />;
 export const AmericanFootball = (props) => <SportIcon sport="american-football" {...props} />;

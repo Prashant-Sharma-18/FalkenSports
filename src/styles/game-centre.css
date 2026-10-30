@@ -341,42 +341,16 @@
   vertical-align: middle;
   object-fit: contain;
   flex-shrink: 0;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease, opacity 0.2s ease;
-}
-
-/* Light mode theme default (charcoal / graphite #222222 line art) */
-[data-theme="light"] .sport-icon-img,
-:root:not([data-theme="dark"]) .sport-icon-img {
-  filter: brightness(0.15);
-  opacity: 0.85;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sport-tab:hover .sport-icon-img {
   transform: translateY(-1px) scale(1.12);
-  opacity: 1;
 }
 
-/* On active sport tab (vibrant green gradient background) -> crisp pure white */
-.sport-tab.active .sport-icon-img,
-.tab.active .sport-icon-img {
-  filter: brightness(0) invert(1) !important;
-  opacity: 1 !important;
-}
-
-/* Dark mode theme -> crisp soft white / silver */
-[data-theme="dark"] .sport-icon-img {
-  filter: brightness(0) invert(0.92);
-  opacity: 0.88;
-}
-
-[data-theme="dark"] .sport-tab:hover .sport-icon-img {
-  opacity: 1;
-  filter: brightness(0) invert(1);
-}
-
-[data-theme="dark"] .sport-tab.active .sport-icon-img {
-  filter: brightness(0) invert(1) !important;
-  opacity: 1 !important;
+/* Full-colour images: a soft drop shadow lifts them off the red active tab. */
+.sport-tab.active .sport-icon-img {
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
 }
 
 /* Inline goal/event icon in match cards & details */
