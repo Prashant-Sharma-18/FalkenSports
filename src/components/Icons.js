@@ -1,4 +1,15 @@
 import React from "react";
+import footballImg from "../assets/sports/football.svg";
+import basketballImg from "../assets/sports/basketball.svg";
+import cricketImg from "../assets/sports/cricket.svg";
+import rugbyImg from "../assets/sports/rugby.svg";
+import americanFootballImg from "../assets/sports/american-football.svg";
+import hockeyImg from "../assets/sports/hockey.svg";
+import baseballImg from "../assets/sports/baseball.svg";
+import tennisImg from "../assets/sports/tennis.svg";
+import f1Img from "../assets/sports/f1.svg";
+import golfImg from "../assets/sports/golf.svg";
+import mmaImg from "../assets/sports/mma.svg";
 
 // Small inline icon set (paths from Lucide, ISC license) so we don't ship a whole icon package.
 function Icon({ size = 18, className, children }) {
@@ -185,27 +196,6 @@ export const Smartphone = (props) => (
   </Icon>
 );
 
-
-
-
-// Sport marks, drawn in the same 24px line style as the rest of the set.
-export const Football = (props) => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="10" />
-    <path d="m12 7 4.5 3.3-1.7 5.2H9.2l-1.7-5.2z" />
-    <path d="M12 7V2.5M16.5 10.3l4.3-1.4M14.8 15.5l2.7 3.7M9.2 15.5l-2.7 3.7M7.5 10.3 3.2 8.9" />
-  </Icon>
-);
-
-export const Basketball = (props) => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 2v20M2 12h20" />
-    <path d="M4.9 4.9A10 10 0 0 1 7.5 12a10 10 0 0 1-2.6 7.1" />
-    <path d="M19.1 4.9A10 10 0 0 0 16.5 12a10 10 0 0 0 2.6 7.1" />
-  </Icon>
-);
-
 export const AlertTriangle = (props) => (
   <Icon {...props}>
     <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
@@ -246,37 +236,6 @@ export const ArrowDown = (props) => (
   </Icon>
 );
 
-export const Cricket = (props) => (
-  <Icon {...props}>
-    <path d="M6.6 17.4 16 8l3 3-9.4 9.4a1.4 1.4 0 0 1-2 0l-1-1a1.4 1.4 0 0 1 0-2z" />
-    <path d="m17.5 9.5 3-3" />
-    <circle cx="7" cy="7" r="2.5" />
-  </Icon>
-);
-
-export const AmericanFootball = (props) => (
-  <Icon {...props}>
-    <ellipse cx="12" cy="12" rx="10" ry="6" transform="rotate(-45 12 12)" />
-    <path d="m9.5 14.5 5-5" />
-    <path d="m9.3 11.9 2.8 2.8M11.9 9.3l2.8 2.8" />
-  </Icon>
-);
-
-export const Hockey = (props) => (
-  <Icon {...props}>
-    <path d="M7 2.5 14 16h6.5" />
-    <ellipse cx="6.5" cy="18.5" rx="3.5" ry="1.8" />
-  </Icon>
-);
-
-export const Baseball = (props) => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="10" />
-    <path d="M5.6 4.4C8.2 7 8.2 17 5.6 19.6" />
-    <path d="M18.4 4.4C15.8 7 15.8 17 18.4 19.6" />
-  </Icon>
-);
-
 export const Bell = ({ off, ...props }) => (
   <Icon {...props}>
     <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
@@ -285,66 +244,47 @@ export const Bell = ({ off, ...props }) => (
   </Icon>
 );
 
-// Racket and ball (a plain ball would look like the baseball).
-export const Tennis = (props) => (
-  <Icon {...props}>
-    <ellipse cx="14.5" cy="9.5" rx="5.5" ry="6.5" transform="rotate(45 14.5 9.5)" />
-    <path d="m10.3 13.7-6.8 6.8" />
-    <circle cx="18.5" cy="19" r="1.8" />
-  </Icon>
-);
-
-// Chequered flag.
-export const RacingFlag = (props) => (
-  <Icon {...props}>
-    <path d="M5 21V4" />
-    <path d="M5 4h14v10H5" />
-    <path d="M9.7 4v10M14.3 4v10M5 9h14" />
-  </Icon>
-);
-
-export const Rugby = (props) => (
-  <Icon {...props}>
-    <ellipse cx="12" cy="12" rx="10" ry="6.5" />
-    <path d="M12 5.5v13" />
-    <path d="M7.5 6.3c1.6 3.6 1.6 7.8 0 11.4M16.5 6.3c-1.6 3.6-1.6 7.8 0 11.4" />
-  </Icon>
-);
-
-// Pin and flag on the green.
-export const Golf = (props) => (
-  <Icon {...props}>
-    <path d="M12 18V3l7 3.5-7 3.5" />
-    <ellipse cx="12" cy="19" rx="7" ry="2.5" />
-  </Icon>
-);
-
-// Fight glove.
-export const Glove = (props) => (
-  <Icon {...props}>
-    <path d="M7 11V7a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v6a5 5 0 0 1-5 5H9a2 2 0 0 1-2-2" />
-    <path d="M7 11H5.5a2 2 0 0 0 0 4H7" />
-    <path d="M8 18v3h8v-3" />
-    <path d="M11 7.5h4" />
-  </Icon>
-);
-
-const SPORT_ICONS = {
-  football: Football,
-  basketball: Basketball,
-  cricket: Cricket,
-  "american-football": AmericanFootball,
-  hockey: Hockey,
-  baseball: Baseball,
-  tennis: Tennis,
-  f1: RacingFlag,
-  rugby: Rugby,
-  golf: Golf,
-  mma: Glove,
+// Airbnb-style sports image assets
+export const SPORT_ICONS = {
+  football: footballImg,
+  basketball: basketballImg,
+  cricket: cricketImg,
+  rugby: rugbyImg,
+  "american-football": americanFootballImg,
+  hockey: hockeyImg,
+  baseball: baseballImg,
+  tennis: tennisImg,
+  f1: f1Img,
+  golf: golfImg,
+  mma: mmaImg,
 };
 
-// Icon for a sport id from sports.js.
-export const SportIcon = ({ sport, ...props }) => {
-  const Mark = SPORT_ICONS[sport] || Football;
-  return <Mark {...props} />;
+// Airbnb-style image icon component for all sports
+export const SportIcon = ({ sport, size = 18, className = "", alt = "", ...props }) => {
+  const src = SPORT_ICONS[sport] || SPORT_ICONS.football;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      aria-hidden={!alt ? "true" : undefined}
+      width={size}
+      height={size}
+      className={`sport-icon-img ${className}`.trim()}
+      loading="lazy"
+      draggable="false"
+      {...props}
+    />
+  );
 };
+
+export const Football = (props) => <SportIcon sport="football" {...props} />;
+export const Basketball = (props) => <SportIcon sport="basketball" {...props} />;
+export const Cricket = (props) => <SportIcon sport="cricket" {...props} />;
+export const AmericanFootball = (props) => <SportIcon sport="american-football" {...props} />;
+export const Hockey = (props) => <SportIcon sport="hockey" {...props} />;
+export const Baseball = (props) => <SportIcon sport="baseball" {...props} />;
+export const Tennis = (props) => <SportIcon sport="tennis" {...props} />;
+export const RacingFlag = (props) => <SportIcon sport="f1" {...props} />;
+export const Rugby = (props) => <SportIcon sport="rugby" {...props} />;
+export const Golf = (props) => <SportIcon sport="golf" {...props} />;
+export const Glove = (props) => <SportIcon sport="mma" {...props} />;

@@ -269,7 +269,7 @@ function Shell() {
                       aria-current={active ? "page" : undefined}
                       title={SPORTS[s].name}
                     >
-                      <SportIcon sport={s} size={16} />
+                      <SportIcon sport={s} size={18} />
                       <span className="sport-tab-label">{SPORTS[s].name}</span>
                     </a>
                   );

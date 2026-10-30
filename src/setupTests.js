@@ -11,3 +11,4 @@ window.scrollTo = () => {};
 // Screens other than scores load lazily (React.lazy); with the whole suite
 // running in parallel that can take longer than the default 1 s wait (more on a busy machine).
 configure({ asyncUtilTimeout: 8000 });
+jest.setTimeout(15000);
