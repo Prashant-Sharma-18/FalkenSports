@@ -25,6 +25,8 @@ import { SPORTS, hasTeamPages, isUsStyle } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 import Pitch, { pitchRows } from "./Pitch";
 import { colourVars, teamPaint } from "../teamColours";
+import { StatBars, TeamsKey, orient, sides } from "./CompareStats";
+import MatchPreview, { hasPreview } from "./MatchPreview";
 
 const LIVE_REFRESH = 30 * 1000;
 
@@ -139,44 +141,16 @@ function Form({ team, games }) {
   );
 }
 
-// Left and right as the header has them: US sports put the away team first.
-const sides = (match) => (isUsStyle(match.sport) ? [match.away, match.home] : [match.home, match.away]);
-
 // Team stats in the teams' colours. Possession leads as one split bar; every
-// other stat has a bar per team growing out from the middle, and the leader's
-// number filled in its colour.
+// other stat has a bar per team growing out from the middle.
 function Stats({ match }) {
-  const awayFirst = isUsStyle(match.sport);
   const [leftTeam, rightTeam] = sides(match);
-  const rows = match.stats.map((s) => {
-    const [left, right] = awayFirst ? [s.away, s.home] : [s.home, s.away];
-    const [leftText, rightText] = awayFirst ? [s.awayText, s.homeText] : [s.homeText, s.awayText];
-    const total = left + right;
-    return {
-      ...s,
-      leftText: leftText ?? `${left}${s.suffix}`,
-      rightText: rightText ?? `${right}${s.suffix}`,
-      leftShare: total ? (left / total) * 100 : 0,
-      rightShare: total ? (right / total) * 100 : 0,
-      lead: left === right ? "" : left > right ? "left" : "right",
-    };
-  });
+  const rows = orient(match, match.stats);
   const possession = rows.find((s) => s.label === "Possession");
 
   return (
     <div className="stats" style={colourVars(teamPaint(leftTeam), teamPaint(rightTeam))}>
-      <div className="stats-teams">
-        <span className="stats-team">
-          <span className="stats-dot stats-dot-left" aria-hidden="true" />
-          <TeamLogo src={leftTeam.logo} name={leftTeam.name} size={20} />
-          <span>{leftTeam.short || leftTeam.name}</span>
-        </span>
-        <span className="stats-team">
-          <span>{rightTeam.short || rightTeam.name}</span>
-          <TeamLogo src={rightTeam.logo} name={rightTeam.name} size={20} />
-          <span className="stats-dot stats-dot-right" aria-hidden="true" />
-        </span>
-      </div>
+      <TeamsKey left={leftTeam} right={rightTeam} />
 
       {possession && (
         <div className="stat-possession">
@@ -192,35 +166,7 @@ function Stats({ match }) {
         </div>
       )}
 
-      {rows
-        .filter((s) => s !== possession)
-        .map((s) => (
-          <div className="stat" key={s.label}>
-            <div className="stat-values">
-              <span className={`stat-num stat-val-home ${s.lead === "left" ? "stat-lead" : ""}`}>
-                {s.leftText}
-              </span>
-              <span className="stat-label">{s.label}</span>
-              <span className={`stat-num stat-val-away ${s.lead === "right" ? "stat-lead" : ""}`}>
-                {s.rightText}
-              </span>
-            </div>
-            <div className="stat-bars" aria-hidden="true">
-              <span className="stat-track">
-                <span
-                  className={`stat-fill stat-fill-left ${s.lead === "right" ? "trail" : ""}`}
-                  style={{ width: `${s.leftShare}%` }}
-                />
-              </span>
-              <span className="stat-track">
-                <span
-                  className={`stat-fill stat-fill-right ${s.lead === "left" ? "trail" : ""}`}
-                  style={{ width: `${s.rightShare}%` }}
-                />
-              </span>
-            </div>
-          </div>
-        ))}
+      <StatBars rows={rows.filter((s) => s !== possession)} />
     </div>
   );
 }
@@ -398,7 +344,8 @@ function Header({ match }) {
           ) : (
             <span className="mh-kickoff">{match.date ? formatTime(match.date) : "TBD"}</span>
           )}
-          <MatchStatus match={match} />
+          {/* Before kick-off the time above says it all. */}
+          {!(match.state === "pre" && match.date && !match.timeTbd) && <MatchStatus match={match} />}
         </div>
         {side(right)}
       </div>
@@ -515,8 +462,12 @@ export default function MatchDetail({ league, id, onBack }) {
             {activeTab === "scorecard" && <Scorecard match={match} />}
             {activeTab === "summary" && !usStyle && !cricket && (
               <>
-                {/* ESPN has no rugby match events, so there's no timeline to show. */}
-                {(match.sport !== "rugby" || match.events.length > 0) && <Timeline match={match} />}
+                {match.state === "pre" && hasPreview(match) ? (
+                  <MatchPreview match={match} />
+                ) : (
+                  // ESPN has no rugby match events, so there's no timeline to show.
+                  (match.sport !== "rugby" || match.events.length > 0) && <Timeline match={match} />
+                )}
                 {(match.form[match.home.id]?.length > 0 ||
                   match.form[match.away.id]?.length > 0) && (
                   <div className="form-block">

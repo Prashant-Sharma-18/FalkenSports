@@ -27,8 +27,13 @@ export async function fetchMatch(league, id, signal) {
     id,
     sport,
     league,
-    // Our short name ("NBA", "Premier League") when we know the league; ESPN's for cups.
-    competition: leagueName(league) !== league ? leagueName(league) : s.header?.league?.name || league,
+    // Our short name ("NBA", "Premier League") when we know the league; ESPN's for
+    // cups, and for a football match opened from another competition's page (a
+    // past meeting that was a friendly).
+    competition:
+      leagueName(league) !== league && !(sport === "football" && otherLeague(s, league))
+        ? leagueName(league)
+        : s.header?.league?.name || league,
     date: comp.date ? new Date(comp.date) : null,
     state: comp.status?.type?.state,
     detail: statusDetail(sport, comp.status),
@@ -54,6 +59,11 @@ export async function fetchMatch(league, id, signal) {
     ? usGame(base, usDetail(s, sport, league, base.detail, home, away, homeRaw, awayRaw), scoreboardExtras(board, sport))
     : { ...base, ...footballDetail(s, home, away), link: base.link || `https://www.espn.com/soccer/match/_/gameId/${id}` };
 }
+
+const otherLeague = (s, league) => {
+  const slug = s.header?.league?.slug;
+  return Boolean(slug && slug !== league);
+};
 
 // Summary detail plus the scoreboard's extras; summary leaders win when present.
 function usGame(base, detail, extras) {

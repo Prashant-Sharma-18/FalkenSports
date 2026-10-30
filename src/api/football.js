@@ -106,5 +106,114 @@ export function footballDetail(s, home, away) {
     .map((c) => ({ id: c.sequence, minute: c.time?.displayValue || "", text: c.text }))
     .reverse();
 
-  return { events, stats: statRows(s, home, away, FOOTBALL_STATS), lineups, form, commentary };
+  return {
+    events,
+    stats: statRows(s, home, away, FOOTBALL_STATS),
+    lineups,
+    form,
+    commentary,
+    preview: matchPreview(s, home, away),
+  };
+}
+
+// Before kick-off ESPN's boxscore holds each side's season totals instead.
+const SEASON_STATS = [
+  ["totalGoals", "Goals scored"],
+  ["goalsConceded", "Goals conceded"],
+  ["goalAssists", "Assists"],
+];
+
+const toNumber = (v) => {
+  const n = parseInt(v, 10);
+  return Number.isNaN(n) ? null : n;
+};
+
+// What there is to know before a match: past meetings, where both teams stand,
+// their season so far, their top scorers and where it's on.
+export function matchPreview(s, home, away) {
+  const side = (c) => ({
+    id: c.team?.id,
+    name: c.team?.displayName,
+    short: c.team?.abbreviation,
+    logo: c.team?.logo || c.team?.logos?.[0]?.href,
+    score: c.score,
+    winner: Boolean(c.winner),
+  });
+  // "2025-26 English Premier League" -> "English Premier League", shortened to
+  // "Premier League" when it's this match's league.
+  const league = s.header?.league;
+  const competitionOf = (name = "") => {
+    const plain = name.replace(/^\d{4}(-\d{2})?\s+/, "");
+    return plain === league?.name ? league.shortName || plain : plain;
+  };
+  const h2h = (s.seasonseries || [])
+    .flatMap((series) => series.events || [])
+    .filter((e) => e.status === "post" || e.statusType?.completed)
+    .map((e) => {
+      const teams = e.competitors || [];
+      return {
+        id: e.id,
+        date: e.date ? new Date(e.date) : null,
+        competition: competitionOf(e.competitionName),
+        home: side(teams.find((c) => c.homeAway === "home") || {}),
+        away: side(teams.find((c) => c.homeAway === "away") || {}),
+      };
+    })
+    .filter((g) => g.home.id && g.away.id && g.home.score != null);
+
+  // Only the table (or the group, in cups) that has these two teams in it.
+  const ids = [home.id, away.id];
+  const group = (s.standings?.groups || []).find((g) =>
+    (g.standings?.entries || []).some((e) => ids.includes(String(e.id)))
+  );
+  const stat = (e, name) => e.stats?.find((x) => x.name === name)?.displayValue;
+  const table = (group?.standings?.entries || [])
+    .filter((e) => ids.includes(String(e.id)))
+    .map((e) => ({
+      id: String(e.id),
+      name: e.team,
+      logo: e.logo?.[0]?.href,
+      rank: toNumber(stat(e, "rank")),
+      played: stat(e, "gamesPlayed"),
+      record: stat(e, "overall"),
+      gd: stat(e, "pointDifferential"),
+      points: stat(e, "points"),
+    }))
+    .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+
+  // Season totals, as stat rows (only when both sides have them). Fewer
+  // goals conceded is the better number.
+  const season = statRows(s, home, away, SEASON_STATS).map((r) =>
+    r.label === "Goals conceded" ? { ...r, lowerIsBetter: true } : r
+  );
+
+  const leaders = Object.fromEntries(
+    (s.leaders || []).map((t) => [
+      t.team?.id,
+      (t.leaders || [])
+        .filter((c) => ["goalsLeaders", "assistsLeaders"].includes(c.name))
+        .map((c) => {
+          const top = c.leaders?.[0];
+          return top && {
+            label: c.name === "goalsLeaders" ? "Goals" : "Assists",
+            name: top.athlete?.displayName,
+            value: top.mainStat?.value ?? top.displayValue,
+            apps: toNumber(top.summary),
+          };
+        })
+        .filter((l) => l && l.name && Number(l.value) > 0),
+    ])
+  );
+
+  // US channels and streams ("Peacock", "Telemundo"), once each.
+  const broadcasts = [
+    ...new Set(
+      (s.broadcasts || [])
+        .filter((b) => !b.region || b.region === "us")
+        .map((b) => b.media?.name || b.media?.shortName)
+        .filter(Boolean)
+    ),
+  ];
+
+  return { h2h, table: table.length === 2 ? table : [], season, leaders, broadcasts };
 }
