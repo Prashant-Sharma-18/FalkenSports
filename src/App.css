@@ -3058,3 +3058,24 @@ a {
 .hero-cricket-score .cricket-score-main {
   white-space: normal;
 }
+
+/* ==========================================================================
+   More sports: American football, hockey, baseball
+   ========================================================================== */
+
+/* With many sports, only the active one keeps its label; the rest show icons. */
+.sport-tab:not(.active) .sport-tab-label {
+  display: none;
+}
+
+/* Several box score tables per team (passing, rushing… / skaters, goalies). */
+.table-scroll + .table-scroll {
+  margin-top: 18px;
+}
+
+/* NFL leader lines are long ("28/37, 276 YDS, 3 TD"), so they may wrap. */
+.leader-value {
+  white-space: normal;
+  text-align: right;
+  max-width: 55%;
+}

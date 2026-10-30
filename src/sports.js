@@ -25,6 +25,7 @@ export const SPORTS = {
     games: "Games",
     game: "game",
     draws: false,
+    usStyle: true,
     leagues: [
       { id: "nba", name: "NBA" },
       { id: "wnba", name: "WNBA" },
@@ -56,6 +57,39 @@ export const SPORTS = {
       { id: "8052", name: "County Championship" },
     ],
   },
+  "american-football": {
+    id: "american-football",
+    espn: "football",
+    name: "American Football",
+    games: "Games",
+    game: "game",
+    draws: false,
+    usStyle: true,
+    leagues: [
+      { id: "nfl", name: "NFL" },
+      { id: "college-football", name: "NCAA Football" },
+    ],
+  },
+  hockey: {
+    id: "hockey",
+    espn: "hockey",
+    name: "Hockey",
+    games: "Games",
+    game: "game",
+    draws: false,
+    usStyle: true,
+    leagues: [{ id: "nhl", name: "NHL" }],
+  },
+  baseball: {
+    id: "baseball",
+    espn: "baseball",
+    name: "Baseball",
+    games: "Games",
+    game: "game",
+    draws: false,
+    usStyle: true,
+    leagues: [{ id: "mlb", name: "MLB" }],
+  },
 };
 
 export const SPORT_IDS = Object.keys(SPORTS);
@@ -80,6 +114,10 @@ export function sportOfLeague(league) {
 // Optional features default to on; a sport opts out in its config.
 export const hasTeamPages = (sport) => SPORTS[sport]?.teamPages !== false;
 export const hasForm = (sport) => SPORTS[sport]?.form !== false;
+
+// North American conventions: the away team is listed first ("Heat at Hawks"),
+// and games have a line score, box score and play-by-play.
+export const isUsStyle = (sport) => SPORTS[sport]?.usStyle === true;
 
 export function leagueName(league) {
   for (const s of SPORT_IDS) {

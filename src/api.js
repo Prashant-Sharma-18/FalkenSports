@@ -1,5 +1,5 @@
 // Free, keyless ESPN endpoints (CORS-enabled, so they can be called from the browser).
-import { SPORTS, hasTeamPages, leagueName, leaguesOf, sportOfLeague, teamKey } from "./sports";
+import { SPORTS, hasTeamPages, isUsStyle, leagueName, leaguesOf, sportOfLeague, teamKey } from "./sports";
 
 const API = "https://site.api.espn.com/apis";
 
@@ -140,15 +140,23 @@ export async function fetchAllMatches(sport, dayKey, signal) {
   };
 }
 
+// "26:41" (time of possession) -> seconds; otherwise the leading number of "5-16", "48.5".
+const statValue = (v) => {
+  const clock = /^(\d+):(\d{2})$/.exec(v);
+  return clock ? Number(clock[1]) * 60 + Number(clock[2]) : parseFloat(v) || 0;
+};
+
 // Pick named team statistics as comparison rows: [name, label, suffix].
+// Baseball nests its stats in categories, named here "batting.hits".
 function statRows(s, home, away, rows) {
   const box = s.boxscore?.teams || [];
   const statsFor = (teamId) =>
     Object.fromEntries(
-      (box.find((t) => t.team?.id === teamId)?.statistics || []).map((st) => [
-        st.name,
-        st.displayValue,
-      ])
+      (box.find((t) => t.team?.id === teamId)?.statistics || []).flatMap((st) =>
+        Array.isArray(st.stats)
+          ? st.stats.map((x) => [`${st.name}.${x.name}`, x.displayValue])
+          : [[st.name, st.displayValue]]
+      )
     );
   const hs = statsFor(home.id);
   const as = statsFor(away.id);
@@ -157,8 +165,11 @@ function statRows(s, home, away, rows) {
     .map(([name, label, suffix = ""]) => ({
       label,
       suffix,
-      home: parseFloat(hs[name]) || 0,
-      away: parseFloat(as[name]) || 0,
+      home: statValue(hs[name]),
+      away: statValue(as[name]),
+      // Shown as sent: "5-16" third downs and "26:41" possession aren't plain numbers.
+      homeText: /^[\d.]+$/.test(hs[name]) ? null : hs[name],
+      awayText: /^[\d.]+$/.test(as[name]) ? null : as[name],
     }));
 }
 
@@ -209,8 +220,88 @@ const BASKETBALL_STATS = [
   ["largestLead", "Largest lead"],
 ];
 
-// Box score columns shown, in order (ESPN sends more).
-const BOX_COLUMNS = ["MIN", "PTS", "REB", "AST", "FG", "3PT", "FT", "STL", "BLK", "TO", "+/-"];
+const AMERICAN_FOOTBALL_STATS = [
+  ["totalYards", "Total yards"],
+  ["netPassingYards", "Passing yards"],
+  ["rushingYards", "Rushing yards"],
+  ["firstDowns", "First downs"],
+  ["yardsPerPlay", "Yards per play"],
+  ["thirdDownEff", "Third downs"],
+  ["fourthDownEff", "Fourth downs"],
+  ["redZoneAttempts", "Red zone"],
+  ["turnovers", "Turnovers"],
+  ["sacksYardsLost", "Sacks taken"],
+  ["totalPenaltiesYards", "Penalties"],
+  ["possessionTime", "Possession"],
+];
+
+const HOCKEY_STATS = [
+  ["shotsTotal", "Shots"],
+  ["faceoffPercent", "Faceoffs won", "%"],
+  ["powerPlayGoals", "Power-play goals"],
+  ["powerPlayOpportunities", "Power plays"],
+  ["hits", "Hits"],
+  ["blockedShots", "Blocked shots"],
+  ["takeaways", "Takeaways"],
+  ["giveaways", "Giveaways"],
+  ["penaltyMinutes", "Penalty minutes"],
+];
+
+const BASEBALL_STATS = [
+  ["batting.hits", "Hits"],
+  ["batting.homeRuns", "Home runs"],
+  ["batting.doubles", "Doubles"],
+  ["batting.walks", "Walks"],
+  ["batting.strikeouts", "Struck out"],
+  ["batting.stolenBases", "Stolen bases"],
+  ["batting.runnersLeftOnBase", "Left on base"],
+  ["fielding.errors", "Errors"],
+  ["pitching.pitches", "Pitches thrown"],
+];
+
+const STATS = {
+  football: FOOTBALL_STATS,
+  basketball: BASKETBALL_STATS,
+  "american-football": AMERICAN_FOOTBALL_STATS,
+  hockey: HOCKEY_STATS,
+  baseball: BASEBALL_STATS,
+};
+
+// Box score tables per sport, in order: the ESPN stat group they come from
+// (by name, or type for baseball; basketball has a single unnamed group), and
+// the columns kept, in order (ESPN sends more). No column list keeps them all.
+// `bench` splits starters from the bench.
+const SKATER_COLUMNS = ["G", "A", "+/-", "SOG", "HT", "BS", "PIM", "TOI"];
+const BOX_GROUPS = {
+  basketball: [
+    {
+      key: null,
+      title: "Starters",
+      bench: true,
+      columns: ["MIN", "PTS", "REB", "AST", "FG", "3PT", "FT", "STL", "BLK", "TO", "+/-"],
+    },
+  ],
+  "american-football": [
+    { key: "passing", title: "Passing" },
+    { key: "rushing", title: "Rushing" },
+    { key: "receiving", title: "Receiving" },
+    { key: "defensive", title: "Defence" },
+    { key: "interceptions", title: "Interceptions" },
+    { key: "kickReturns", title: "Kick returns" },
+    { key: "puntReturns", title: "Punt returns" },
+    { key: "kicking", title: "Kicking" },
+    { key: "punting", title: "Punting" },
+  ],
+  hockey: [
+    { key: "forwards", title: "Forwards", columns: [...SKATER_COLUMNS, "FO%"] },
+    { key: "defenses", title: "Defence", columns: SKATER_COLUMNS },
+    { key: "goalies", title: "Goalies", columns: ["SA", "GA", "SV", "SV%", "TOI"] },
+  ],
+  baseball: [
+    { key: "batting", title: "Batters", columns: ["AB", "R", "H", "RBI", "HR", "BB", "K", "AVG"] },
+    { key: "pitching", title: "Pitchers", columns: ["IP", "H", "R", "ER", "BB", "K", "HR", "PC-ST", "ERA"] },
+  ],
+};
 
 function eventKind(e) {
   const type = e.type?.type || "";
@@ -261,8 +352,8 @@ export async function fetchMatch(league, id, signal) {
   };
 
   if (sport === "cricket") return { ...base, ...cricketDetail(s, homeRaw, awayRaw) };
-  return sport === "basketball"
-    ? { ...base, ...basketballDetail(s, league, home, away, homeRaw, awayRaw) }
+  return isUsStyle(sport)
+    ? { ...base, ...usDetail(s, sport, league, base.detail, home, away, homeRaw, awayRaw) }
     : { ...base, ...footballDetail(s, home, away), link: base.link || `https://www.espn.com/soccer/match/_/gameId/${id}` };
 }
 
@@ -330,46 +421,100 @@ function footballDetail(s, home, away) {
   return { events, stats: statRows(s, home, away, FOOTBALL_STATS), lineups, form, commentary };
 }
 
-// Period names: college men play halves, everyone else quarters.
-function periodLabel(league, index) {
-  const regular = league === "mens-college-basketball" ? 2 : 4;
-  if (index < regular) return regular === 2 ? `H${index + 1}` : `Q${index + 1}`;
+// Period names. Basketball: college men play halves, everyone else quarters.
+// American football: quarters. Hockey: three periods. Then overtimes (2OT…).
+// Baseball: innings, extra innings just keep counting.
+export function periodLabel(sport, league, index) {
+  if (sport === "baseball") return String(index + 1);
+  const halves = league === "mens-college-basketball";
+  const regular = sport === "hockey" ? 3 : halves ? 2 : 4;
+  if (index < regular) return `${sport === "hockey" ? "P" : halves ? "H" : "Q"}${index + 1}`;
   const ot = index - regular + 1;
   return ot === 1 ? "OT" : `${ot}OT`;
 }
 
-function basketballDetail(s, league, home, away, homeRaw, awayRaw) {
+// "T3" / "B3": top or bottom of an inning.
+const inningLabel = (period) => `${period?.type === "Bottom" ? "B" : "T"}${period?.number || 1}`;
+
+// Plays worth listing. NFL plays live inside drives; baseball sends every
+// pitch, so only at-bat results are kept; hockey drops faceoffs and stoppages.
+function playsOf(s, sport) {
+  if (sport === "american-football") {
+    const drives = [...(s.drives?.previous || []), s.drives?.current].filter(Boolean);
+    const seen = new Set();
+    return drives.flatMap((d) =>
+      (d.plays || [])
+        .filter((p) => !seen.has(p.id) && seen.add(p.id))
+        .map((p) => ({ ...p, team: p.team || d.team }))
+    );
+  }
+  if (sport === "baseball") {
+    return (s.plays || []).filter((p) => p.type?.type === "play-result" || p.scoringPlay);
+  }
+  if (sport === "hockey") {
+    return (s.plays || []).filter((p) => !["Face Off", "Stoppage"].includes(p.type?.text));
+  }
+  return s.plays || [];
+}
+
+// Each team's box score as tables (see BOX_GROUPS).
+function boxScoreOf(s, sport) {
+  return (s.boxscore?.players || []).map((t) => ({
+    teamId: t.team?.id,
+    groups: BOX_GROUPS[sport]
+      .map((cfg) => {
+        const group =
+          cfg.key == null
+            ? t.statistics?.[0]
+            : t.statistics?.find((g) => (g.name || g.type) === cfg.key);
+        if (!group?.athletes?.length) return null;
+        const labels = group.labels || group.names || [];
+        const pick = (cfg.columns || labels).map((c) => labels.indexOf(c)).filter((i) => i >= 0);
+        return {
+          title: cfg.title,
+          bench: Boolean(cfg.bench),
+          columns: pick.map((i) => labels[i]),
+          players: group.athletes.map((a) => ({
+            id: a.athlete?.id,
+            name: a.athlete?.displayName,
+            short: a.athlete?.shortName || a.athlete?.displayName,
+            // Baseball pitchers carry their decision ("W, 2-0") instead.
+            position: a.notes?.[0]?.text || a.athlete?.position?.abbreviation || a.position?.abbreviation,
+            jersey: a.athlete?.jersey,
+            starter: a.starter,
+            dnp: a.didNotPlay || !a.stats?.length,
+            reason: a.reason,
+            stats: pick.map((i) => a.stats?.[i] ?? ""),
+          })),
+          totals: group.totals?.length ? pick.map((i) => group.totals[i] ?? "") : null,
+        };
+      })
+      .filter(Boolean),
+  }));
+}
+
+function usDetail(s, sport, league, detail, home, away, homeRaw, awayRaw) {
   const scores = (raw) => (raw?.linescores || []).map((l) => l.displayValue ?? l.value);
   const homeLines = scores(homeRaw);
   const awayLines = scores(awayRaw);
   const periods = Math.max(homeLines.length, awayLines.length);
+  const labels = Array.from({ length: periods }, (_, i) => periodLabel(sport, league, i));
+  // A regular-season NHL game level after overtime ends in a shootout.
+  if (sport === "hockey" && periods > 4 && /SO/.test(detail)) labels[periods - 1] = "SO";
+  const baseball = sport === "baseball";
   const linescore = {
-    labels: Array.from({ length: periods }, (_, i) => periodLabel(league, i)),
+    labels,
     home: homeLines,
     away: awayLines,
+    // Baseball's line score is runs, hits and errors.
+    totalLabel: baseball ? "R" : "T",
+    extra: baseball
+      ? [
+          { label: "H", home: homeRaw?.hits, away: awayRaw?.hits },
+          { label: "E", home: homeRaw?.errors, away: awayRaw?.errors },
+        ]
+      : [],
   };
-
-  const box = (s.boxscore?.players || []).map((t) => {
-    const group = t.statistics?.[0] || {};
-    const labels = group.labels || group.names || [];
-    const pick = BOX_COLUMNS.map((c) => labels.indexOf(c)).filter((i) => i >= 0);
-    return {
-      teamId: t.team?.id,
-      columns: pick.map((i) => labels[i]),
-      players: (group.athletes || []).map((a) => ({
-        id: a.athlete?.id,
-        name: a.athlete?.displayName,
-        short: a.athlete?.shortName || a.athlete?.displayName,
-        position: a.athlete?.position?.abbreviation,
-        jersey: a.athlete?.jersey,
-        starter: a.starter,
-        dnp: a.didNotPlay || !a.stats?.length,
-        reason: a.reason,
-        stats: pick.map((i) => a.stats?.[i] ?? ""),
-      })),
-      totals: group.totals?.length ? pick.map((i) => group.totals[i] ?? "") : null,
-    };
-  });
 
   const leaders = (s.leaders || []).map((t) => ({
     teamId: t.team?.id,
@@ -387,13 +532,15 @@ function basketballDetail(s, league, home, away, homeRaw, awayRaw) {
       .slice(0, 3),
   }));
 
-  const plays = (s.plays || [])
+  const plays = playsOf(s, sport)
     .filter((p) => p.text)
     .slice(-300)
     .reverse()
     .map((p) => ({
       id: p.id,
-      minute: `${periodLabel(league, (p.period?.number || 1) - 1)} ${p.clock?.displayValue || ""}`.trim(),
+      minute: baseball
+        ? inningLabel(p.period)
+        : `${periodLabel(sport, league, (p.period?.number || 1) - 1)} ${p.clock?.displayValue || ""}`.trim(),
       text: p.text,
       scoring: p.scoringPlay,
       teamId: p.team?.id,
@@ -401,9 +548,9 @@ function basketballDetail(s, league, home, away, homeRaw, awayRaw) {
     }));
 
   return {
-    stats: statRows(s, home, away, BASKETBALL_STATS),
+    stats: statRows(s, home, away, STATS[sport]),
     linescore,
-    box,
+    box: boxScoreOf(s, sport),
     leaders,
     plays,
   };
@@ -504,14 +651,22 @@ function cricketDetail(s, homeRaw, awayRaw) {
   return { innings, notes };
 }
 
-// Basketball leagues without ESPN zone notes: their fixed post-season formats.
-const BASKETBALL_ZONES = {
+// North American leagues without ESPN zone notes: their fixed post-season
+// formats, by seed within the conference (or league, in MLB).
+const SEED_ZONES = {
   nba: [
     { upTo: 6, label: "Playoffs", kind: "ucl" },
     { upTo: 10, label: "Play-In Tournament", kind: "uel" },
   ],
   wnba: [{ upTo: 8, label: "Playoffs", kind: "ucl" }],
+  nfl: [{ upTo: 7, label: "Playoffs", kind: "ucl" }],
+  nhl: [{ upTo: 8, label: "Playoffs", kind: "ucl" }],
+  mlb: [{ upTo: 6, label: "Playoffs", kind: "ucl" }],
 };
+
+// Table groups: conferences, or their divisions when a conference is split (Sun Belt).
+const tableGroups = (children = []) =>
+  children.flatMap((g) => (g.standings?.entries?.length || !g.children ? [g] : tableGroups(g.children)));
 
 // Cricket points table, from the competition scoreboard (ESPN's standings feed
 // is empty for cricket). Only a clean 1..n ranking is shown: group stages share
@@ -544,13 +699,15 @@ export async function fetchStandings(league, signal) {
     entry.stats?.find((s) => s.name === name)?.displayValue ?? "";
   const num = (entry, name) => Number(entry.stats?.find((s) => s.name === name)?.value);
 
-  return (data.children || []).map((group) => {
+  const usStyle = isUsStyle(sport);
+
+  return tableGroups(data.children).map((group) => {
     const entries = group.standings?.entries || [];
     const rows = entries.map((entry) => ({
       id: entry.team?.id,
       key: teamKey(sport, entry.team?.id),
       sport,
-      rank: Number(stat(entry, sport === "basketball" ? "playoffSeed" : "rank")) || 0,
+      rank: Number(stat(entry, usStyle ? "playoffSeed" : "rank")) || 0,
       name: entry.team?.displayName,
       short: entry.team?.abbreviation,
       logo: entry.team?.logos?.[0]?.href,
@@ -564,16 +721,22 @@ export async function fetchStandings(league, signal) {
       gb: stat(entry, "gamesBehind"),
       streak: stat(entry, "streak"),
       winPct: num(entry, "winPercent") || 0,
+      // Every stat by name (the first of each: college football repeats them
+      // for home, away and conference splits), for the per-sport table columns.
+      stats: (entry.stats || []).reduce((acc, s) => {
+        if (!(s.name in acc)) acc[s.name] = s.displayValue ?? "";
+        return acc;
+      }, {}),
       zoneLabel: entry.note?.description || null,
     }));
 
-    if (sport === "basketball") {
+    if (usStyle) {
       // Seeds where ESPN has them (pro leagues), win percentage otherwise (college).
       const seeded = rows.every((r) => r.rank > 0);
       rows.sort((a, b) => (seeded ? a.rank - b.rank : b.winPct - a.winPct || Number(b.won) - Number(a.won)));
       rows.forEach((r, i) => {
         if (!seeded) r.rank = i + 1;
-        const zone = !r.zoneLabel && BASKETBALL_ZONES[league]?.find((z) => r.rank <= z.upTo);
+        const zone = !r.zoneLabel && SEED_ZONES[league]?.find((z) => r.rank <= z.upTo);
         if (zone) r.zoneLabel = zone.label;
       });
     } else {
@@ -609,7 +772,7 @@ export async function fetchLeagueForm(league, signal) {
     return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}`;
   });
   const results = await Promise.allSettled(
-    months.map((m) => getJson(`${site(league)}/scoreboard?dates=${m}&limit=300`, signal))
+    months.map((m) => getJson(`${site(league)}/scoreboard?dates=${m}&limit=1000`, signal))
   );
 
   const seen = new Set();
@@ -656,7 +819,7 @@ export async function fetchTeam(league, teamId, signal) {
       getJson(`${soccer}?fixture=true`, signal).catch(() => ({ events: [] })),
     ]);
   } else {
-    // A basketball schedule already holds the whole season, played and upcoming.
+    // Other sports' schedules already hold the whole season, played and upcoming.
     responses = [await getJson(`${site(league)}/teams/${teamId}/schedule`, signal)];
   }
   const t = responses.find((r) => r.team)?.team || {};

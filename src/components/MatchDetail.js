@@ -17,9 +17,9 @@ import {
   Users,
   Shield,
 } from "./Icons";
-import { BoxScore, Leaders, Linescore, PlayByPlay } from "./BasketballDetail";
+import { BoxScore, Leaders, Linescore, PlayByPlay } from "./GameDetail";
 import { CricketScore, CricketSummary, Scorecard } from "./CricketDetail";
-import { hasTeamPages } from "../sports";
+import { SPORTS, hasTeamPages, isUsStyle } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 
 const LIVE_REFRESH = 30 * 1000;
@@ -103,12 +103,13 @@ function Form({ team, games }) {
 }
 
 function Stats({ match }) {
-  // Same left/right order as the header: basketball puts the away team first.
-  const awayFirst = match.sport === "basketball";
+  // Same left/right order as the header: US sports put the away team first.
+  const awayFirst = isUsStyle(match.sport);
   return (
     <div className="stats">
       {match.stats.map((s) => {
         const [left, right] = awayFirst ? [s.away, s.home] : [s.home, s.away];
+        const [leftText, rightText] = awayFirst ? [s.awayText, s.homeText] : [s.homeText, s.awayText];
         const total = left + right;
         const leftShare = total ? (left / total) * 100 : 50;
         const lead = left === right ? "" : left > right ? "left" : "right";
@@ -116,13 +117,11 @@ function Stats({ match }) {
           <div className="stat" key={s.label}>
             <div className="stat-values">
               <span className={`stat-val-home ${lead === "left" ? "strong stat-lead" : ""}`}>
-                {left}
-                {s.suffix}
+                {leftText ?? `${left}${s.suffix}`}
               </span>
               <span className="stat-label muted">{s.label}</span>
               <span className={`stat-val-away ${lead === "right" ? "strong stat-lead" : ""}`}>
-                {right}
-                {s.suffix}
+                {rightText ?? `${right}${s.suffix}`}
               </span>
             </div>
             <div className="stat-bar" aria-hidden="true">
@@ -215,8 +214,9 @@ function Commentary({ match }) {
 
 function Header({ match }) {
   const started = match.state !== "pre";
-  // Basketball convention is "away at home", so the away team goes on the left.
-  const [left, right] = match.sport === "basketball" ? [match.away, match.home] : [match.home, match.away];
+  // US convention is "away at home", so the away team goes on the left.
+  const usStyle = isUsStyle(match.sport);
+  const [left, right] = usStyle ? [match.away, match.home] : [match.home, match.away];
   const scorers = (team) =>
     match.events
       .filter((e) => e.kind === "goal" && e.teamId === team.id)
@@ -254,7 +254,7 @@ function Header({ match }) {
         ) : (
           <span className="hero-cricket-score muted">Yet to bat</span>
         ))}
-      {match.sport === "basketball" && team.record && <span className="hero-record">{team.record}</span>}
+      {usStyle && team.record && <span className="hero-record">{team.record}</span>}
       <ul className="hero-scorers">
         {scorers(team).map((s, i) => (
           <li key={i} className="hero-scorer-item">
@@ -340,17 +340,17 @@ export default function MatchDetail({ league, id, onBack }) {
     (m) => (m?.state === "in" ? LIVE_REFRESH : m?.state === "pre" ? 5 * 60 * 1000 : null)
   );
 
-  const basketball = match?.sport === "basketball";
+  const usStyle = isUsStyle(match?.sport);
   const cricket = match?.sport === "cricket";
   const tabs = match
     ? [
         { id: "summary", label: "Summary", show: true },
         { id: "scorecard", label: "Scorecard", show: cricket && match.innings?.length > 0 },
         { id: "stats", label: "Stats", show: match.stats.length > 0 },
-        { id: "box", label: "Box score", show: basketball && match.box?.length > 0 },
+        { id: "box", label: "Box score", show: usStyle && match.box?.some((b) => b.groups.length) },
         { id: "lineups", label: "Line-ups", show: match.lineups.length > 0 },
         { id: "commentary", label: "Commentary", show: match.commentary.length > 0 },
-        { id: "plays", label: "Plays", show: basketball && match.plays?.length > 0 },
+        { id: "plays", label: "Plays", show: usStyle && match.plays?.length > 0 },
       ].filter((t) => t.show)
     : [];
   const [tab, setTab] = useState("summary");
@@ -359,14 +359,14 @@ export default function MatchDetail({ league, id, onBack }) {
   useEffect(() => {
     if (!match) return;
     const score = match.state === "pre" ? "vs" : `${match.home.score}–${match.away.score}`;
-    // Basketball lists the away team first, as scoreboards do; cricket has no
+    // US sports list the away team first, as scoreboards do; cricket has no
     // single score, so it shows the result or situation instead.
     document.title = cricket
       ? `${match.home.name} v ${match.away.name}${match.summary ? `: ${match.summary}` : ""} – FalkenSports`
-      : basketball
+      : usStyle
       ? `${match.away.name} ${match.state === "pre" ? "at" : `${match.away.score}–${match.home.score}`} ${match.home.name} – FalkenSports`
       : `${match.home.name} ${score} ${match.away.name} – FalkenSports`;
-  }, [match, basketball, cricket]);
+  }, [match, usStyle, cricket]);
 
   return (
     <section className="match-detail">
@@ -395,7 +395,7 @@ export default function MatchDetail({ league, id, onBack }) {
           </nav>
 
           <div className="card panel">
-            {activeTab === "summary" && basketball && (
+            {activeTab === "summary" && usStyle && (
               <>
                 <Linescore match={match} />
                 <Leaders match={match} />
@@ -403,7 +403,7 @@ export default function MatchDetail({ league, id, onBack }) {
             )}
             {activeTab === "summary" && cricket && <CricketSummary match={match} />}
             {activeTab === "scorecard" && <Scorecard match={match} />}
-            {activeTab === "summary" && !basketball && !cricket && (
+            {activeTab === "summary" && !usStyle && !cricket && (
               <>
                 <Timeline match={match} />
                 {(match.form[match.home.id]?.length > 0 ||
@@ -429,7 +429,7 @@ export default function MatchDetail({ league, id, onBack }) {
           </div>
 
           <a className="match-link" href={match.link} target="_blank" rel="noreferrer">
-            <span>{basketball ? "Full game centre on ESPN" : "Full match centre on ESPN"}</span>
+            <span>Full {SPORTS[match.sport].game} centre on ESPN</span>
             <ExternalLink size={14} />
           </a>
         </>

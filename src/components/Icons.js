@@ -254,7 +254,37 @@ export const Cricket = (props) => (
   </Icon>
 );
 
-const SPORT_ICONS = { football: Football, basketball: Basketball, cricket: Cricket };
+export const AmericanFootball = (props) => (
+  <Icon {...props}>
+    <ellipse cx="12" cy="12" rx="10" ry="6" transform="rotate(-45 12 12)" />
+    <path d="m9.5 14.5 5-5" />
+    <path d="m9.3 11.9 2.8 2.8M11.9 9.3l2.8 2.8" />
+  </Icon>
+);
+
+export const Hockey = (props) => (
+  <Icon {...props}>
+    <path d="M7 2.5 14 16h6.5" />
+    <ellipse cx="6.5" cy="18.5" rx="3.5" ry="1.8" />
+  </Icon>
+);
+
+export const Baseball = (props) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="10" />
+    <path d="M5.6 4.4C8.2 7 8.2 17 5.6 19.6" />
+    <path d="M18.4 4.4C15.8 7 15.8 17 18.4 19.6" />
+  </Icon>
+);
+
+const SPORT_ICONS = {
+  football: Football,
+  basketball: Basketball,
+  cricket: Cricket,
+  "american-football": AmericanFootball,
+  hockey: Hockey,
+  baseball: Baseball,
+};
 
 // Icon for a sport id from sports.js.
 export const SportIcon = ({ sport, ...props }) => {

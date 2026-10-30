@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { fetchStandings, fetchTeam, resultFor } from "../api";
 import { formatTime } from "../dates";
 import { routeHref } from "../router";
-import { SPORTS, sportOfLeague } from "../sports";
+import { SPORTS, isUsStyle, sportOfLeague } from "../sports";
 import useRemoteData from "../useRemoteData";
 import MatchCard from "./MatchCard";
 import FormPills from "./FormPills";
@@ -10,6 +10,7 @@ import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
 import { ArrowLeft, ExternalLink } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
+import { usColumns } from "./Standings";
 import "./Team.css";
 
 // "29 Oct": fits the narrow date column on phones without wrapping.
@@ -53,7 +54,9 @@ function MatchRow({ match, teamId }) {
 
 // Five rows of the league table centred on this team.
 function TablePosition({ league, teamId }) {
-  const basketball = sportOfLeague(league) === "basketball";
+  const usStyle = isUsStyle(sportOfLeague(league));
+  // Record and the table's main column (college football: conference and overall records).
+  const miniColumns = usColumns(league).filter((c) => c.main || ["wins", "losses", "overall"].includes(c.stat));
   const { data } = useRemoteData((signal) => fetchStandings(league, signal), [league], null);
   const group = data?.find((g) => g.rows.some((r) => r.id === teamId));
   if (!group) return null;
@@ -75,12 +78,8 @@ function TablePosition({ league, teamId }) {
           <tr>
             <th>#</th>
             <th className="left">Team</th>
-            {basketball ? (
-              <>
-                <th>W</th>
-                <th>L</th>
-                <th>PCT</th>
-              </>
+            {usStyle ? (
+              miniColumns.map((c) => <th key={c.stat}>{c.label}</th>)
             ) : (
               <>
                 <th>P</th>
@@ -102,12 +101,12 @@ function TablePosition({ league, teamId }) {
                   <span>{r.name}</span>
                 </a>
               </td>
-              {basketball ? (
-                <>
-                  <td>{r.won}</td>
-                  <td>{r.lost}</td>
-                  <td className="pts">{r.pct}</td>
-                </>
+              {usStyle ? (
+                miniColumns.map((c) => (
+                  <td key={c.stat} className={c.main ? "pts" : ""}>
+                    {r.stats?.[c.stat]}
+                  </td>
+                ))
               ) : (
                 <>
                   <td>{r.played}</td>
@@ -168,7 +167,7 @@ export default function TeamPage({ league, id, onBack }) {
               </h1>
               {(team.standing || team.record) && (
                 <p className="muted">
-                  {[team.sport === "basketball" && team.record, team.standing].filter(Boolean).join(" · ")}
+                  {[isUsStyle(team.sport) && team.record, team.standing].filter(Boolean).join(" · ")}
                 </p>
               )}
               {form.length > 0 && (

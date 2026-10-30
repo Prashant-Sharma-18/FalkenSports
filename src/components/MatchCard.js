@@ -6,13 +6,14 @@ import TeamLogo from "./TeamLogo";
 import StarButton from "./StarButton";
 import { Football, MapPin } from "./Icons";
 import { CricketScore } from "./CricketDetail";
+import { isUsStyle } from "../sports";
 
 export function MatchStatus({ match }) {
   if (match.state === "in") {
     return (
       <span className="badge live">
         <span className="pulse" />
-        {/* Football shows the minute; basketball's detail already reads "Q3 5:32". */}
+        {/* Football shows the minute; other sports' detail already reads "Q3 5:32", "Top 5th". */}
         <span className="live-text">
           {match.sport !== "football" || match.detail === "HT" ? match.detail : match.clock}
         </span>
@@ -51,6 +52,7 @@ function Scorers({ goals }) {
 export default function MatchCard({ match }) {
   const { isFavorite } = useFavorites();
   const started = match.state !== "pre";
+  const usStyle = isUsStyle(match.sport);
 
   const row = (team, goals) => {
     const fav = isFavorite(team);
@@ -67,10 +69,11 @@ export default function MatchCard({ match }) {
             <StarButton team={team} size={14} />
           </div>
           <Scorers goals={goals} />
-          {match.sport === "basketball" && (team.record || (started && team.leader)) && (
+          {usStyle && (team.record || (started && team.leader)) && (
             <div className="team-meta">
               {team.record && <span>{team.record}</span>}
-              {started && team.leader && <span>{team.leader} pts</span>}
+              {/* Basketball only: a points leader means little in other sports. */}
+              {started && team.leader && match.sport === "basketball" && <span>{team.leader} pts</span>}
             </div>
           )}
         </div>
@@ -109,8 +112,8 @@ export default function MatchCard({ match }) {
         )}
       </header>
       <div className="match-teams-list">
-        {/* Basketball scoreboards list the away team first ("Heat at Hawks"). */}
-        {match.sport === "basketball" ? (
+        {/* US scoreboards list the away team first ("Heat at Hawks"). */}
+        {usStyle ? (
           <>
             {row(match.away, match.goals.away)}
             {row(match.home, match.goals.home)}

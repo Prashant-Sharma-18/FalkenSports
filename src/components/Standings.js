@@ -6,13 +6,55 @@ import useRemoteData from "../useRemoteData";
 import FormPills from "./FormPills";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
-import { hasForm, hasTeamPages, sportOfLeague } from "../sports";
+import { hasForm, hasTeamPages, isUsStyle, sportOfLeague } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 import { Trophy } from "./Icons";
 
+// North American table columns: [ESPN stat, header, tooltip]. The first
+// column marked `main` is highlighted, and is the one team pages show.
+const W = ["wins", "W", "Won"];
+const L = ["losses", "L", "Lost"];
+const PCT = ["winPercent", "PCT", "Win percentage", "main"];
+const GB = ["gamesBehind", "GB", "Games behind"];
+const STRK = ["streak", "STRK", "Current streak"];
+const US_COLUMNS = {
+  basketball: [W, L, PCT, GB, STRK],
+  "american-football": [W, L, ["ties", "T", "Tied"], PCT, ["pointDifferential", "DIFF", "Point difference"], STRK],
+  hockey: [
+    ["gamesPlayed", "GP", "Games played"],
+    W,
+    L,
+    ["otLosses", "OTL", "Overtime losses"],
+    ["points", "PTS", "Points", "main"],
+    STRK,
+  ],
+  baseball: [W, L, PCT, GB, STRK],
+};
+// College football ranks within each conference.
+const LEAGUE_COLUMNS = {
+  "college-football": [
+    ["vs. Conf.", "CONF", "Conference record", "main"],
+    ["overall", "OVR", "Overall record"],
+    ["pointsFor", "PF", "Points for"],
+    ["pointsAgainst", "PA", "Points against"],
+    STRK,
+  ],
+};
+
+export const usColumns = (league) =>
+  (LEAGUE_COLUMNS[league] || US_COLUMNS[sportOfLeague(league)] || []).map(([stat, label, title, main]) => ({
+    stat,
+    label,
+    title,
+    main: main === "main",
+  }));
+
+const streakClass = (v) => (/^W/.test(v) ? "gd-pos" : /^L/.test(v) ? "gd-neg" : "");
+
 export default function Standings({ league }) {
   const sport = sportOfLeague(league);
-  const basketball = sport === "basketball";
+  const usStyle = isUsStyle(sport);
+  const columns = usColumns(league);
   const cricket = sport === "cricket";
   const showForm = hasForm(sport);
   const linkTeams = hasTeamPages(sport);
@@ -70,14 +112,16 @@ export default function Standings({ league }) {
                     <th className="left col-team">Team</th>
                     {cricket ? (
                       <th className="pts" title="Points">Pts</th>
-                    ) : basketball ? (
-                      <>
-                        <th title="Won">W</th>
-                        <th title="Lost">L</th>
-                        <th className="pts" title="Win percentage">PCT</th>
-                        <th title="Games behind">GB</th>
-                        <th className="col-streak" title="Current streak">STRK</th>
-                      </>
+                    ) : usStyle ? (
+                      columns.map((c) => (
+                        <th
+                          key={c.stat}
+                          className={c.main ? "pts" : c.stat === "streak" ? "col-streak" : ""}
+                          title={c.title}
+                        >
+                          {c.label}
+                        </th>
+                      ))
                     ) : (
                       <>
                         <th title="Played">P</th>
@@ -137,20 +181,21 @@ export default function Standings({ league }) {
                         </td>
                         {cricket ? (
                           <td className="pts">{row.points}</td>
-                        ) : basketball ? (
-                          <>
-                            <td className="num-w">{row.won}</td>
-                            <td className="num-l">{row.lost}</td>
-                            <td className="pts">{row.pct}</td>
-                            <td>{row.gb}</td>
-                            <td
-                              className={`col-streak ${
-                                /^W/.test(row.streak) ? "gd-pos" : /^L/.test(row.streak) ? "gd-neg" : ""
-                              }`}
-                            >
-                              {row.streak}
-                            </td>
-                          </>
+                        ) : usStyle ? (
+                          columns.map((c) => {
+                            const v = row.stats?.[c.stat] ?? "";
+                            const cls =
+                              c.main ? "pts"
+                              : c.stat === "streak" ? `col-streak ${streakClass(v)}`
+                              : c.stat === "wins" ? "num-w"
+                              : c.stat === "losses" ? "num-l"
+                              : "";
+                            return (
+                              <td key={c.stat} className={cls}>
+                                {v}
+                              </td>
+                            );
+                          })
                         ) : (
                           <>
                             <td>{row.played}</td>

@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import TeamLogo from "./TeamLogo";
 import { Empty } from "./Status";
 
-// Score by quarter (or half, in men's college) plus the total.
+// Score by period (quarter, half, period or inning) plus the total;
+// baseball adds hits and errors.
 export function Linescore({ match }) {
-  const { labels, home, away } = match.linescore || {};
+  const { labels, home, away, totalLabel = "T", extra = [] } = match.linescore || {};
   if (!labels?.length) {
     return <Empty label={match.state === "pre" ? "The game hasn't started yet." : "No scoring yet."} />;
   }
@@ -20,6 +21,9 @@ export function Linescore({ match }) {
         <td key={l}>{scores[i] ?? "-"}</td>
       ))}
       <td className="ls-total">{team.score ?? "-"}</td>
+      {extra.map((x) => (
+        <td key={x.label}>{x[team === match.home ? "home" : "away"] ?? "-"}</td>
+      ))}
     </tr>
   );
   return (
@@ -31,7 +35,10 @@ export function Linescore({ match }) {
             {labels.map((l) => (
               <th key={l}>{l}</th>
             ))}
-            <th>T</th>
+            <th>{totalLabel}</th>
+            {extra.map((x) => (
+              <th key={x.label}>{x.label}</th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -43,7 +50,7 @@ export function Linescore({ match }) {
   );
 }
 
-// Each team's top performers: points, rebounds, assists.
+// Each team's top performers, e.g. points, rebounds, assists.
 export function Leaders({ match }) {
   const teams = [match.away, match.home]
     .map((team) => ({ team, items: match.leaders?.find((l) => l.teamId === team.id)?.items || [] }))
@@ -81,16 +88,10 @@ export function Leaders({ match }) {
   );
 }
 
-// Player stats per team, starters first; a team switcher keeps it readable on phones.
-export function BoxScore({ match }) {
-  const teams = [match.away, match.home].filter((t) => match.box?.some((b) => b.teamId === t.id));
-  const [teamId, setTeamId] = useState(teams[0]?.id);
-  const box = match.box?.find((b) => b.teamId === teamId) || match.box?.[0];
-  if (!box) return <Empty label="Box score appears once the game starts." />;
-
-  const starters = box.players.filter((p) => p.starter && !p.dnp);
-  const bench = box.players.filter((p) => !p.starter && !p.dnp);
-  const dnp = box.players.filter((p) => p.dnp);
+function BoxTable({ group }) {
+  const shown = group.players.filter((p) => !p.dnp);
+  const starters = group.bench ? shown.filter((p) => p.starter) : shown;
+  const bench = group.bench ? shown.filter((p) => !p.starter) : [];
   const rows = (players) =>
     players.map((p) => (
       <tr key={p.id || p.name}>
@@ -99,12 +100,60 @@ export function BoxScore({ match }) {
           {p.position && <span className="muted small">{p.position}</span>}
         </td>
         {p.stats.map((v, i) => (
-          <td key={i} className={box.columns[i] === "PTS" ? "box-pts" : ""}>
+          <td key={i} className={group.columns[i] === "PTS" ? "box-pts" : ""}>
             {v}
           </td>
         ))}
       </tr>
     ));
+
+  return (
+    <div className="table-scroll">
+      <table className="boxscore">
+        <thead>
+          <tr>
+            <th className="left">{group.title}</th>
+            {group.columns.map((c) => (
+              <th key={c}>{c}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{rows(starters)}</tbody>
+        {bench.length > 0 && (
+          <tbody>
+            <tr className="box-subhead">
+              <th className="left" colSpan={group.columns.length + 1}>
+                Bench
+              </th>
+            </tr>
+            {rows(bench)}
+          </tbody>
+        )}
+        {group.totals && (
+          <tfoot>
+            <tr>
+              <td className="left">Team</td>
+              {group.totals.map((v, i) => (
+                <td key={i}>{v}</td>
+              ))}
+            </tr>
+          </tfoot>
+        )}
+      </table>
+    </div>
+  );
+}
+
+// Player stats per team, one table per stat group (basketball: starters,
+// then the bench); a team switcher keeps it readable on phones.
+export function BoxScore({ match }) {
+  const teams = [match.away, match.home].filter((t) => match.box?.some((b) => b.teamId === t.id));
+  const [teamId, setTeamId] = useState(teams[0]?.id);
+  const box = match.box?.find((b) => b.teamId === teamId) || match.box?.[0];
+  if (!box?.groups.length) return <Empty label="Box score appears once the game starts." />;
+
+  // Listed by name only where a whole squad is in the group (basketball).
+  const dnp = box.groups.filter((g) => g.bench).flatMap((g) => g.players.filter((p) => p.dnp));
 
   return (
     <div>
@@ -122,39 +171,9 @@ export function BoxScore({ match }) {
           </button>
         ))}
       </div>
-      <div className="table-scroll">
-        <table className="boxscore">
-          <thead>
-            <tr>
-              <th className="left">Starters</th>
-              {box.columns.map((c) => (
-                <th key={c}>{c}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>{rows(starters)}</tbody>
-          {bench.length > 0 && (
-            <tbody>
-              <tr className="box-subhead">
-                <th className="left" colSpan={box.columns.length + 1}>
-                  Bench
-                </th>
-              </tr>
-              {rows(bench)}
-            </tbody>
-          )}
-          {box.totals && (
-            <tfoot>
-              <tr>
-                <td className="left">Team</td>
-                {box.totals.map((v, i) => (
-                  <td key={i}>{v}</td>
-                ))}
-              </tr>
-            </tfoot>
-          )}
-        </table>
-      </div>
+      {box.groups.map((g) => (
+        <BoxTable key={g.title} group={g} />
+      ))}
       {dnp.length > 0 && (
         <p className="muted small box-dnp">
           Did not play: {dnp.map((p) => p.short + (p.reason ? ` (${p.reason.toLowerCase()})` : "")).join(", ")}
