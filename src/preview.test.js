@@ -71,7 +71,7 @@ const summary = () => ({
     {
       team: { id: '1' },
       leaders: [
-        { name: 'goalsLeaders', leaders: [{ athlete: { displayName: 'Red Striker' }, mainStat: { value: '6' }, summary: '7 APP' }] },
+        { name: 'goalsLeaders', displayName: 'Goals', leaders: [{ athlete: { displayName: 'Red Striker' }, mainStat: { value: '6' }, summary: '7 APP' }] },
         { name: 'totalShots', leaders: [{ athlete: { displayName: 'Shooter' }, displayValue: '20' }] },
       ],
     },
@@ -87,15 +87,17 @@ beforeEach(() => {
   clearRequestCache();
   window.location.hash = '';
   localStorage.clear();
-  global.fetch = jest.fn((url) => respond(url.includes('/summary') ? summary() : { events: [] }));
+  global.fetch = jest.fn((url) =>
+    respond(url.includes('/summary') ? (url.includes('/nba/') ? nbaSummary() : summary()) : { events: [] })
+  );
 });
 
 test('the preview has past meetings, both table rows, season totals, top players and US channels', async () => {
   const { preview: p } = await fetchMatch('eng.1', '1');
   expect(p.h2h.map((g) => g.competition)).toEqual(['Premier League', 'Premier League', 'Club Friendly']);
-  expect(p.table.map((r) => [r.name, r.rank])).toEqual([['Blues', 2], ['Reds', 4]]);
+  expect(p.table.rows.map((r) => [r.name, r.rank, r.cells.at(-1)])).toEqual([['Blues', 2, '21'], ['Reds', 4, '15']]);
   expect(p.season.find((s) => s.label === 'Goals conceded')).toMatchObject({ lowerIsBetter: true });
-  expect(p.leaders['1']).toEqual([{ label: 'Goals', name: 'Red Striker', value: '6', apps: 7 }]);
+  expect(p.leaders['1']).toEqual([{ label: 'Goals', name: 'Red Striker', value: '6', note: 'Goals in 7 games' }]);
   expect(p.broadcasts).toEqual(['Peacock']);
 });
 
@@ -114,4 +116,84 @@ test('before kick-off the summary shows the preview', async () => {
   expect(screen.getByText('Peacock')).toBeInTheDocument();
   // No "match hasn't started" placeholder when there's a preview.
   expect(screen.queryByText("The match hasn't started yet.")).toBeNull();
+});
+
+// Celtics at Magic, tip-off to come; they met once already.
+const nbaSummary = () => ({
+  header: {
+    competitions: [
+      {
+        date: '2026-11-01T23:00Z',
+        status: { type: { state: 'pre', detail: 'Sun, November 1st at 7:00 PM EST' } },
+        competitors: [
+          { homeAway: 'home', team: team('19', 'Orlando Magic', 'ORL', '0077c0') },
+          { homeAway: 'away', team: team('2', 'Boston Celtics', 'BOS', '008348') },
+        ],
+      },
+    ],
+  },
+  seasonseries: [
+    {
+      summary: 'BOS leads series 1-0',
+      events: [
+        {
+          id: '700', date: '2026-10-22T23:00Z', status: 'post',
+          competitors: [
+            { homeAway: 'home', score: '101', winner: false, team: { id: '19', abbreviation: 'ORL' } },
+            { homeAway: 'away', score: '110', winner: true, team: { id: '2', abbreviation: 'BOS' } },
+          ],
+        },
+        { id: '701', date: '2026-11-01T23:00Z', status: 'pre', competitors: [] },
+      ],
+    },
+  ],
+  standings: {
+    groups: [
+      {
+        header: '2026-27 Atlantic Standings',
+        standings: {
+          entries: [
+            { id: '20', team: 'Philadelphia', stats: [{ name: 'wins', displayValue: '3' }, { name: 'losses', displayValue: '2' }, { name: 'winPercent', displayValue: '.600' }] },
+            { id: '2', team: 'Boston', stats: [{ name: 'wins', displayValue: '4' }, { name: 'losses', displayValue: '1' }, { name: 'winPercent', displayValue: '.800' }, { name: 'gamesBehind', displayValue: '-' }] },
+          ],
+        },
+      },
+      {
+        header: '2026-27 Southeast Standings',
+        standings: {
+          entries: [{ id: '19', team: 'Orlando', stats: [{ name: 'wins', displayValue: '3' }, { name: 'losses', displayValue: '2' }, { name: 'winPercent', displayValue: '.600' }] }],
+        },
+      },
+    ],
+  },
+  injuries: [
+    {
+      team: { id: '19' },
+      injuries: [{ status: 'Out', athlete: { displayName: 'Jalen Suggs', position: { abbreviation: 'G' } }, details: { type: 'Knee', side: 'Right' } }],
+    },
+  ],
+  predictor: { homeTeam: { id: '19', gameProjection: '35.7' }, awayTeam: { id: '2', gameProjection: '64.3' } },
+});
+
+test('US games get a preview too, away team first', async () => {
+  const { preview: p, stats } = await fetchMatch('nba', '2');
+  // Only finished meetings; the note is ESPN's.
+  expect(p.h2h.map((g) => g.id)).toEqual(['700']);
+  expect(p.h2hNote).toBe('BOS leads series 1-0');
+  // Each team from its own division, away first.
+  expect(p.table.rows.map((r) => [r.name, r.rank, r.note, r.cells[0]])).toEqual([
+    ['Boston Celtics', 1, '1st in Atlantic', '4-1'],
+    ['Orlando Magic', 1, '1st in Southeast', '3-2'],
+  ]);
+  expect(p.injuries['19']).toEqual([{ name: 'Jalen Suggs', position: 'G', status: 'Out', detail: 'Knee, Right' }]);
+  expect(p.predictor).toEqual({ 19: 35.7, 2: 64.3 });
+  expect(stats).toEqual([]);
+
+  window.location.hash = '#/basketball/match/nba/2';
+  render(<App />);
+  expect(await screen.findByRole('heading', { name: /Season series/ })).toBeInTheDocument();
+  expect(screen.getByRole('img', { name: 'Boston Celtics 64.3%, Orlando Magic 35.7%' })).toBeInTheDocument();
+  expect(screen.queryByText('Draws')).toBeNull();
+  expect(screen.getByText('Jalen Suggs')).toBeInTheDocument();
+  expect(screen.getByText('None reported')).toBeInTheDocument();
 });

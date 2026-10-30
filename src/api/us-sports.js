@@ -1,6 +1,17 @@
 // Game centre for North American sports (basketball, American football,
 // hockey, baseball): line score, leaders, team stats, box score, plays.
 import { situationOf, statRows } from "./common";
+import {
+  formOf,
+  injuriesOf,
+  keyPlayersOf,
+  meetingsOf,
+  predictorOf,
+  preview,
+  seasonRows,
+  statOf,
+  toNumber,
+} from "./preview";
 
 const BASKETBALL_STATS = [
   ["fieldGoalPct", "Field goal", "%"],
@@ -231,7 +242,104 @@ export function usDetail(s, sport, league, detail, home, away, homeRaw, awayRaw)
     box: boxScoreOf(s, sport),
     leaders,
     plays,
+    form: formOf(s),
+    preview: gamePreview(s, sport, home, away),
   };
+}
+
+// Before a game ESPN's boxscore holds season averages: [name, label, suffix,
+// lowerIsBetter].
+const SEASON_STATS = {
+  basketball: [
+    ["avgPoints", "Points per game"],
+    ["avgPointsAgainst", "Points allowed", "", true],
+    ["fieldGoalPct", "Field goal %", "%"],
+    ["threePointFieldGoalPct", "Three point %", "%"],
+    ["avgRebounds", "Rebounds"],
+    ["avgAssists", "Assists"],
+  ],
+  "american-football": [
+    ["totalPointsPerGame", "Points per game"],
+    ["totalPointsPerGameAllowed", "Points allowed", "", true],
+    ["yardsPerGame", "Yards per game"],
+    ["yardsPerGameAllowed", "Yards allowed", "", true],
+    ["passingYardsPerGame", "Passing yards"],
+    ["rushingYardsPerGame", "Rushing yards"],
+  ],
+  hockey: [
+    ["avgGoals", "Goals per game"],
+    ["avgGoalsAgainst", "Goals against", "", true],
+    ["avgShots", "Shots per game"],
+    ["powerPlayPct", "Power play", "%"],
+    ["penaltyKillPct", "Penalty kill", "%"],
+  ],
+};
+
+// Standings columns: hockey ranks by points, the rest by winning percentage.
+const record = (e) =>
+  statOf(e, "overall") || [statOf(e, "wins"), statOf(e, "losses")].filter((x) => x != null).join("-");
+const STANDINGS_COLUMNS = {
+  hockey: [
+    { label: "W-L-OT", title: "Won-lost-overtime losses", value: (e) => [statOf(e, "wins"), statOf(e, "losses"), statOf(e, "otLosses")].join("-") },
+    { label: "Pts", title: "Points", value: (e) => statOf(e, "points"), strong: true },
+  ],
+  "american-football": [
+    { label: "W-L", title: "Record", value: record, strong: true },
+    { label: "PF", title: "Points for", value: (e) => statOf(e, "pointsFor") },
+    { label: "PA", title: "Points against", value: (e) => statOf(e, "pointsAgainst") },
+  ],
+  default: [
+    { label: "W-L", title: "Record", value: record, strong: true },
+    { label: "Pct", title: "Winning percentage", value: (e) => statOf(e, "winPercent") },
+    { label: "GB", title: "Games behind", value: (e) => statOf(e, "gamesBehind") },
+  ],
+};
+
+const ordinal = (n) => `${n}${["th", "st", "nd", "rd"][n % 100 > 10 && n % 100 < 14 ? 0 : n % 10] || "th"}`;
+
+// Each team's row from its own division (they're often in different ones),
+// with its place there: "2nd in Atlantic". Away team first, as on the page.
+function standingsOf(s, sport, home, away) {
+  const columns = STANDINGS_COLUMNS[sport] || STANDINGS_COLUMNS.default;
+  const groups = s.standings?.groups || [];
+  const rowFor = (team) => {
+    const group = groups.find((g) => (g.standings?.entries || []).some((e) => String(e.id) === team.id));
+    if (!group) return null;
+    const by = sport === "hockey" ? "points" : "winPercent";
+    const ranked = [...group.standings.entries].sort(
+      (a, b) => (toNumber(statOf(b, by)) ?? 0) - (toNumber(statOf(a, by)) ?? 0)
+    );
+    const rank = ranked.findIndex((e) => String(e.id) === team.id) + 1;
+    const entry = ranked[rank - 1];
+    // "2026-27 Atlantic Standings" -> "Atlantic"
+    const division = (group.header || "").replace(/^\d{4}(-\d{2})?\s+/, "").replace(/\s*Standings$/, "");
+    return {
+      id: team.id,
+      name: team.name,
+      logo: team.logo,
+      rank,
+      note: division ? `${ordinal(rank)} in ${division}` : null,
+      cells: columns.map((c) => c.value(entry) || "–"),
+    };
+  };
+  const rows = [rowFor(away), rowFor(home)];
+  return rows.every(Boolean) ? { title: "Standings", columns, rows } : null;
+}
+
+// Before a game: this season's meetings, standings, season averages, each
+// team's leaders, injuries and ESPN's predictor.
+function gamePreview(s, sport, home, away) {
+  const h2h = meetingsOf(s);
+  return preview({
+    h2h,
+    // "CAR leads series 1-0"
+    h2hNote: h2h.length ? s.seasonseries?.[0]?.summary || null : null,
+    table: standingsOf(s, sport, home, away),
+    season: seasonRows(s, home, away, SEASON_STATS[sport] || []),
+    leaders: keyPlayersOf(s, { max: 3 }),
+    injuries: injuriesOf(s),
+    predictor: predictorOf(s, home, away),
+  });
 }
 
 // What a game's own scoreboard entry adds to the summary: the live situation,

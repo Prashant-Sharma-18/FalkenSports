@@ -740,6 +740,10 @@
   line-height: 1.1;
 }
 
+.h2h-tally-two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .h2h-bar {
   display: flex;
   gap: 3px;
@@ -833,6 +837,7 @@ li:last-child > .h2h-game {
 }
 
 .preview-table th {
+  white-space: nowrap;
   padding: 0 4px 6px;
   color: var(--muted);
   font-size: 0.68rem;
@@ -868,6 +873,19 @@ td.pt-team {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.pt-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.pt-note {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
 }
 
 .pt-rank {
@@ -909,7 +927,7 @@ td.pt-team {
 /* Key players */
 .key-players {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -938,16 +956,19 @@ td.pt-team {
   background: var(--surface-2);
 }
 
+/* A round badge that stretches into a pill for "1,504" or "28.8". */
 .key-value {
   display: grid;
   flex: none;
   place-items: center;
-  width: 32px;
+  min-width: 32px;
   height: 32px;
-  border-radius: 50%;
+  padding: 0 7px;
+  border-radius: 999px;
   font-family: var(--font-mono);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .key-left .key-value {
@@ -981,6 +1002,54 @@ td.pt-team {
   font-size: 0.7rem;
 }
 
+/* Injuries */
+/* Name first, then the status and what it is, so long statuses
+   ("Injured reserve") never squeeze the name. */
+.injury {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.injury:last-child {
+  border-bottom: none;
+}
+
+.injury-status {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(234, 179, 8, 0.16);
+  color: #a16207;
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.injury-status.out {
+  background: var(--live-soft);
+  color: var(--live);
+}
+
+:root[data-theme="dark"] .injury-status:not(.out) {
+  color: #facc15;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .injury-status:not(.out) {
+    color: #facc15;
+  }
+}
+
+.injury-pos {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
 /* ---- Phones ---- */
 .layout-compact .h2h-game {
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) auto minmax(0, 1fr);
@@ -988,8 +1057,7 @@ td.pt-team {
   font-size: 0.76rem;
 }
 
-.layout-compact .preview-table th:nth-child(4),
-.layout-compact .preview-table td:nth-child(4) {
+.layout-compact .pt-hide-phone {
   display: none;
 }
 

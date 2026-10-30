@@ -68,5 +68,7 @@ const otherLeague = (s, league) => {
 // Summary detail plus the scoreboard's extras; summary leaders win when present.
 function usGame(base, detail, extras) {
   const leaders = detail.leaders.some((l) => l.items.length) ? detail.leaders : extras.leaders || [];
-  return { ...base, ...detail, leaders, situation: extras.situation || null };
+  // Before a game the boxscore holds season averages, not this game's stats.
+  const stats = base.state === "pre" ? [] : detail.stats;
+  return { ...base, ...detail, stats, leaders, situation: extras.situation || null };
 }

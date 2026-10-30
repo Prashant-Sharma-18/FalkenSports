@@ -1,6 +1,17 @@
 // Football (soccer) match centre: key events, line-ups, form and commentary.
 // Rugby uses it too: ESPN gives rugby line-ups and form, but no events or stats.
 import { hexColour, statRows } from "./common";
+import {
+  broadcastsOf,
+  formOf,
+  keyPlayersOf,
+  meetingsOf,
+  predictorOf,
+  preview,
+  seasonRows,
+  statOf,
+  toNumber,
+} from "./preview";
 
 const FOOTBALL_STATS = [
   ["possessionPct", "Possession", "%"],
@@ -87,19 +98,7 @@ export function footballDetail(s, home, away) {
       };
     });
 
-  const form = Object.fromEntries(
-    (s.lastFiveGames || []).map((t) => [
-      t.team?.id,
-      (t.events || []).map((g) => ({
-        id: g.id,
-        result: g.gameResult,
-        score: g.score,
-        opponent: g.opponent?.displayName,
-        atVs: g.atVs,
-        date: g.gameDate ? new Date(g.gameDate) : null,
-      })),
-    ])
-  );
+  const form = formOf(s);
 
   const commentary = (s.commentary || [])
     .filter((c) => c.text)
@@ -117,103 +116,48 @@ export function footballDetail(s, home, away) {
 }
 
 // Before kick-off ESPN's boxscore holds each side's season totals instead.
+// Fewer goals conceded is the better number.
 const SEASON_STATS = [
   ["totalGoals", "Goals scored"],
-  ["goalsConceded", "Goals conceded"],
+  ["goalsConceded", "Goals conceded", "", true],
   ["goalAssists", "Assists"],
 ];
 
-const toNumber = (v) => {
-  const n = parseInt(v, 10);
-  return Number.isNaN(n) ? null : n;
-};
+const TABLE_COLUMNS = [
+  { label: "P", title: "Played", stat: "gamesPlayed" },
+  { label: "W-D-L", title: "Won-drawn-lost", stat: "overall", phoneHide: true },
+  { label: "GD", title: "Goal difference", stat: "pointDifferential" },
+  { label: "Pts", title: "Points", stat: "points", strong: true },
+];
 
-// What there is to know before a match: past meetings, where both teams stand,
-// their season so far, their top scorers and where it's on.
-export function matchPreview(s, home, away) {
-  const side = (c) => ({
-    id: c.team?.id,
-    name: c.team?.displayName,
-    short: c.team?.abbreviation,
-    logo: c.team?.logo || c.team?.logos?.[0]?.href,
-    score: c.score,
-    winner: Boolean(c.winner),
-  });
-  // "2025-26 English Premier League" -> "English Premier League", shortened to
-  // "Premier League" when it's this match's league.
-  const league = s.header?.league;
-  const competitionOf = (name = "") => {
-    const plain = name.replace(/^\d{4}(-\d{2})?\s+/, "");
-    return plain === league?.name ? league.shortName || plain : plain;
-  };
-  const h2h = (s.seasonseries || [])
-    .flatMap((series) => series.events || [])
-    .filter((e) => e.status === "post" || e.statusType?.completed)
-    .map((e) => {
-      const teams = e.competitors || [];
-      return {
-        id: e.id,
-        date: e.date ? new Date(e.date) : null,
-        competition: competitionOf(e.competitionName),
-        home: side(teams.find((c) => c.homeAway === "home") || {}),
-        away: side(teams.find((c) => c.homeAway === "away") || {}),
-      };
-    })
-    .filter((g) => g.home.id && g.away.id && g.home.score != null);
-
-  // Only the table (or the group, in cups) that has these two teams in it.
+// Where both teams stand: only the table (or the group, in cups) holding them.
+function tableOf(s, home, away) {
   const ids = [home.id, away.id];
   const group = (s.standings?.groups || []).find((g) =>
     (g.standings?.entries || []).some((e) => ids.includes(String(e.id)))
   );
-  const stat = (e, name) => e.stats?.find((x) => x.name === name)?.displayValue;
-  const table = (group?.standings?.entries || [])
+  const rows = (group?.standings?.entries || [])
     .filter((e) => ids.includes(String(e.id)))
     .map((e) => ({
       id: String(e.id),
       name: e.team,
       logo: e.logo?.[0]?.href,
-      rank: toNumber(stat(e, "rank")),
-      played: stat(e, "gamesPlayed"),
-      record: stat(e, "overall"),
-      gd: stat(e, "pointDifferential"),
-      points: stat(e, "points"),
+      rank: toNumber(statOf(e, "rank")),
+      cells: TABLE_COLUMNS.map((c) => statOf(e, c.stat) ?? "–"),
     }))
     .sort((a, b) => (a.rank ?? 99) - (b.rank ?? 99));
+  return rows.length === 2 ? { title: "League position", columns: TABLE_COLUMNS, rows } : null;
+}
 
-  // Season totals, as stat rows (only when both sides have them). Fewer
-  // goals conceded is the better number.
-  const season = statRows(s, home, away, SEASON_STATS).map((r) =>
-    r.label === "Goals conceded" ? { ...r, lowerIsBetter: true } : r
-  );
-
-  const leaders = Object.fromEntries(
-    (s.leaders || []).map((t) => [
-      t.team?.id,
-      (t.leaders || [])
-        .filter((c) => ["goalsLeaders", "assistsLeaders"].includes(c.name))
-        .map((c) => {
-          const top = c.leaders?.[0];
-          return top && {
-            label: c.name === "goalsLeaders" ? "Goals" : "Assists",
-            name: top.athlete?.displayName,
-            value: top.mainStat?.value ?? top.displayValue,
-            apps: toNumber(top.summary),
-          };
-        })
-        .filter((l) => l && l.name && Number(l.value) > 0),
-    ])
-  );
-
-  // US channels and streams ("Peacock", "Telemundo"), once each.
-  const broadcasts = [
-    ...new Set(
-      (s.broadcasts || [])
-        .filter((b) => !b.region || b.region === "us")
-        .map((b) => b.media?.name || b.media?.shortName)
-        .filter(Boolean)
-    ),
-  ];
-
-  return { h2h, table: table.length === 2 ? table : [], season, leaders, broadcasts };
+// What there is to know before a match: past meetings, where both teams stand,
+// their season so far, their top scorer and provider, and where it's on.
+export function matchPreview(s, home, away) {
+  return preview({
+    h2h: meetingsOf(s),
+    table: tableOf(s, home, away),
+    season: seasonRows(s, home, away, SEASON_STATS),
+    leaders: keyPlayersOf(s, { only: ["goalsLeaders", "assistsLeaders"] }),
+    predictor: predictorOf(s, home, away),
+    broadcasts: broadcastsOf(s),
+  });
 }

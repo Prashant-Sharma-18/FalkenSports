@@ -141,6 +141,20 @@ function Form({ team, games }) {
   );
 }
 
+// Both teams' last five results, in the header's left/right order.
+function RecentForm({ match }) {
+  const teams = sides(match);
+  if (!teams.some((t) => match.form?.[t.id]?.length)) return null;
+  return (
+    <div className="form-block">
+      <h3 className="panel-title">Recent Form</h3>
+      {teams.map((t) => (
+        <Form key={t.id} team={t} games={match.form[t.id]} />
+      ))}
+    </div>
+  );
+}
+
 // Team stats in the teams' colours. Possession leads as one split bar; every
 // other stat has a bar per team growing out from the middle.
 function Stats({ match }) {
@@ -453,9 +467,18 @@ export default function MatchDetail({ league, id, onBack }) {
           <div className="card panel">
             {activeTab === "summary" && usStyle && (
               <>
-                <Situation match={match} />
-                <Linescore match={match} />
-                <Leaders match={match} />
+                {match.state === "pre" && hasPreview(match) ? (
+                  <>
+                    <MatchPreview match={match} />
+                    <RecentForm match={match} />
+                  </>
+                ) : (
+                  <>
+                    <Situation match={match} />
+                    <Linescore match={match} />
+                    <Leaders match={match} />
+                  </>
+                )}
               </>
             )}
             {activeTab === "summary" && cricket && <CricketSummary match={match} />}
@@ -468,14 +491,7 @@ export default function MatchDetail({ league, id, onBack }) {
                   // ESPN has no rugby match events, so there's no timeline to show.
                   (match.sport !== "rugby" || match.events.length > 0) && <Timeline match={match} />
                 )}
-                {(match.form[match.home.id]?.length > 0 ||
-                  match.form[match.away.id]?.length > 0) && (
-                  <div className="form-block">
-                    <h3 className="panel-title">Recent Form</h3>
-                    <Form team={match.home} games={match.form[match.home.id]} />
-                    <Form team={match.away} games={match.form[match.away.id]} />
-                  </div>
-                )}
+                <RecentForm match={match} />
                 {match.state === "pre" && match.lineups.length === 0 && (
                   <p className="muted small center">
                     Line-ups usually appear about an hour before kick-off.
