@@ -62,19 +62,20 @@ function RowCricketScore({ score }) {
   );
 }
 
-// The left column: kick-off time, "FT", or a pulsing dot and the minute.
+// Breaks in play: shown plainly, without the pulsing dot.
+const PAUSED = /stumps|lunch|tea|drinks|^ht$|half ?time|break|delay|suspend|end of/i;
+
+// The left column, one line: kick-off time, "FT", a pulsing dot and the
+// minute ("62'", "Q3 5:32"), or a break ("Stumps", "HT").
 function StatusCell({ match }) {
   if (match.state === "in") {
-    // Football shows the minute; other sports' detail reads "Q3 5:32", "Top 5th", "Stumps".
-    const now = match.sport !== "football" || match.detail === "HT" ? match.detail : match.clock;
+    // Football shows the minute; other sports' detail reads "Q3 5:32", "Top 5th".
+    const now = (match.sport !== "football" || match.detail === "HT" ? match.detail : match.clock) || "Live";
+    if (PAUSED.test(now)) return <span className="row-status row-status-paused">{now}</span>;
     return (
       <span className="row-status row-status-live">
-        <span className="row-live-tag">
-          <span className="pulse" />
-          Live
-        </span>
-        {/* Only when it adds something: ESPN's detail is sometimes just "Live". */}
-        {now && !/^live$/i.test(now) && <span className="row-status-detail">{now}</span>}
+        <span className="pulse" />
+        <span>{now}</span>
       </span>
     );
   }
@@ -160,9 +161,10 @@ export default function MatchCard({ match }) {
         {/* US scoreboards list the away team first ("Heat at Hawks"). */}
         {usStyle ? side(match.away) : side(match.home)}
         {usStyle ? side(match.home) : side(match.away)}
-        {note.length > 0 && <p className="row-note">{note.join(" · ")}</p>}
-        <Situation match={match} compact />
       </div>
+      {/* Below the teams, so the status lines up with the two sides alone. */}
+      {note.length > 0 && <p className="row-note">{note.join(" · ")}</p>}
+      <Situation match={match} compact />
     </Row>
   );
 }

@@ -112,18 +112,6 @@ a.match-row-card:hover {
   background: var(--surface-2);
 }
 
-/* Live games carry a red edge; red is kept for live alone. */
-.match-row-card.is-live::before {
-  content: "";
-  position: absolute;
-  top: 8px;
-  bottom: 8px;
-  left: 0;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: var(--live);
-}
-
 /* Status column: time, result, or live and the minute. */
 .row-status {
   display: flex;
@@ -149,28 +137,31 @@ a.match-row-card:hover {
   text-transform: uppercase;
 }
 
+/* Live: a pulsing dot and the minute, on one line. Red is kept for live alone. */
 .row-status-live {
-  color: var(--live);
-}
-
-.row-live-tag {
-  display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 5px;
-  font-size: 0.6rem;
+  color: var(--live);
+  font-size: 0.74rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
 }
 
-.row-live-tag .pulse {
+.row-status-live .pulse {
+  flex: none;
   width: 6px;
   height: 6px;
 }
 
-.row-status-detail {
-  font-size: 0.74rem;
-  font-weight: 800;
+/* A tighter ring than badges use, so it doesn't spread over the minute. */
+.row-status-live .pulse::after {
+  inset: -1px;
+}
+
+/* A break in play (stumps, half-time): live, but nothing happening. */
+.row-status-paused {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
 }
 
 /* The two sides. */
@@ -276,8 +267,18 @@ a.match-row-card:hover {
   color: var(--text-secondary);
 }
 
-.row-sides .situation-compact {
-  margin-top: 4px;
+/* The note and live situation sit under the teams, in the second column. */
+.match-row-card .row-note,
+.match-row-card .situation-compact {
+  grid-column: 2;
+}
+
+.match-row-card .row-note {
+  margin-top: 5px;
+}
+
+.match-row-card .situation-compact {
+  margin-top: 6px;
   padding-top: 7px;
 }
 
