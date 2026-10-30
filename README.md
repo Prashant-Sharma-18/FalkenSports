@@ -1,7 +1,7 @@
 # FalkenSports — free live scores & news
 
 A free, installable, multi-sport web app for live scores, game centres, team
-pages, standings and news. Football, basketball, cricket, rugby, American football, hockey, baseball, tennis, Formula 1, golf and UFC today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
+pages, standings and news. Football, basketball, cricket, rugby, American football, NHL (ice hockey), baseball, tennis, Formula 1, golf and UFC today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
 JSON feeds, called directly from the browser.
 
 **Football:** Premier League, LaLiga, Bundesliga, Serie A, Ligue 1, Champions
@@ -14,7 +14,7 @@ pages also include domestic cups and friendlies).
 **Cricket:** every series being played (internationals, tours, domestic), plus
 IPL, Big Bash, WBBL, PSL, Ranji Trophy, Sheffield Shield, County Championship.
 
-**American football:** NFL, NCAA Football. **Hockey:** NHL. **Baseball:** MLB.
+**American football:** NFL, NCAA Football. **NHL** (ice hockey). **Baseball:** MLB.
 
 **Rugby:** Six Nations, Premiership, URC, Top 14, Champions Cup, Super Rugby,
 Rugby Championship, World Cup.
@@ -28,7 +28,7 @@ Rugby Championship, World Cup.
   match minute, goal scorers, a day strip that jumps between match days, live filter.
 - **Match centre (football)** — goals/cards/subs timeline, team stats, line-ups,
   commentary, recent form. Refreshes every 30 s while live.
-- **Game centre (basketball, American football, hockey, baseball)** — score by
+- **Game centre (basketball, American football, NHL, baseball)** — score by
   period (baseball: by inning with runs, hits and errors), game leaders, team
   stats, box score per team (passing/rushing/…, skaters and goalies, batters and
   pitchers), play-by-play with scoring plays highlighted. Live NFL games show
@@ -46,7 +46,7 @@ Rugby Championship, World Cup.
   league position.
 - **Tables** — ESPN's real qualification and relegation zones, last-five form;
   North American leagues show their own columns (W/L, PCT, games behind, OTL and
-  points in hockey, conference records in college football), streaks and playoff seeds.
+  points in the NHL, conference records in college football), streaks and playoff seeds.
 - **Golf** — every tour's live leaderboard (positions with ties, to par, today,
   thru), the season schedule, and a full round-by-round leaderboard per tournament.
 - **UFC** — fight cards by day (main card, prelims, early prelims) with weight
@@ -94,6 +94,9 @@ locally: `npm run build && npx serve -s build`.
 | `src/useRemoteData.js` | Loading, polling (paused in hidden tabs) and refresh |
 | `src/favorites.js`, `src/theme.js` | Favourite teams and theme, persisted locally |
 | `src/components/` | Screens (`Scores`, `MatchDetail`, `TeamPage`, `PlayerPage`, `Favourites`, `Standings`, `News`, F1 `Races` and `RaceDetail`), game centre sections for North American sports (`GameDetail`) and UI pieces |
+| `src/assets/sports/` | The sport icons the app shows (cut from the icon sheet) |
+| `design/sport-icons/` | The full 3D icon library (45 sports) and its source sheet, for future sports |
+| `tools/cut_sport_icons.py` | Re-cuts every icon from the sheet: `python tools/cut_sport_icons.py` |
 | `src/styles/` | Styles, one file per area, imported in cascade order by `App.js` |
 | `src/service-worker.js` | Offline caching (built by Workbox) |
 

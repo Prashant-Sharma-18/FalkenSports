@@ -4,7 +4,7 @@ import basketballImg from "../assets/sports/basketball.png";
 import cricketImg from "../assets/sports/cricket.png";
 import rugbyImg from "../assets/sports/rugby.png";
 import americanFootballImg from "../assets/sports/american-football.png";
-import hockeyImg from "../assets/sports/hockey.png";
+import hockeyImg from "../assets/sports/ice-hockey.png";
 import baseballImg from "../assets/sports/baseball.png";
 import tennisImg from "../assets/sports/tennis.png";
 import f1Img from "../assets/sports/f1.png";

@@ -101,10 +101,13 @@ export const SPORTS = {
       { id: "college-football", name: "NCAA Football" },
     ],
   },
+  // Ice hockey, shown as "NHL" (its only league). The id stays "hockey" so
+  // shared links (#/hockey/...) and followed teams (hockey:20) keep working;
+  // field hockey, when added, gets its own id ("field-hockey").
   hockey: {
     id: "hockey",
     espn: "hockey",
-    name: "Hockey",
+    name: "NHL",
     games: "Games",
     game: "game",
     draws: false,
