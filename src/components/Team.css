@@ -528,9 +528,14 @@ a.team-link:hover .team-name-cell {
   border-radius: 0 8px 8px 0;
 }
 
-.team-side {
-  position: sticky;
-  top: 140px;
+/* The sidebar follows the page down only where it fits on screen: with the
+   news under the table it's tall, and a sticky box taller than the window
+   hides its own bottom. */
+@media (min-height: 900px) {
+  .team-side {
+    position: sticky;
+    top: 140px;
+  }
 }
 
 @media (max-width: 600px) {
@@ -612,4 +617,69 @@ a.team-link:hover .team-name-cell {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Latest news about the team: thumbnail, headline, how long ago. */
+.team-news {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-story {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 0;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.team-news li:first-child .team-story {
+  border-top: none;
+}
+
+.team-story:hover .team-story-title {
+  color: var(--accent);
+}
+
+.team-story-img {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 72px;
+  height: 48px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.team-story-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.team-story-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.team-story-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.team-story-time {
+  color: var(--muted);
+  font-size: 0.72rem;
 }

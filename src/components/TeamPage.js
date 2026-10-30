@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchStandings, fetchTeam, resultFor } from "../api";
+import { fetchStandings, fetchTeam, fetchTeamNews, resultFor } from "../api";
 import { formatTime, fromKey, toKey, todayKey } from "../dates";
 import { routeHref } from "../router";
 import { SPORTS, isUsStyle, leagueName, sportOfLeague } from "../sports";
@@ -8,7 +8,8 @@ import { CompetitionCard } from "./MatchCard";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
 import Banner from "./Banner";
-import { ArrowLeft, CalendarDays, ExternalLink } from "./Icons";
+import { ArrowLeft, CalendarDays, ExternalLink, Newspaper } from "./Icons";
+import { timeAgo } from "./News";
 import { downloadIcs } from "../calendar";
 import { ErrorState, Loading, Empty } from "./Status";
 import { tableColumns } from "./Standings";
@@ -121,6 +122,32 @@ function TablePosition({ league, teamId }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// The latest stories about this team; nothing at all when there are none.
+function TeamNews({ league, teamId }) {
+  const { data } = useRemoteData((signal) => fetchTeamNews(league, teamId, signal), [league, teamId], 10 * 60 * 1000);
+  if (!data?.length) return null;
+  return (
+    <div className="card team-section">
+      <h2 className="panel-title">Latest news</h2>
+      <ul className="team-news">
+        {data.map((a) => (
+          <li key={a.id}>
+            <a className="team-story" href={a.link} target="_blank" rel="noreferrer">
+              <span className="team-story-img">
+                {a.image ? <img src={a.image} alt="" loading="lazy" /> : <Newspaper size={18} />}
+              </span>
+              <span className="team-story-text">
+                <span className="team-story-title">{a.headline}</span>
+                <span className="team-story-time">{timeAgo(a.published)}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -331,6 +358,7 @@ export default function TeamPage({ league, id, onBack }) {
 
             <aside className="team-side">
               <TablePosition league={team.homeLeague} teamId={team.id} />
+              <TeamNews league={team.homeLeague} teamId={team.id} />
             </aside>
           </div>
 

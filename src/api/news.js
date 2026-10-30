@@ -1,19 +1,40 @@
 import { leagueName } from "../sports";
 import { getJson, site } from "./espn";
 
+const article = (a) => ({
+  id: a.id,
+  headline: a.headline,
+  description: a.description,
+  published: new Date(a.published),
+  image: a.images?.[0]?.url,
+  link: a.links.web.href,
+  premium: a.premium,
+});
+
 export async function fetchNews(league, signal) {
   const data = await getJson(`${site(league)}/news?limit=24`, signal);
+  return (data.articles || []).filter((a) => a.links?.web?.href).map(article);
+}
+
+// Stories about one team, newest first. ESPN's team filter also returns
+// round-ups tagged with every club ("Power rankings: all 30 teams"), and some
+// leagues ignore it, so only stories tagged with this team and few others count.
+const MAX_TEAMS_TAGGED = 4;
+
+export async function fetchTeamNews(league, teamId, signal, count = 5) {
+  const data = await getJson(`${site(league)}/news?team=${teamId}&limit=30`, signal);
   return (data.articles || [])
-    .filter((a) => a.links?.web?.href)
-    .map((a) => ({
-      id: a.id,
-      headline: a.headline,
-      description: a.description,
-      published: new Date(a.published),
-      image: a.images?.[0]?.url,
-      link: a.links.web.href,
-      premium: a.premium,
-    }));
+    .filter((a) => {
+      const teams = (a.categories || []).filter((c) => c.type === "team");
+      return (
+        a.links?.web?.href &&
+        teams.length <= MAX_TEAMS_TAGGED &&
+        teams.some((c) => String(c.teamId) === String(teamId))
+      );
+    })
+    .map(article)
+    .sort((a, b) => b.published - a.published)
+    .slice(0, count);
 }
 
 // Home page "Top stories": the newest headlines from a few big leagues, taken
