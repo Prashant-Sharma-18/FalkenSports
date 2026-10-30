@@ -8,14 +8,6 @@
   gap: 14px;
 }
 
-.mode-app-shell .grid {
-  grid-template-columns: 1fr;
-}
-
-.match-group + .match-group {
-  margin-top: 24px;
-}
-
 .group-heading-wrapper {
   display: flex;
   align-items: center;
@@ -55,16 +47,6 @@
   border: 1px solid var(--border);
 }
 
-.star-icon-pill {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--star-soft);
-  color: var(--star);
-}
-
 .league-icon-pill {
   display: grid;
   place-items: center;
@@ -76,61 +58,6 @@
 }
 
 /* Match Card */
-.match {
-  display: flex;
-  flex-direction: column;
-  padding: 14px 16px;
-  text-decoration: none;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  position: relative;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
-}
-
-.match:hover {
-  border-color: var(--border-highlight);
-  box-shadow: var(--shadow);
-  transform: translateY(-1px);
-}
-
-.match.is-live {
-  border-color: rgba(239, 68, 68, 0.4);
-  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
-  box-shadow: 0 3px 16px -2px rgba(239, 68, 68, 0.14);
-}
-
-.match.is-live::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 3.5px;
-  background: var(--live-gradient);
-}
-
-.match-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
-.venue {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--muted);
-  font-size: 0.725rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 190px;
-}
-
 /* Status Badges */
 .badge {
   display: inline-flex;
@@ -187,30 +114,6 @@
 }
 
 /* Match Teams Rows */
-.match-teams-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.team-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 3px 0;
-}
-
-.team-logo-wrap {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  flex: none;
-  border-radius: 6px;
-  background: var(--surface-2);
-  padding: 2px;
-}
-
 .team-logo {
   object-fit: contain;
   max-width: 100%;
@@ -229,19 +132,6 @@
   font-weight: 800;
 }
 
-.team-info {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.team-identity {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .team-name {
   font-weight: 600;
   font-size: 0.925rem;
@@ -249,16 +139,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-secondary);
-}
-
-.team-row.winner .team-name {
-  color: var(--text);
-  font-weight: 800;
-}
-
-.team-name.fav {
-  color: var(--text);
-  font-weight: 700;
 }
 
 .star-btn {
@@ -281,35 +161,6 @@
 .star-btn.on {
   opacity: 1;
   color: var(--star);
-}
-
-.score {
-  min-width: 28px;
-  text-align: right;
-  font-size: 1.25rem;
-  font-weight: 800;
-  font-family: var(--font-mono);
-  color: var(--muted);
-  padding: 2px 4px;
-}
-
-.score-started {
-  color: var(--text-secondary);
-}
-
-.score-upcoming {
-  color: var(--muted);
-  opacity: 0.45;
-  font-size: 1.05rem;
-}
-
-.team-row.winner .score {
-  color: var(--text);
-}
-
-.is-live .score {
-  color: var(--live);
-  font-weight: 800;
 }
 
 /* Scorers */

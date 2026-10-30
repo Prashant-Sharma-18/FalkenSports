@@ -4,7 +4,7 @@ import { formatTime, fromKey, toKey, todayKey } from "../dates";
 import { routeHref } from "../router";
 import { SPORTS, isUsStyle, leagueName, sportOfLeague } from "../sports";
 import useRemoteData from "../useRemoteData";
-import MatchCard from "./MatchCard";
+import { CompetitionCard } from "./MatchCard";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
 import Banner from "./Banner";
@@ -320,14 +320,7 @@ export default function TeamPage({ league, id, onBack }) {
           <div className="team-grid">
             <div className="team-main">
               {team.live.length > 0 ? (
-                <div className="team-section">
-                  <h2 className="panel-title">Live now</h2>
-                  <div className="grid">
-                    {team.live.map((m) => (
-                      <MatchCard key={m.id} match={m} />
-                    ))}
-                  </div>
-                </div>
+                <CompetitionCard title="Live now" matches={team.live} highlight />
               ) : (
                 next && <NextMatch match={next} team={team} />
               )}

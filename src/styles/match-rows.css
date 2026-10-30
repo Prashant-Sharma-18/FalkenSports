@@ -1,0 +1,293 @@
+/* ==========================================================================
+   Competition cards and match rows
+   Every list of games (scores, Live now, My Teams, team pages) is a set of
+   competition cards: a header band, then one row per game. On wide screens
+   the cards flow in columns; on phones they stack.
+   ========================================================================== */
+
+.comp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.layout-compact .comp-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.comp-card {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---- Header band: competition, game count ---- */
+.comp-card-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.comp-card-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.comp-card-title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comp-card-title a {
+  color: inherit;
+}
+
+.comp-card-title a:hover {
+  color: var(--accent);
+}
+
+.comp-card-count {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+/* "Your teams" and a team's live games stand out in gold. */
+.comp-card-highlight {
+  border-color: color-mix(in srgb, var(--star) 40%, var(--border));
+}
+
+.comp-card-highlight .comp-card-head {
+  background: linear-gradient(90deg, var(--star-soft), var(--surface-2));
+}
+
+.comp-card-highlight .comp-card-icon {
+  color: var(--star);
+}
+
+/* ---- A row per game: status | sides and scores ---- */
+.match-row-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: center;
+  padding: 11px 14px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.match-row-card + .match-row-card {
+  border-top: 1px solid var(--border-subtle);
+}
+
+a.match-row-card:hover {
+  background: var(--surface-2);
+}
+
+/* Live games carry a red edge; red is kept for live alone. */
+.match-row-card.is-live::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--live);
+}
+
+/* Status column: time, result, or live and the minute. */
+.row-status {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.row-status-pre {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.row-status-done {
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.row-status-live {
+  color: var(--live);
+}
+
+.row-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.row-live-tag .pulse {
+  width: 6px;
+  height: 6px;
+}
+
+.row-status-detail {
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+/* The two sides. */
+.row-sides {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.row-side {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.row-side .team-logo,
+.row-side .logo-fallback {
+  flex: none;
+}
+
+.row-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-fav {
+  flex: none;
+  display: inline-flex;
+  color: var(--star);
+}
+
+.row-record {
+  flex: none;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.row-score {
+  flex: none;
+  margin-left: auto;
+  padding-left: 8px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 800;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Finished games: the winner stands out, the loser steps back. */
+.row-side.is-winner .row-name {
+  font-weight: 800;
+}
+
+.row-side.is-loser .row-name,
+.row-side.is-loser .row-score {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Cricket: earlier innings small and grey, the current one bold. */
+.row-cricket {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+}
+
+.row-cricket-earlier {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.row-cricket-current {
+  font-size: 0.95rem;
+}
+
+.row-cricket-detail {
+  color: var(--muted);
+  font-family: var(--font-main);
+  font-size: 0.64rem;
+  font-weight: 600;
+}
+
+/* Round, format or weight class, and the result or situation in words. */
+.row-note {
+  margin: 1px 0 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.match-row-card.is-live .row-note {
+  color: var(--text-secondary);
+}
+
+.row-sides .situation-compact {
+  margin-top: 4px;
+  padding-top: 7px;
+}
+
+/* ---- Phones: a little tighter ---- */
+.layout-compact .match-row-card {
+  grid-template-columns: 48px minmax(0, 1fr);
+  column-gap: 10px;
+  padding: 10px 12px;
+}
+
+.layout-compact .comp-card {
+  border-radius: 16px;
+}

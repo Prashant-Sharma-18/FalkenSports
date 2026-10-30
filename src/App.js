@@ -19,6 +19,7 @@ import "./styles/base.css";
 import "./styles/header.css";
 import "./styles/date-strip-and-filters.css";
 import "./styles/match-cards.css";
+import "./styles/match-rows.css";
 import "./styles/bottom-nav.css";
 import "./styles/standings.css";
 import "./styles/match-detail.css";

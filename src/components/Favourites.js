@@ -6,7 +6,7 @@ import { useFavorites } from "../favorites";
 import { DEFAULT_SPORT, SPORTS, SPORT_IDS, canFollow } from "../sports";
 import useRemoteData from "../useRemoteData";
 import DateStrip from "./DateStrip";
-import MatchCard from "./MatchCard";
+import { CompetitionCard } from "./MatchCard";
 import TeamLogo from "./TeamLogo";
 import { Bell, SportIcon, Star, X } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
@@ -104,24 +104,18 @@ export default function Favourites({ date, onDateChange }) {
         />
       )}
 
-      {sections.map((s) => (
-        <div className="match-group" key={s.sport}>
-          <div className="group-heading-wrapper">
-            <h2 className="group-heading">
-              <span className="league-icon-pill">
-                <SportIcon sport={s.sport} size={13} />
-              </span>
-              <span>{SPORTS[s.sport].name}</span>
-            </h2>
-            <span className="group-count-pill">{s.matches.length}</span>
-          </div>
-          <div className="grid">
-            {s.matches.map((m) => (
-              <MatchCard key={m.id} match={m} />
-            ))}
-          </div>
+      {sections.length > 0 && (
+        <div className="comp-grid">
+          {sections.map((s) => (
+            <CompetitionCard
+              key={s.sport}
+              title={SPORTS[s.sport].name}
+              icon={<SportIcon sport={s.sport} size={13} />}
+              matches={s.matches}
+            />
+          ))}
         </div>
-      ))}
+      )}
     </section>
   );
 }

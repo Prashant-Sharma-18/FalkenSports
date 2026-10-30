@@ -101,16 +101,6 @@
 }
 
 /* Basketball cards and header */
-.team-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2px 10px;
-  margin-top: 2px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--muted);
-}
-
 .hero-record {
   font-family: var(--font-mono);
   font-size: 0.75rem;

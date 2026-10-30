@@ -2,11 +2,6 @@
    Tennis and Formula 1
    ========================================================================== */
 
-/* Tennis cards show the whole match, so they aren't links. */
-.card.match.match-tennis {
-  cursor: default;
-}
-
 .seed {
   color: var(--muted);
   font-size: 0.8em;

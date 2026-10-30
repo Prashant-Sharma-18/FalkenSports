@@ -3,9 +3,8 @@ import { formatTime } from "../dates";
 import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
 import TeamLogo from "./TeamLogo";
-import StarButton from "./StarButton";
-import { Football, MapPin } from "./Icons";
-import { CricketScore } from "./CricketDetail";
+import { Star } from "./Icons";
+import { splitCricketScore } from "./CricketDetail";
 import { Situation } from "./GameDetail";
 import { hasMatchPages, isUsStyle } from "../sports";
 
@@ -32,25 +31,6 @@ export function MatchStatus({ match }) {
   );
 }
 
-function Scorers({ goals }) {
-  if (!goals.length) return null;
-  return (
-    <ul className="scorers">
-      {goals.map((g, i) => (
-        <li key={i} className="scorer-item">
-          <span className="scorer-icon" aria-hidden="true">
-            <Football size={11} />
-          </span>
-          <span className="scorer-name">{g.player}</span>
-          <span className="scorer-minute">{g.minute}</span>
-          {g.penalty && <span className="tag-penalty">(pen)</span>}
-          {g.ownGoal && <span className="tag-og">(og)</span>}
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 // Games per set; the set's loser carries the tie-break points (7-6⁵).
 function TennisSets({ sets }) {
   return (
@@ -65,109 +45,142 @@ function TennisSets({ sets }) {
   );
 }
 
+// "154 & 84/1": earlier innings small and grey, the current one bold; overs
+// and target go on a small line underneath.
+function RowCricketScore({ score }) {
+  const { main, detail } = splitCricketScore(score);
+  const innings = main.split(/\s*&\s*/);
+  const current = innings.pop();
+  return (
+    <span className="row-cricket">
+      <span>
+        {innings.length > 0 && <span className="row-cricket-earlier">{innings.join(" & ")} & </span>}
+        <span className="row-cricket-current">{current}</span>
+      </span>
+      {detail && <span className="row-cricket-detail">{detail}</span>}
+    </span>
+  );
+}
+
+// The left column: kick-off time, "FT", or a pulsing dot and the minute.
+function StatusCell({ match }) {
+  if (match.state === "in") {
+    // Football shows the minute; other sports' detail reads "Q3 5:32", "Top 5th", "Stumps".
+    const now = match.sport !== "football" || match.detail === "HT" ? match.detail : match.clock;
+    return (
+      <span className="row-status row-status-live">
+        <span className="row-live-tag">
+          <span className="pulse" />
+          Live
+        </span>
+        {/* Only when it adds something: ESPN's detail is sometimes just "Live". */}
+        {now && !/^live$/i.test(now) && <span className="row-status-detail">{now}</span>}
+      </span>
+    );
+  }
+  if (match.state === "post") {
+    return <span className="row-status row-status-done">{match.detail || "FT"}</span>;
+  }
+  // Tennis order of play may not be set yet ("TBD").
+  return (
+    <span className="row-status row-status-pre">
+      {match.date && !match.timeTbd ? formatTime(match.date) : match.detail || "TBD"}
+    </span>
+  );
+}
+
+// One game as a row: status on the left, the two sides with crests, scores on
+// the right. Following happens on team pages, match pages and search, so rows
+// only show a small star for teams already followed.
 export default function MatchCard({ match }) {
   const { isFavorite } = useFavorites();
   const started = match.state !== "pre";
   const usStyle = isUsStyle(match.sport);
+  const decided = match.state === "post" && (match.home.winner || match.away.winner);
 
-  const row = (team, goals) => {
+  const side = (team) => {
     const fav = isFavorite(team);
-    const isWinner = match.state === "post" && team.winner;
+    const name = (
+      <>
+        {team.name}
+        {team.seed && <span className="seed"> ({team.seed})</span>}
+      </>
+    );
     return (
-      <div className={`team-row ${isWinner ? "winner" : ""}`}>
-        <div className="team-logo-wrap">
-          <TeamLogo src={team.logo} name={team.name} size={28} />
-        </div>
-        <div className="team-info">
-          <div className="team-identity">
-            {/* The star button beside the name already shows favourite state. */}
-            {/* Tennis singles players link to their page (the card itself isn't a link). */}
-            {match.sport === "tennis" && /^\d+$/.test(team.id || "") ? (
-              <a
-                className={`team-name team-link ${fav ? "fav" : ""}`}
-                href={routeHref({ view: "player", league: match.league, id: team.id })}
-              >
-                {team.name}
-                {team.seed && <span className="seed"> ({team.seed})</span>}
-              </a>
-            ) : (
-              <span className={`team-name ${fav ? "fav" : ""}`}>
-                {team.name}
-                {team.seed && <span className="seed"> ({team.seed})</span>}
-              </span>
-            )}
-            <StarButton team={team} size={14} />
-          </div>
-          <Scorers goals={goals} />
-          {/* Season record (US sports) or a fighter's record (UFC). */}
-          {(usStyle || match.sport === "mma") && (team.record || (started && team.leader)) && (
-            <div className="team-meta">
-              {team.record && <span>{team.record}</span>}
-              {/* Basketball only: a points leader means little in other sports. */}
-              {started && team.leader && match.sport === "basketball" && <span>{team.leader} pts</span>}
-            </div>
-          )}
-        </div>
-        {/* Cricket scores are innings text ("406/5d & 79/6 (29 ov)"); empty until a side bats. */}
-        <span
-          className={`score ${started ? "score-started" : "score-upcoming"} ${
-            match.sport === "cricket" ? "score-cricket" : ""
-          }`}
-        >
+      <div className={`row-side ${decided ? (team.winner ? "is-winner" : "is-loser") : ""}`}>
+        <TeamLogo src={team.logo} name={team.name} size={20} />
+        {/* Tennis singles players link to their page (the row itself isn't a link). */}
+        {match.sport === "tennis" && /^\d+$/.test(team.id || "") ? (
+          <a className="row-name team-link" href={routeHref({ view: "player", league: match.league, id: team.id })}>
+            {name}
+          </a>
+        ) : (
+          <span className="row-name">{name}</span>
+        )}
+        {fav && (
+          <span className="row-fav" title="You follow them" aria-label="Followed">
+            <Star size={11} filled />
+          </span>
+        )}
+        {/* Season record (US sports) or a fighter's record (UFC). */}
+        {(usStyle || match.sport === "mma") && team.record && <span className="row-record">{team.record}</span>}
+        <span className="row-score">
           {started && match.sport === "cricket" && team.score ? (
-            <CricketScore score={team.score} />
+            <RowCricketScore score={team.score} />
           ) : started && match.sport === "tennis" && team.sets?.length ? (
             <TennisSets sets={team.sets} />
           ) : started ? (
-            team.score || "-"
+            team.score ?? ""
           ) : (
-            "-"
+            ""
           )}
         </span>
       </div>
     );
   };
 
-  // Sports without match pages (tennis) show the whole match on the card.
+  // Sports without match pages (tennis, UFC) show the whole match in the row.
   const linked = hasMatchPages(match.sport);
-  const Card = linked ? "a" : "div";
+  const Row = linked ? "a" : "div";
+  // Round and court (tennis), format (cricket) or weight class (UFC), then the
+  // result or situation in words.
+  const note = [
+    match.sport === "tennis" && [match.label, match.venue].filter(Boolean).join(" · "),
+    ["mma", "cricket"].includes(match.sport) && [match.format, match.label].filter(Boolean).join(" · "),
+    match.summary,
+  ].filter(Boolean);
 
   return (
-    <Card
-      className={`card match ${match.state === "in" ? "is-live" : ""} ${match.state === "post" ? "is-post" : "is-pre"} ${
-        match.sport === "tennis" ? "match-tennis" : ""
-      }`}
+    <Row
+      className={`match-row-card ${match.state === "in" ? "is-live" : ""}`}
       href={linked ? routeHref({ view: "match", league: match.league, id: match.id }) : undefined}
     >
-      <header className="match-head">
-        <MatchStatus match={match} />
-        {(match.sport === "tennis" || match.sport === "mma") && match.label ? (
-          <span className="match-format">{[match.label, match.venue].filter(Boolean).join(" · ")}</span>
-        ) : match.sport === "cricket" && (match.format || match.label) ? (
-          <span className="match-format">{[match.format, match.label].filter(Boolean).join(" · ")}</span>
-        ) : match.venue && (
-          <span className="venue" title={match.venue}>
-            <MapPin size={11} />
-            <span>{match.venue}</span>
-          </span>
-        )}
-      </header>
-      <div className="match-teams-list">
+      <StatusCell match={match} />
+      <div className="row-sides">
         {/* US scoreboards list the away team first ("Heat at Hawks"). */}
-        {usStyle ? (
-          <>
-            {row(match.away, match.goals.away)}
-            {row(match.home, match.goals.home)}
-          </>
-        ) : (
-          <>
-            {row(match.home, match.goals.home)}
-            {row(match.away, match.goals.away)}
-          </>
-        )}
+        {usStyle ? side(match.away) : side(match.home)}
+        {usStyle ? side(match.home) : side(match.away)}
+        {note.length > 0 && <p className="row-note">{note.join(" · ")}</p>}
+        <Situation match={match} compact />
       </div>
-      <Situation match={match} compact />
-      {match.summary && <p className="match-summary">{match.summary}</p>}
-    </Card>
+    </Row>
+  );
+}
+
+// A competition's games as one card: a header band, then a row per game.
+export function CompetitionCard({ title, href, icon, matches, highlight = false }) {
+  return (
+    <section className={`comp-card ${highlight ? "comp-card-highlight" : ""}`}>
+      <header className="comp-card-head">
+        {icon && <span className="comp-card-icon">{icon}</span>}
+        <h2 className="comp-card-title">{href ? <a href={href}>{title}</a> : title}</h2>
+        <span className="comp-card-count">{matches.length}</span>
+      </header>
+      <div className="comp-card-rows">
+        {matches.map((m) => (
+          <MatchCard key={`${m.sport}:${m.id}`} match={m} />
+        ))}
+      </div>
+    </section>
   );
 }

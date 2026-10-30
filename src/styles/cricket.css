@@ -3,32 +3,6 @@
    ========================================================================== */
 
 /* Innings text ("406/5d & 79/6 (29 ov)") is long, so it gets a smaller face and may wrap. */
-.score.score-cricket {
-  max-width: 48%;
-  font-size: 0.85rem;
-  line-height: 1.3;
-  text-align: right;
-  white-space: normal;
-}
-
-.match-format {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.match-summary {
-  margin: 2px 0 0;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
-  color: var(--accent);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
 .hero-cricket-score {
   font-family: var(--font-mono);
   font-size: 0.95rem;

@@ -3,10 +3,10 @@ import { fetchLiveNow } from "../api";
 import { routeHref } from "../router";
 import { SPORTS, leagueName } from "../sports";
 import useRemoteData from "../useRemoteData";
-import MatchCard from "./MatchCard";
+import { CompetitionCard } from "./MatchCard";
 import { GolfTable } from "./Golf";
 import { SessionList } from "./Races";
-import { Clock, SportIcon } from "./Icons";
+import { Clock, SportIcon, Trophy } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
 
 // Every sport is fetched, so poll gently.
@@ -28,17 +28,15 @@ function SportSection({ sport, groups }) {
         </h2>
         <span className="group-count-pill">{games}</span>
       </div>
-      {/* Competitions flow side by side on wide screens, each with its games stacked. */}
-      <div className="live-competitions">
+      {/* Competitions flow side by side on wide screens. */}
+      <div className="comp-grid">
         {groups.map((g) => (
-          <div className="live-competition" key={g.key || g.league}>
-            <h3 className="live-competition-name">{g.name || leagueName(g.league)}</h3>
-            <div className="grid">
-              {g.matches.map((m) => (
-                <MatchCard key={m.id} match={m} />
-              ))}
-            </div>
-          </div>
+          <CompetitionCard
+            key={g.key || g.league}
+            title={g.name || leagueName(g.league)}
+            icon={<Trophy size={13} />}
+            matches={g.matches}
+          />
         ))}
       </div>
     </div>

@@ -5,7 +5,7 @@ import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
 import useRemoteData from "../useRemoteData";
 import DateStrip from "./DateStrip";
-import MatchCard from "./MatchCard";
+import { CompetitionCard } from "./MatchCard";
 import { SPORTS, isLeagueOf } from "../sports";
 import { RefreshCw, Star, Trophy, Search, SearchX, SportIcon, X } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
@@ -18,15 +18,6 @@ function emptyLabel(date) {
   return /^(Today|Yesterday|Tomorrow)$/.test(label) ? label.toLowerCase() : `on ${label}`;
 }
 
-function MatchGrid({ matches }) {
-  return (
-    <div className="grid">
-      {matches.map((m) => (
-        <MatchCard key={m.id} match={m} />
-      ))}
-    </div>
-  );
-}
 
 export default function Scores({ sport, league, date, onDateChange }) {
   const games = SPORTS[sport].games; // "Matches" / "Games"
@@ -221,47 +212,30 @@ export default function Scores({ sport, league, date, onDateChange }) {
         </div>
       )}
 
-      {/* Pinned Favorite Matches */}
-      {pinned.length > 0 && (
-        <div className="match-group pinned-group">
-          <div className="group-heading-wrapper">
-            <h2 className="group-heading pinned-heading">
-              <span className="star-icon-pill">
-                <Star size={13} filled />
-              </span>
-              <span>Your teams</span>
-            </h2>
-            <span className="group-count-pill">{pinned.length}</span>
-          </div>
-          <MatchGrid matches={pinned} />
+      {/* Followed teams first, then one card per competition, flowing in
+          columns on wide screens. */}
+      {(pinned.length > 0 || groups.length > 0) && (
+        <div className="comp-grid">
+          {pinned.length > 0 && (
+            <CompetitionCard title="Your teams" icon={<Star size={13} filled />} matches={pinned} highlight />
+          )}
+          {groups.map((g) => (
+            <CompetitionCard
+              key={g.key || g.league}
+              title={g.name || leagueName(g.league)}
+              // Only configured competitions have their own page; cricket tours
+              // and tennis tournaments (grouped under ATP / WTA) don't.
+              href={
+                all && isLeagueOf(sport, g.league) && (!g.name || g.name === leagueName(g.league))
+                  ? routeHref({ sport, view: "matches", league: g.league, date })
+                  : null
+              }
+              icon={<Trophy size={13} />}
+              matches={g.matches}
+            />
+          ))}
         </div>
       )}
-
-      {/* Competition Match Groups */}
-      {groups.map((g) => (
-        <div className="match-group" key={g.key || g.league}>
-          {(all || groups.length > 1 || pinned.length > 0 || filterMode === "favs") && (
-            <div className="group-heading-wrapper">
-              <h2 className="group-heading">
-                <span className="league-icon-pill">
-                  <Trophy size={13} />
-                </span>
-                {/* Only configured competitions have their own page; cricket tours and
-                    tennis tournaments (grouped under ATP / WTA) don't. */}
-                {all && isLeagueOf(sport, g.league) && (!g.name || g.name === leagueName(g.league)) ? (
-                  <a href={routeHref({ sport, view: "matches", league: g.league, date })}>
-                    {g.name || leagueName(g.league)}
-                  </a>
-                ) : (
-                  <span>{g.name || leagueName(g.league)}</span>
-                )}
-              </h2>
-              <span className="group-count-pill">{g.matches.length}</span>
-            </div>
-          )}
-          <MatchGrid matches={g.matches} />
-        </div>
-      ))}
 
       {all && data && allMatches.length > 0 && favTeams.length === 0 && !query && (
         <div className="hint-card app-hint-card">
