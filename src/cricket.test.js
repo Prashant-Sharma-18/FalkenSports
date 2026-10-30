@@ -149,3 +149,79 @@ test('cricket match page shows the result and a scorecard tab, without team link
   expect(screen.queryByRole('link', { name: 'Jersey' })).not.toBeInTheDocument();
   expect(document.title).toBe('Kenya v Jersey: Jersey won by 123 runs – FalkenSports');
 });
+
+// Kenya chasing, live: 60/2 after 9.2 overs.
+const player = (id, name) => ({ athlete: { id, displayName: name } });
+const ball = (seq, over, shortText, scoreValue, extra = {}) => ({
+  id: String(seq),
+  sequence: seq,
+  period: 2,
+  shortText,
+  scoreValue,
+  boundary: scoreValue >= 4,
+  over: { number: over },
+  batsman: { ...player('k3', 'Kenya Three'), totalRuns: 20, faced: 15, fours: 2, sixes: 1 },
+  otherBatsman: { ...player('k4', 'Kenya Four'), totalRuns: 8, faced: 6, fours: 1, sixes: 0 },
+  bowler: { ...player('j5', 'Jersey Seamer'), overs: 2.2, maidens: 0, conceded: 19, wickets: 1 },
+  dismissal: { dismissal: false },
+  ...extra,
+});
+const liveSummary = () => {
+  const s = summary();
+  const comp = s.header.competitions[0];
+  comp.status = { type: { state: 'in', description: 'Live' }, session: 'Innings  break' };
+  comp.competitors[0].linescores[1] = {
+    period: 2,
+    isBatting: true,
+    isCurrent: 1,
+    runs: 60,
+    wickets: 2,
+    overs: 9.2,
+    fow: [
+      { wicketNumber: 1, runs: 14, wicketOver: 2.1, fowType: 'out', athlete: { shortName: 'Opener' } },
+      { wicketNumber: 2, runs: 31, wicketOver: 5.4, fowType: 'out', athlete: { shortName: 'Two' } },
+    ],
+    partnerships: [{ fowType: 'end of innings', runs: 29, batsmen: [{ balls: '12' }, { balls: '6' }] }],
+    statistics: { categories: [{ stats: [{ name: 'runRate', displayValue: '6.42' }, { name: 'requiredRunRate', displayValue: '6.40' }] }] },
+  };
+  comp.commentaries = {
+    a: ball(105, 9, 'Seamer to Three, FOUR runs', 4),
+    b: ball(106, 10, 'Seamer to Three, 1 wide', 1),
+    c: ball(107, 10, 'Seamer to Three, no run', 0),
+    d: ball(104, 9, 'Seamer to Four, OUT', 0, { dismissal: { dismissal: true, batsman: { athlete: { id: 'k9' } } } }),
+    e: ball(103, 8, 'Seamer to Four, 1 run', 1),
+  };
+  // The card lags: it still has the opener not out, though he's been dismissed.
+  s.matchcards[0].playerDetails = [{ playerID: 'k2', dismissal: 'not out' }];
+  s.rosters[0].roster[0].linescores = [innings(2, { batted: 1, battingPosition: 1, outs: 1, dismissalCard: 'c', runs: 9 })];
+  return s;
+};
+
+test('a live cricket match shows who is batting and bowling, and the last two overs', async () => {
+  global.fetch = jest.fn(() => respond(liveSummary()));
+  const m = await fetchMatch('19553', '1559445');
+  expect(m.live).toMatchObject({
+    team: 'Kenya',
+    batters: [{ name: 'Kenya Three', runs: 20, balls: 15 }, { name: 'Kenya Four', runs: 8, balls: 6 }],
+    bowler: { name: 'Jersey Seamer', wickets: 1, runs: 19 },
+    partnership: { runs: 29, balls: 18 },
+    runRate: '6.42',
+    requiredRate: '6.40',
+    session: 'Innings break',
+  });
+  // Newest over first; balls in the order bowled.
+  expect(m.live.overs.map((o) => [o.number, o.balls.map((b) => b.label)])).toEqual([
+    [10, ['wd', '•']],
+    [9, ['W', '4']],
+  ]);
+  const kenya = m.innings.find((i) => i.team === 'Kenya');
+  expect(kenya.fallOfWickets.map((f) => `${f.wicket}-${f.runs}`)).toEqual(['1-14', '2-31']);
+  // A stale "not out" on the card gives way to the player's own record.
+  expect(kenya.batters[0]).toMatchObject({ out: true, dismissal: 'caught' });
+
+  window.location.hash = '#/cricket/match/19553/1559445';
+  render(<App />);
+  expect(await screen.findByRole('region', { name: 'Live' })).toBeInTheDocument();
+  expect(screen.getByText('Kenya batting')).toBeInTheDocument();
+  expect(screen.getByText('2 fours, 1 six')).toBeInTheDocument();
+});

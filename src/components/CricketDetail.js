@@ -33,6 +33,96 @@ function inningsLabel(inn, innings) {
     : inn.short || inn.team;
 }
 
+// "6 fours, 1 six"; nothing when there are none.
+const plural = (n, word) => `${n} ${word}${Number(n) === 1 ? "" : "s"}`;
+const boundaries = (b) =>
+  [Number(b.fours) > 0 && plural(b.fours, "four"), Number(b.sixes) > 0 && plural(b.sixes, "six")]
+    .filter(Boolean)
+    .join(", ");
+
+// While the match is on: the two batters, the bowler, partnership and rates,
+// then the last two overs ball by ball.
+function LivePanel({ live }) {
+  return (
+    <section className="cricket-live" aria-label="Live">
+      <div className="cl-head">
+        <span className="cl-title">
+          <span className="pulse" aria-hidden="true" /> {live.team} batting
+        </span>
+        {live.session && <span className="cl-session">{live.session}</span>}
+      </div>
+
+      <div className="cl-grid">
+        <div className="cl-block">
+          <span className="cl-label">At the crease</span>
+          {live.batters.map((b) => (
+            <div key={b.name} className="cl-row">
+              <span className="cl-name">{b.name}</span>
+              <span className="cl-figure">
+                <b>{b.runs}*</b> <span className="muted">({b.balls})</span>
+              </span>
+              {boundaries(b) && <span className="cl-extra muted">{boundaries(b)}</span>}
+            </div>
+          ))}
+        </div>
+        {live.bowler && (
+          <div className="cl-block">
+            <span className="cl-label">Bowling</span>
+            <div className="cl-row">
+              <span className="cl-name">{live.bowler.name}</span>
+              <span className="cl-figure">
+                <b>
+                  {live.bowler.wickets}/{live.bowler.runs}
+                </b>{" "}
+                <span className="muted">({live.bowler.overs} ov)</span>
+              </span>
+              {Number(live.bowler.maidens) > 0 && (
+                <span className="cl-extra muted">{plural(live.bowler.maidens, "maiden")}</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="cl-facts">
+        {live.partnership && (
+          <span>
+            Partnership <b>{live.partnership.runs}</b>
+            {live.partnership.balls > 0 && <span className="muted"> ({live.partnership.balls} balls)</span>}
+          </span>
+        )}
+        {live.runRate && (
+          <span>
+            Run rate <b>{live.runRate}</b>
+          </span>
+        )}
+        {live.requiredRate && (
+          <span>
+            Required <b>{live.requiredRate}</b>
+          </span>
+        )}
+      </div>
+
+      {live.overs.length > 0 && (
+        <div className="cl-overs">
+          {live.overs.map((o) => (
+            <div key={o.number} className="cl-over">
+              <span className="cl-over-label">Over {o.number}</span>
+              <span className="cl-balls">
+                {o.balls.map((b) => (
+                  <span key={b.id} className={`cl-ball cl-${b.kind}`}>
+                    {b.label}
+                  </span>
+                ))}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // Result, each innings total, and match facts (toss, days, points).
 export function CricketSummary({ match }) {
   const innings = match.innings || [];
@@ -41,6 +131,7 @@ export function CricketSummary({ match }) {
   }
   return (
     <div className="cricket-summary">
+      {match.live && <LivePanel live={match.live} />}
       {innings.length > 0 && (
         <ol className="innings-list">
           {innings.map((inn) => (
@@ -155,6 +246,21 @@ export function Scorecard({ match }) {
           {inn.yetToBat.join(", ")}
         </p>
       )}
+      {inn.fallOfWickets?.length > 0 && (
+        <div className="fow">
+          <h4 className="fow-title">Fall of wickets</h4>
+          <p className="fow-list">
+            {inn.fallOfWickets.map((f, i) => (
+              <span key={f.wicket} className="fow-item">
+                <b>
+                  {f.wicket}-{f.runs}
+                </b>{" "}
+                ({f.batter}, {f.over} ov){i < inn.fallOfWickets.length - 1 ? ", " : ""}
+              </span>
+            ))}
+          </p>
+        </div>
+      )}
 
       {inn.bowlers.length > 0 && (
         <div className="table-scroll bowling-scroll">
@@ -167,8 +273,8 @@ export function Scorecard({ match }) {
                 <th>R</th>
                 <th>W</th>
                 <th>Econ</th>
-                <th>Wd</th>
-                <th>Nb</th>
+                <th className="hide-phone">Wd</th>
+                <th className="hide-phone">Nb</th>
               </tr>
             </thead>
             <tbody>
@@ -182,8 +288,8 @@ export function Scorecard({ match }) {
                   <td>{b.runs}</td>
                   <td className="box-pts">{b.wickets}</td>
                   <td>{b.economy}</td>
-                  <td>{b.wides || 0}</td>
-                  <td>{b.noballs || 0}</td>
+                  <td className="hide-phone">{b.wides || 0}</td>
+                  <td className="hide-phone">{b.noballs || 0}</td>
                 </tr>
               ))}
             </tbody>
