@@ -368,3 +368,14 @@
 .layout-compact .match-detail .session-row.session-post {
   display: none;
 }
+
+/* Golf leaderboards: position, player, to par and thru fit; today doesn't. */
+.layout-compact .golf-today {
+  display: none;
+}
+
+/* Long names (Grands Prix, golfers) wrap so the numbers stay on screen. */
+.layout-compact .race-results td.left,
+.layout-compact .golf-table td.left {
+  white-space: normal;
+}

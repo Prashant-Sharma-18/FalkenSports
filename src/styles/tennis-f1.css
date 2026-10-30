@@ -222,27 +222,6 @@ a.weekend-name:hover {
   }
 }
 
-/* Player and driver pages (layout shared with team pages, see Team.css). */
-.player-photo {
-  flex: none;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--surface-2);
-}
-
-.player-standing {
-  margin: 4px 0;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.team-title .team-logo {
-  vertical-align: -3px;
-  margin-right: 8px;
-}
-
 .player-result {
   flex-direction: column;
   align-items: flex-start;

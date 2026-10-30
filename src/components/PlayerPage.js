@@ -4,46 +4,59 @@ import { routeHref } from "../router";
 import { canFollow } from "../sports";
 import useRemoteData from "../useRemoteData";
 import StarButton from "./StarButton";
-import TeamLogo from "./TeamLogo";
+import Banner from "./Banner";
 import { ArrowLeft, ExternalLink } from "./Icons";
 import { ErrorState, Loading, Empty } from "./Status";
 
 const shortDate = (d) => d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
-// Name, flag, photo and the facts ESPN has (age, height, plays, team, car).
+// Name, photo and flag, the facts ESPN has (age, height, plays, team), and
+// the numbers that matter: ranking and recent record, or the championship.
 function Hero({ player }) {
+  const f1 = player.sport === "f1";
   const facts = [
     player.country,
-    player.team && `${player.team}${player.number ? ` · #${player.number}` : ""}`,
     player.age && `Age ${player.age}`,
     player.height,
     player.hand && `Plays ${player.hand.toLowerCase()}-handed`,
     player.turnedPro && `Pro since ${player.turnedPro}`,
     player.birthPlace && `Born in ${player.birthPlace}`,
   ].filter(Boolean);
-  const standing =
-    player.rank &&
-    (player.sport === "f1"
-      ? `P${player.rank} in the championship · ${player.points} pts`
-      : `${player.tour} rank ${player.rank} · ${player.points} pts`);
+
+  const count = (list, test) => list.filter(test).length;
+  const stats = f1
+    ? [
+        ["Championship", player.rank ? `P${player.rank}` : "–"],
+        ["Points", player.points ?? "–"],
+        ["Wins", count(player.races, (r) => r.finish === 1)],
+        ["Podiums", count(player.races, (r) => r.finish && r.finish <= 3)],
+        ["Poles", count(player.races, (r) => r.grid === 1)],
+        ["Races", player.races.length],
+      ]
+    : [
+        ["Rank", player.rank ?? "–"],
+        ["Points", player.points ?? "–"],
+        // Won–lost over the recent matches below.
+        ["Record", `${count(player.matches, (m) => m.won === true)}–${count(player.matches, (m) => m.won === false)}`],
+      ];
 
   return (
-    <div className="card team-hero">
-      {player.headshot ? (
-        <img className="player-photo" src={player.headshot} alt="" />
-      ) : (
-        <TeamLogo src={player.logo} name={player.name} size={72} />
-      )}
-      <div className="team-hero-text">
-        <h1 className="team-title">
-          {player.headshot && player.logo && <TeamLogo src={player.logo} name={player.country} size={22} />}
-          {player.name}
-          {canFollow(player.sport) && <StarButton team={player} size={18} />}
-        </h1>
-        {standing && <p className="player-standing">{standing}</p>}
-        {facts.length > 0 && <p className="muted small">{facts.join(" · ")}</p>}
-      </div>
-    </div>
+    <Banner
+      color={player.color}
+      image={player.headshot || player.logo}
+      photo={Boolean(player.headshot)}
+      watermark={player.logo}
+      kicker={
+        f1
+          ? ["Formula 1", player.team, player.number && `#${player.number}`].filter(Boolean).join(" · ")
+          : `${player.tour} · Tennis`
+      }
+      title={player.name}
+      after={canFollow(player.sport) && <StarButton team={player} size={18} />}
+      standing={facts.join(" · ")}
+      stats={stats}
+      statsLabel={f1 ? "This season" : "Ranking and recent matches"}
+    />
   );
 }
 
@@ -64,10 +77,7 @@ function TennisMatches({ matches }) {
               <span className="mr-name">
                 {m.won === null ? "vs" : m.won ? "bt" : "lost to"} {m.opponent}
               </span>
-              <span className="muted small">
-                {[m.tournament, m.draw].filter(Boolean).join(" · ")}
-                {m.result && ` — ${m.result}`}
-              </span>
+              <span className="muted small">{[m.tournament, m.score].filter(Boolean).join(" · ")}</span>
             </span>
             <span className="mr-score">
               {m.won === null ? (

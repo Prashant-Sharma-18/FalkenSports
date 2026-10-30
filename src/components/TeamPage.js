@@ -7,6 +7,7 @@ import useRemoteData from "../useRemoteData";
 import MatchCard from "./MatchCard";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
+import Banner from "./Banner";
 import { ArrowLeft, CalendarDays, ExternalLink } from "./Icons";
 import { downloadIcs } from "../calendar";
 import { ErrorState, Loading, Empty } from "./Status";
@@ -159,56 +160,23 @@ function seasonStats(team) {
   ].filter(Boolean);
 }
 
-// Light club colours (Dortmund yellow, white kits) get dark text instead of white.
-// Relative luminance per WCAG, from "#rrggbb".
-function isLight(hex) {
-  const [r, g, b] = [1, 3, 5].map((i) => {
-    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4;
-}
-
 // The club banner: crest, name, position, and the season in numbers.
-function Banner({ team }) {
-  const stats = seasonStats(team);
+function ClubBanner({ team }) {
   const kicker = [leagueName(team.homeLeague), SPORTS[team.sport].name].filter(
     (x, i, all) => x && all.indexOf(x) === i
   );
   return (
-    <header
-      className={`team-banner ${team.color && isLight(team.color) ? "team-banner-light" : ""}`}
-      style={team.color ? { "--team": team.color } : undefined}
-    >
-      {team.logo && <img className="team-watermark" src={team.logo} alt="" aria-hidden="true" />}
-      <div className="team-banner-top">
-        <span className="team-crest">
-          <TeamLogo src={team.logo} name={team.name} size={64} />
-        </span>
-        <div className="team-banner-text">
-          <span className="team-kicker">{kicker.join(" · ")}</span>
-          <h1 className="team-title">
-            {team.name}
-            <StarButton team={team} size={18} />
-          </h1>
-          {(team.standing || team.record) && (
-            <p className="team-standing">
-              {[isUsStyle(team.sport) && team.record, team.standing].filter(Boolean).join(" · ")}
-            </p>
-          )}
-        </div>
-      </div>
-      {stats.length > 0 && (
-        <dl className="team-stats" aria-label="This season, all competitions">
-          {stats.map(([label, value]) => (
-            <div key={label} className="team-stat">
-              <dt>{label}</dt>
-              <dd>{value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </header>
+    <Banner
+      color={team.color}
+      image={team.logo}
+      watermark={team.logo}
+      kicker={kicker.join(" · ")}
+      title={team.name}
+      after={<StarButton team={team} size={18} />}
+      standing={[isUsStyle(team.sport) && team.record, team.standing].filter(Boolean).join(" · ")}
+      stats={seasonStats(team)}
+      statsLabel="This season, all competitions"
+    />
   );
 }
 
@@ -347,7 +315,7 @@ export default function TeamPage({ league, id, onBack }) {
 
       {team && (
         <>
-          <Banner team={team} />
+          <ClubBanner team={team} />
 
           <div className="team-grid">
             <div className="team-main">

@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import App from './App';
 import { fetchPlayer, fetchSessionResults } from './api';
+import { setScore } from './api/players';
 import { parseRoute, routeHref } from './router';
 
 const respond = (body) => Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
@@ -195,4 +196,11 @@ test("My Teams shows followed teams' games from every sport, and unfollowing rem
   expect(await screen.findByRole('heading', { name: 'Tennis' })).toBeInTheDocument();
   expect(screen.queryByRole('heading', { name: 'Football' })).toBeNull();
   expect(global.fetch.mock.calls.at(-1)[0]).toContain('/tennis/');
+});
+
+test('tennis scores read as sets: "6–1, 7–6 (13–11)"', () => {
+  expect(setScore('(2) Carlos Alcaraz (ESP) bt Nikoloz Basilashvili (GEO) 6-1 7-6 (13-11)')).toBe('6–1, 7–6 (13–11)');
+  expect(setScore('Zizou Bergs (BEL) bt (2) Carlos Alcaraz (ESP) 7-5 7-6 (7-4)')).toBe('7–5, 7–6 (7–4)');
+  expect(setScore('(1) Carlos Alcaraz (ESP) bt Denis Shapovalov (CAN) 7-6 (7-3) 2-1 ret')).toBe('7–6 (7–3), 2–1 ret');
+  expect(setScore('')).toBe('');
 });

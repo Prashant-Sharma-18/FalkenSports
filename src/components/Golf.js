@@ -25,7 +25,7 @@ export function GolfTable({ board, limit, full = false }) {
             <th>Pos</th>
             <th className="left">Player</th>
             <th title="Score to par">To par</th>
-            <th>Today</th>
+            <th className="golf-today">Today</th>
             <th title="Holes played in the current round">Thru</th>
             {full && rounds.map((r) => <th key={r}>R{r}</th>)}
             {full && <th>Tot</th>}
@@ -42,7 +42,7 @@ export function GolfTable({ board, limit, full = false }) {
                 </span>
               </td>
               <td className={`golf-par ${p.par < 0 ? "under" : p.par > 0 ? "over" : ""}`}>{p.score}</td>
-              <td>{p.today ?? ""}</td>
+              <td className="golf-today">{p.today ?? ""}</td>
               <td>{p.thru ?? ""}</td>
               {full &&
                 rounds.map((r) => <td key={r}>{p.rounds.find((x) => x.number === r)?.strokes ?? ""}</td>)}

@@ -10,6 +10,18 @@ const CORE = "https://sports.core.api.espn.com/v2/sports";
 // The core API links to itself over plain http.
 const follow = (ref, signal) => getJson(ref.replace(/^http:/, "https:"), signal);
 
+// Just the sets from ESPN's result line: everything after the last country
+// code, "6-1 7-6 (13-11)" -> "6–1, 7–6 (13–11)" (a plain space between sets
+// is too narrow to read at small sizes: "6-17-6").
+export function setScore(result = "") {
+  if (!/\([A-Z]{3}\)/.test(result)) return "";
+  return result
+    .replace(/^.*\([A-Z]{3}\)\s*/, "")
+    .split(/\s+(?=\d)/)
+    .join(", ")
+    .replace(/(\d)-(\d)/g, "$1–$2");
+}
+
 // How many recent tennis matches to load (one request each).
 const RECENT_MATCHES = 10;
 
@@ -68,6 +80,7 @@ async function fetchTennisPlayer(league, id, signal) {
         opponent: opponent?.name || "",
         won: result ? me?.winner === true : null,
         result,
+        score: setScore(result),
       };
     })
     // A first-round bye is listed as a match against "Bye".
@@ -115,10 +128,14 @@ async function fetchDriver(id, signal) {
     });
 
   const car = athlete.vehicles?.[0];
+  const team = car?.team || car?.manufacturer || null;
+  // The team's colour comes from the constructors' championship.
+  const constructor = standings.find((g) => g.unit === "Teams")?.rows.find((r) => r.name === team);
   return {
     ...profile(athlete, "f1"),
     league: "f1",
-    team: car?.team || car?.manufacturer || null,
+    team,
+    color: constructor?.color || null,
     number: car?.number || null,
     rank: row?.rank || null,
     points: row?.points || null,
