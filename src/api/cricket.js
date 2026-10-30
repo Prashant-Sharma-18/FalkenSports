@@ -1,12 +1,12 @@
 // Cricket: the day's score panel, scorecards and points tables.
 import { leagueName, teamKey } from "../sports";
-import { API, apiDate, getJson, site } from "./espn";
+import { API, datesQuery, getJson, site } from "./espn";
 import { normalizeMatch } from "./common";
 
 // Every cricket series in play around a day (internationals, tours, leagues),
 // one group per series.
 export async function fetchCricketPanel(dayKey, signal) {
-  const data = await getJson(`${API}/site/v2/sports/cricket/scorepanel?dates=${apiDate(dayKey)}`, signal);
+  const data = await getJson(`${API}/site/v2/sports/cricket/scorepanel${datesQuery(dayKey)}`, signal);
   const groups = (data.scores || [])
     .map((g) => {
       const lg = g.leagues?.[0] || {};

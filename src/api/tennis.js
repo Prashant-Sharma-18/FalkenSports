@@ -1,7 +1,7 @@
 // Tennis: ATP and WTA tournaments, matches by day, and rankings.
 import { leagueName, teamKey } from "../sports";
 import { toKey } from "../dates";
-import { apiDate, getJson, site } from "./espn";
+import { datesQuery, getJson, site } from "./espn";
 
 // A tennis player, or doubles pair, shaped like a team so cards, search and
 // favourites work unchanged. `logo` is the country flag.
@@ -58,7 +58,7 @@ function tennisMatch(c, event, league) {
 // ESPN returns every tournament in play around a day with its whole draw;
 // keep that day's matches, one group per tournament and draw (singles, doubles).
 export async function fetchTennis(league, dayKey, signal) {
-  const data = await getJson(`${site(league)}/scoreboard?dates=${apiDate(dayKey)}`, signal);
+  const data = await getJson(`${site(league)}/scoreboard${datesQuery(dayKey)}`, signal);
   const groups = (data.events || [])
     .flatMap((event) =>
       (event.groupings || []).map((g) => ({
@@ -66,7 +66,8 @@ export async function fetchTennis(league, dayKey, signal) {
         league,
         name: `${event.name} · ${g.grouping?.displayName}`,
         matches: (g.competitions || [])
-          .filter((c) => toKey(new Date(c.date)) === dayKey)
+          // Without a day (the current scoreboard), every match is kept.
+          .filter((c) => !dayKey || toKey(new Date(c.date)) === dayKey)
           .map((c) => tennisMatch(c, event, league))
           .sort((a, b) => a.date - b.date),
       }))

@@ -12,3 +12,4 @@ export { fetchRaceSeason, fetchRace, fetchSessionResults } from "./f1";
 export { fetchPlayer } from "./players";
 export { searchAll } from "./search";
 export { fetchGolfTour, fetchGolfTours, fetchGolfEvent } from "./golf";
+export { fetchLiveNow } from "./live";

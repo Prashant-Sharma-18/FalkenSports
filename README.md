@@ -52,6 +52,9 @@ Rugby Championship, World Cup.
 - **UFC** — fight cards by day (main card, prelims, early prelims) with weight
   class, records, and how each fight ended (KO/TKO, submission, decision, round
   and time).
+- **Live now** — everything under way across every sport on one screen
+  (`#/live`), grouped by sport and competition, with live golf leaderboards and
+  F1 sessions, then what starts in the next three hours.
 - **Search** — teams and players from every sport (`#/search`).
 - **Calendar export** — add a team's fixtures, or one upcoming match, to your
   calendar (an `.ics` file; no account needed).

@@ -2,7 +2,7 @@
 // "teams" (the fighters), so cards, search, favourites and alerts just work.
 import { teamKey } from "../sports";
 import { toKey } from "../dates";
-import { apiDate, getJson, site } from "./espn";
+import { datesQuery, getJson, site } from "./espn";
 
 function fighter(c = {}, finished) {
   const a = c.athlete || {};
@@ -67,7 +67,7 @@ function fight(c, event, league) {
 const SEGMENTS = ["Main card", "Prelims", "Early prelims"];
 
 export async function fetchFights(league, dayKey, signal) {
-  const data = await getJson(`${site(league)}/scoreboard?dates=${apiDate(dayKey)}`, signal);
+  const data = await getJson(`${site(league)}/scoreboard${datesQuery(dayKey)}`, signal);
   const groups = (data.events || []).flatMap((event) => {
     const fights = (event.competitions || []).map((c) => fight(c, event, league));
     const starts = [...new Set(fights.map((f) => f.date.getTime()))].sort((a, b) => b - a);

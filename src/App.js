@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { Newspaper, Table2, Timer, Monitor, Search as SearchIcon, Smartphone, SportIcon, Star } from "./components/Icons";
+import { Newspaper, Radio, Table2, Timer, Monitor, Search as SearchIcon, Smartphone, SportIcon, Star } from "./components/Icons";
 import { leagueName } from "./api";
 import { todayKey } from "./dates";
 import { FavoritesProvider } from "./favorites";
@@ -41,6 +41,7 @@ const RaceDetail = lazy(() => import("./components/RaceDetail"));
 const PlayerPage = lazy(() => import("./components/PlayerPage"));
 const Favourites = lazy(() => import("./components/Favourites"));
 const Search = lazy(() => import("./components/Search"));
+const Live = lazy(() => import("./components/Live"));
 const Golf = lazy(() => import("./components/Golf"));
 const GolfEvent = lazy(() => import("./components/Golf").then((m) => ({ default: m.GolfEvent })));
 
@@ -88,10 +89,12 @@ function Shell() {
   const route = useRoute();
   const sport = route.sport;
   const detailView = route.view === "match" || route.view === "team" || route.view === "player";
-  // "My Teams" and search span every sport, so they have no sport or competition bar.
+  // "My Teams", search and "Live now" span every sport, so they have no sport or competition bar.
   const favouritesView = route.view === "favourites";
   const searchView = route.view === "search";
-  const allSportsView = favouritesView || searchView;
+  const liveView = route.view === "live";
+  const allSportsView = favouritesView || searchView || liveView;
+  const allSportsTitle = favouritesView ? "My Teams" : searchView ? "Search" : "Live now";
   const lastLeagues = useRef(readLastLeagues());
   const navigatedInApp = useRef(false);
   const firstRoute = useRef(true);
@@ -143,13 +146,13 @@ function Shell() {
   useEffect(() => {
     if (detailView) return; // match, team and player pages set their own title
     if (allSportsView) {
-      document.title = `${favouritesView ? "My Teams" : "Search"} – FalkenSports`;
+      document.title = `${allSportsTitle} – FalkenSports`;
       return;
     }
     const where = route.league === "all" ? `${SPORTS[sport].name} scores` : leagueName(route.league);
     const what = tabsFor(sport).find((t) => t.id === route.view)?.label;
     document.title = `${where} · ${what} – FalkenSports`;
-  }, [sport, route.view, route.league, detailView, allSportsView, favouritesView]);
+  }, [sport, route.view, route.league, detailView, allSportsView, allSportsTitle]);
 
   const date = route.date || todayKey();
   const singleLeague = isLeagueOf(sport, route.league) ? route.league : lastLeagues.current[sport];
@@ -221,6 +224,16 @@ function Shell() {
           </nav>
 
           <div className="header-actions">
+            <a
+              href={routeHref({ view: "live" })}
+              className={`icon-btn live-btn ${liveView ? "active" : ""}`}
+              aria-current={liveView ? "page" : undefined}
+              title="Live now: every game under way, in every sport"
+              aria-label="Live now"
+            >
+              <Radio size={15} />
+            </a>
+
             <a
               href={routeHref({ view: "search" })}
               className={`icon-btn ${searchView ? "active" : ""}`}
@@ -305,7 +318,7 @@ function Shell() {
           <div className={`page-header ${allSportsView ? "" : "page-header-list"}`}>
             {allSportsView ? (
               <h1 className="page-title">
-                {favouritesView ? "My Teams" : "Search"} <span className="title-section-badge">All sports</span>
+                {allSportsTitle} <span className="title-section-badge">All sports</span>
               </h1>
             ) : (
               <h1 className="page-title">
@@ -318,6 +331,7 @@ function Shell() {
 
         <Suspense fallback={<Loading label="Loading…" />}>
           {searchView && <Search query={route.query} />}
+          {liveView && <Live />}
           {favouritesView && (
             <Favourites
               date={date}

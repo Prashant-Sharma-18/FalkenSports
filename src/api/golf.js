@@ -50,7 +50,9 @@ export function leaderboard(e, league) {
         total: p.rounds.reduce((sum, r) => sum + (r.strokes || 0), 0) || null,
       };
     })
-    .sort((a, b) => a.cut - b.cut || a.order - b.order);
+    // Mid-round, ESPN's order isn't the standings, so sort by score to par
+    // (players without one last), keeping ESPN's order between equal scores.
+    .sort((a, b) => a.cut - b.cut || (a.par ?? Infinity) - (b.par ?? Infinity) || a.order - b.order);
 
   // "T5" when a score is shared; position = 1 + players strictly ahead.
   players.forEach((p) => {

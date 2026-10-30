@@ -13,6 +13,7 @@ import { isDayKey } from "./dates";
  *   #/tennis/player/atp/3782   #/f1/player/f1/5829       tennis players, F1 drivers
  *   #/favourites[/YYYY-MM-DD]                            my teams, every sport
  *   #/search[/query]                                     teams and players, every sport
+ *   #/live                                               everything live, every sport
  *   #/basketball/matches/all   #/basketball/match/nba/401909881   ...
  */
 
@@ -22,6 +23,9 @@ const isId = (id) => /^\d+$/.test(id || "");
 
 export function parseRoute(hash) {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (parts[0] === "live") {
+    return { sport: DEFAULT_SPORT, view: "live", league: null };
+  }
   if (parts[0] === "search") {
     let query = "";
     try {
@@ -55,6 +59,8 @@ export function routeHref(route) {
     route.sport || (route.league && route.league !== "all" ? sportOfLeague(route.league) : DEFAULT_SPORT);
   const prefix = sport === DEFAULT_SPORT ? "" : `/${sport}`;
   switch (route.view) {
+    case "live":
+      return "#/live";
     case "search":
       return `#/search${route.query ? `/${encodeURIComponent(route.query)}` : ""}`;
     case "favourites":

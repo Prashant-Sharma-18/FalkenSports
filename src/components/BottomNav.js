@@ -1,5 +1,5 @@
 import React from "react";
-import { Newspaper, Table2, Timer, Star } from "./Icons";
+import { Newspaper, Radio, Table2, Timer, Star } from "./Icons";
 import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
 
@@ -9,6 +9,7 @@ export default function BottomNav({ currentView, tabHref, tableLabel = "Table", 
 
   const items = [
     { id: "matches", label: "Scores", icon: Timer, badge: liveCount > 0 ? liveCount : null, live: liveCount > 0 },
+    { id: "live", label: "Live", icon: Radio, href: routeHref({ view: "live" }) },
     { id: "table", label: tableLabel, icon: Table2 },
     { id: "news", label: "News", icon: Newspaper },
   ].filter((item) => item.label); // golf and UFC have no table
@@ -16,12 +17,12 @@ export default function BottomNav({ currentView, tabHref, tableLabel = "Table", 
   return (
     <nav className="bottom-nav" aria-label="App Navigation">
       <div className="bottom-nav-inner">
-        {items.map(({ id, label, icon: Icon, badge, live }) => {
+        {items.map(({ id, label, icon: Icon, badge, live, href }) => {
           const active = currentView === id;
           return (
             <a
               key={id}
-              href={tabHref(id)}
+              href={href || tabHref(id)}
               className={`bottom-nav-item ${active ? "active" : ""}`}
               aria-current={active ? "page" : undefined}
             >

@@ -1,6 +1,6 @@
 // A day's scores: one competition, or every competition of a sport.
 import { leaguesOf, sportOfLeague } from "../sports";
-import { apiDate, getJson, site } from "./espn";
+import { datesQuery, getJson, site } from "./espn";
 import { normalizeMatch } from "./common";
 import { fetchCricketPanel } from "./cricket";
 import { fetchTennis } from "./tennis";
@@ -17,7 +17,7 @@ function matchDaysOf(data) {
 export async function fetchMatches(league, dayKey, signal) {
   if (sportOfLeague(league) === "tennis") return fetchTennis(league, dayKey, signal);
   if (sportOfLeague(league) === "mma") return fetchFights(league, dayKey, signal);
-  const data = await getJson(`${site(league)}/scoreboard?dates=${apiDate(dayKey)}`, signal);
+  const data = await getJson(`${site(league)}/scoreboard${datesQuery(dayKey)}`, signal);
   return {
     groups: [{ league, matches: (data.events || []).map((e) => normalizeMatch(e, league)) }],
     matchDays: matchDaysOf(data),

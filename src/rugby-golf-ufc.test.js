@@ -96,6 +96,32 @@ test('golf leaderboards: ties, today and thru, missed cuts, totals', () => {
   ]);
 });
 
+test('golf leaderboards sort by score, not ESPN order, mid-round', () => {
+  const board = leaderboard(
+    {
+      id: '2',
+      name: 'Maybank Championship',
+      status: { type: { state: 'in' } },
+      competitions: [
+        {
+          status: { period: 2 },
+          competitors: [
+            golfer(1, 'Miyu Yamashita', '-7', [[1, 70, '-1'], [2, 30, '-6', 12]]),
+            golfer(2, 'Charley Hull', '-6', [[1, 71, '-1'], [2, 31, '-5', 11]]),
+            golfer(3, 'A Lim Kim', '-10', [[1, 70, '-2'], [2, 28, '-8', 14]]),
+          ],
+        },
+      ],
+    },
+    'lpga'
+  );
+  expect(board.players.map((p) => [p.pos, p.name, p.thru])).toEqual([
+    ['1', 'A Lim Kim', '14'],
+    ['2', 'Miyu Yamashita', '12'],
+    ['3', 'Charley Hull', '11'],
+  ]);
+});
+
 test('UFC results: method of victory', () => {
   expect(fightMethod([{ type: { text: 'Unofficial Winner Kotko' } }])).toBe('KO/TKO');
   expect(fightMethod([{ type: { text: 'Results' } }, { type: { text: 'Unofficial Winner Decision' } }])).toBe('Decision');

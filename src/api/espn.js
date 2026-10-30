@@ -19,3 +19,7 @@ export async function getJson(url, signal) {
 
 // "2026-10-29" -> "20261029"
 export const apiDate = (dayKey) => dayKey.replace(/-/g, "");
+
+// "?dates=20261029" for a day, or nothing for ESPN's current scoreboard
+// (today's slate, including games still going from the night before).
+export const datesQuery = (dayKey) => (dayKey ? `?dates=${apiDate(dayKey)}` : "");
