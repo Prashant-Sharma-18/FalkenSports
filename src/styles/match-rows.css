@@ -92,16 +92,34 @@
   color: var(--star);
 }
 
-/* ---- A row per game: status | sides and scores ---- */
+/* ---- A row per game: status line, then the sides and scores ---- */
 .match-row-card {
   position: relative;
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  column-gap: 12px;
-  align-items: center;
-  padding: 11px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 14px 11px;
   color: inherit;
   text-decoration: none;
+}
+
+/* Status on the left, round / format / court on the right. */
+.row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.row-label {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .match-row-card + .match-row-card {
@@ -112,18 +130,17 @@ a.match-row-card:hover {
   background: var(--surface-2);
 }
 
-/* Status column: time, result, or live and the minute. */
+/* Status: time, result, a break, or live and the minute. */
 .row-status {
+  flex: none;
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
+  align-items: center;
   color: var(--muted);
   font-size: 0.72rem;
   font-weight: 700;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 
 .row-status-pre {
@@ -137,11 +154,9 @@ a.match-row-card:hover {
   text-transform: uppercase;
 }
 
-/* Live: a pulsing dot and the minute, on one line. Red is kept for live alone. */
+/* Live: a pulsing dot and the minute. Red is kept for live alone. */
 .row-status-live {
-  flex-direction: row;
-  align-items: center;
-  gap: 5px;
+  gap: 6px;
   color: var(--live);
   font-size: 0.74rem;
   font-weight: 800;
@@ -267,26 +282,18 @@ a.match-row-card:hover {
   color: var(--text-secondary);
 }
 
-/* The note and live situation sit under the teams, in the second column. */
-.match-row-card .row-note,
-.match-row-card .situation-compact {
-  grid-column: 2;
-}
-
 .match-row-card .row-note {
-  margin-top: 5px;
+  margin: 0;
 }
 
 .match-row-card .situation-compact {
-  margin-top: 6px;
+  margin-top: 0;
   padding-top: 7px;
 }
 
 /* ---- Phones: a little tighter ---- */
 .layout-compact .match-row-card {
-  grid-template-columns: 48px minmax(0, 1fr);
-  column-gap: 10px;
-  padding: 10px 12px;
+  padding: 9px 12px 10px;
 }
 
 .layout-compact .comp-card {

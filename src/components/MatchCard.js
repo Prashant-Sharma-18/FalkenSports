@@ -65,8 +65,8 @@ function RowCricketScore({ score }) {
 // Breaks in play: shown plainly, without the pulsing dot.
 const PAUSED = /stumps|lunch|tea|drinks|^ht$|half ?time|break|delay|suspend|end of/i;
 
-// The left column, one line: kick-off time, "FT", a pulsing dot and the
-// minute ("62'", "Q3 5:32"), or a break ("Stumps", "HT").
+// The status line above the teams: kick-off time, "FT", a pulsing dot and
+// the minute ("62'", "Q3 5:32"), or a break ("Stumps", "HT").
 function StatusCell({ match }) {
   if (match.state === "in") {
     // Football shows the minute; other sports' detail reads "Q3 5:32", "Top 5th".
@@ -90,9 +90,9 @@ function StatusCell({ match }) {
   );
 }
 
-// One game as a row: status on the left, the two sides with crests, scores on
-// the right. Following happens on team pages, match pages and search, so rows
-// only show a small star for teams already followed.
+// One game as a row: a status line, then the two sides with crests and
+// scores on the right. Following happens on team pages, match pages and
+// search, so rows only show a small star for teams already followed.
 export default function MatchCard({ match }) {
   const { isFavorite } = useFavorites();
   const started = match.state !== "pre";
@@ -143,27 +143,31 @@ export default function MatchCard({ match }) {
   // Sports without match pages (tennis, UFC) show the whole match in the row.
   const linked = hasMatchPages(match.sport);
   const Row = linked ? "a" : "div";
-  // Round and court (tennis), format (cricket) or weight class (UFC), then the
-  // result or situation in words.
-  const note = [
-    match.sport === "tennis" && [match.label, match.venue].filter(Boolean).join(" · "),
-    ["mma", "cricket"].includes(match.sport) && [match.format, match.label].filter(Boolean).join(" · "),
-    match.summary,
-  ].filter(Boolean);
+  // Round and court (tennis), format (cricket) or weight class (UFC), beside the status.
+  const label =
+    match.sport === "tennis"
+      ? [match.label, match.venue].filter(Boolean).join(" · ")
+      : ["mma", "cricket"].includes(match.sport)
+      ? [match.format, match.label].filter(Boolean).join(" · ")
+      : "";
 
   return (
     <Row
       className={`match-row-card ${match.state === "in" ? "is-live" : ""}`}
       href={linked ? routeHref({ view: "match", league: match.league, id: match.id }) : undefined}
     >
-      <StatusCell match={match} />
+      {/* Status above the teams, so names get the card's full width. */}
+      <div className="row-top">
+        <StatusCell match={match} />
+        {label && <span className="row-label">{label}</span>}
+      </div>
       <div className="row-sides">
         {/* US scoreboards list the away team first ("Heat at Hawks"). */}
         {usStyle ? side(match.away) : side(match.home)}
         {usStyle ? side(match.home) : side(match.away)}
       </div>
-      {/* Below the teams, so the status lines up with the two sides alone. */}
-      {note.length > 0 && <p className="row-note">{note.join(" · ")}</p>}
+      {/* The result or situation in words. */}
+      {match.summary && <p className="row-note">{match.summary}</p>}
       <Situation match={match} compact />
     </Row>
   );
