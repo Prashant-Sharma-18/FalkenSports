@@ -242,7 +242,7 @@
 }
 
 .live-pill-count {
-  background: var(--live);
+  background: var(--live-solid);
   color: #ffffff;
 }
 

@@ -133,10 +133,10 @@ function Bench({ team, lineup, side }) {
   if (!lineup.subs.length) return null;
   return (
     <div className={`bench bench-${side}`}>
-      <h4 className="bench-title">
+      <h3 className="bench-title">
         <TeamLogo src={team.logo} name={team.name} size={16} />
         <span>{team.short || team.name}</span>
-      </h4>
+      </h3>
       <ul className="bench-list">
         {benchOrder(lineup.subs).map((p) => (
           <li key={p.id || p.name} className={`bench-player ${p.subbedIn ? "used" : ""}`}>
@@ -189,7 +189,7 @@ export default function Pitch({ home, away, homeLineup, awayLineup, homeRows, aw
       </div>
       <TeamBar team={away} lineup={awayLineup} side="right" />
 
-      <h3 className="panel-title bench-heading">Substitutes</h3>
+      <h2 className="panel-title bench-heading">Substitutes</h2>
       <div className="benches">
         <Bench team={home} lineup={homeLineup} side="left" />
         <Bench team={away} lineup={awayLineup} side="right" />

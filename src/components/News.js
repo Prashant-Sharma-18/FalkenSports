@@ -41,7 +41,7 @@ export default function News({ league }) {
             </span>
           </div>
           <div className="article-body">
-            <h3 className="article-title">{a.headline}</h3>
+            <h2 className="article-title">{a.headline}</h2>
             {a.description && <p className="article-snippet">{a.description}</p>}
             <div className="article-footer">
               <span className="article-time">

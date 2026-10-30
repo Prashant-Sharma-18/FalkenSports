@@ -147,7 +147,7 @@ function RecentForm({ match }) {
   if (!teams.some((t) => match.form?.[t.id]?.length)) return null;
   return (
     <div className="form-block">
-      <h3 className="panel-title">Recent Form</h3>
+      <h2 className="panel-title">Recent Form</h2>
       {teams.map((t) => (
         <Form key={t.id} team={t} games={match.form[t.id]} />
       ))}
@@ -237,19 +237,19 @@ function Lineups({ match }) {
             <div className="lineup-head">
               <TeamLogo src={team.logo} name={team.name} size={26} />
               <div className="lineup-team-title">
-                <span className="lineup-name">{team.name}</span>
+                <h2 className="lineup-name">{team.name}</h2>
                 {lineup.formation && (
                   <span className="formation-badge">{lineup.formation}</span>
                 )}
               </div>
             </div>
             <div className="starters-section">
-              <h4 className="lineup-subheading">{match.sport === "rugby" ? "Starting XV" : "Starting XI"}</h4>
+              <h3 className="lineup-subheading">{match.sport === "rugby" ? "Starting XV" : "Starting XI"}</h3>
               <PlayerList players={lineup.starters} />
             </div>
             {lineup.subs.length > 0 && (
               <div className="bench-section">
-                <h4 className="bench-title">Substitutes</h4>
+                <h3 className="bench-title">Substitutes</h3>
                 <PlayerList players={lineup.subs} bench />
               </div>
             )}
@@ -336,6 +336,10 @@ function Header({ match }) {
     >
       {/* The two teams' colours along the top. */}
       <span className="mh-strip" aria-hidden="true" />
+      {/* The page's heading for screen readers; the teams below say it visually. */}
+      <h1 className="sr-only">
+        {left.name} {usStyle ? "at" : "v"} {right.name}
+      </h1>
       <div className="mh-meta">
         {match.competition || leagueName(match.league)}
         {match.date &&

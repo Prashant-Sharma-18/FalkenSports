@@ -404,7 +404,7 @@ a.team-link:hover .team-name-cell {
 }
 
 .nm-us .nm-name {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 .nm-when {
@@ -418,7 +418,7 @@ a.team-link:hover .team-name-cell {
   padding: 2px 10px;
   border-radius: 999px;
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -507,7 +507,6 @@ a.team-link:hover .team-name-cell {
   margin-left: 4px;
   font-family: var(--font-mono);
   font-size: 0.7rem;
-  opacity: 0.6;
 }
 
 /* Each result carries its outcome down its left edge. */

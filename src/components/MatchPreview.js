@@ -21,12 +21,12 @@ function HeadToHead({ match, games, note, left, right }) {
 
   return (
     <section className="preview-block">
-      <h3 className="panel-title">
+      <h2 className="panel-title">
         {us ? "Season series" : "Head-to-head"}
         <span className="preview-sub">
           {note || `Last ${games.length} meeting${games.length > 1 ? "s" : ""}`}
         </span>
-      </h3>
+      </h2>
       <div className={`h2h-tally ${showDraws ? "" : "h2h-tally-two"}`}>
         <span className="h2h-count h2h-left">
           <b>{leftWins}</b>
@@ -84,7 +84,7 @@ function TableRows({ match, table, left }) {
   const label = tableLabel(match.sport);
   return (
     <section className="preview-block">
-      <h3 className="panel-title">{table.title}</h3>
+      <h2 className="panel-title">{table.title}</h2>
       <table className="preview-table">
         <thead>
           <tr>
@@ -138,9 +138,9 @@ function Predictor({ chances, left, right }) {
   const [l, r] = [chances[left.id], chances[right.id]];
   return (
     <section className="preview-block">
-      <h3 className="panel-title">
+      <h2 className="panel-title">
         Win probability <span className="preview-sub">ESPN Matchup Predictor</span>
-      </h3>
+      </h2>
       <div className="possession-bar" role="img" aria-label={`${left.name} ${l}%, ${right.name} ${r}%`}>
         <span className="possession-left" style={{ width: `${l}%` }}>
           {l}%
@@ -158,7 +158,7 @@ function PerTeam({ title, teams, left, render }) {
   if (!teams.some((t) => t.items?.length)) return null;
   return (
     <section className="preview-block">
-      <h3 className="panel-title">{title}</h3>
+      <h2 className="panel-title">{title}</h2>
       <div className="key-players">
         {teams.map((t) => (
           <div key={t.id} className={`key-team key-${t.id === left.id ? "left" : "right"}`}>
@@ -238,7 +238,7 @@ export default function MatchPreview({ match }) {
       {p.table && <TableRows match={match} table={p.table} left={left} />}
       {season.length > 0 && (
         <section className="preview-block">
-          <h3 className="panel-title">Season so far</h3>
+          <h2 className="panel-title">Season so far</h2>
           <div className="stats">
             <StatBars rows={season} />
           </div>

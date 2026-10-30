@@ -356,10 +356,11 @@ export default function TeamPage({ league, id, onBack }) {
               <Schedule team={team} upcoming={team.live.length ? team.fixtures : later} />
             </div>
 
-            <aside className="team-side">
+            {/* A plain box: it sits inside the page's main content, not beside it. */}
+            <div className="team-side">
               <TablePosition league={team.homeLeague} teamId={team.id} />
               <TeamNews league={team.homeLeague} teamId={team.id} />
-            </aside>
+            </div>
           </div>
 
           {team.link && (

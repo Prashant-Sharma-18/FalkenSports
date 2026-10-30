@@ -112,20 +112,30 @@
 
 .rank-badge.zone-ucl {
   background: rgba(14, 165, 233, 0.15);
-  color: #0284c7;
+  color: #0369a1;
   border: 1px solid rgba(14, 165, 233, 0.3);
 }
 
 .rank-badge.zone-uel {
   background: rgba(245, 158, 11, 0.15);
-  color: #d97706;
+  color: #92400e;
   border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .rank-badge.zone-rel {
   background: rgba(239, 68, 68, 0.15);
-  color: #dc2626;
+  color: var(--live);
   border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* The darker shades above read on light backgrounds; dark mode keeps the
+   brighter ones. */
+:root[data-theme="dark"] .rank-badge.zone-ucl { color: #38bdf8; }
+:root[data-theme="dark"] .rank-badge.zone-uel { color: #fbbf24; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .rank-badge.zone-ucl { color: #38bdf8; }
+  :root:not([data-theme="light"]) .rank-badge.zone-uel { color: #fbbf24; }
 }
 
 .standings tr.zone-ucl td:first-child { box-shadow: inset 3px 0 0 #0284c7; }

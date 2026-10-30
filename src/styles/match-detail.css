@@ -144,7 +144,7 @@
 
 .form-pill-W { background: var(--win); color: #ffffff; }
 .form-pill-D { background: var(--surface-3); color: var(--muted); }
-.form-pill-L { background: var(--live); color: #ffffff; }
+.form-pill-L { background: var(--live-solid); color: #ffffff; }
 
 /* Stats */
 .stats {
@@ -313,6 +313,7 @@
 }
 
 .lineup-name {
+  margin: 0;
   font-size: 0.95rem;
   font-weight: 800;
 }

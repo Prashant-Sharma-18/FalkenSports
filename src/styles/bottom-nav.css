@@ -94,7 +94,7 @@
 }
 
 .nav-badge-live {
-  background: var(--live);
+  background: var(--live-solid);
   box-shadow: 0 0 8px var(--live);
 }
 

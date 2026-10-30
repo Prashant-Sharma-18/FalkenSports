@@ -118,7 +118,7 @@ export function Leaders({ match }) {
 
   return (
     <div className="leaders-block">
-      <h3 className="panel-title">Game leaders</h3>
+      <h2 className="panel-title">Game leaders</h2>
       <div className="leaders-grid">
         {teams.map(({ team, items }) => (
           <div className="leaders-team" key={team.id}>

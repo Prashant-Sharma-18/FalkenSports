@@ -248,7 +248,7 @@ export function Scorecard({ match }) {
       )}
       {inn.fallOfWickets?.length > 0 && (
         <div className="fow">
-          <h4 className="fow-title">Fall of wickets</h4>
+          <h2 className="fow-title">Fall of wickets</h2>
           <p className="fow-list">
             {inn.fallOfWickets.map((f, i) => (
               <span key={f.wicket} className="fow-item">
