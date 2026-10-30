@@ -56,6 +56,11 @@ export default function Standings({ league }) {
   const usStyle = isUsStyle(sport);
   const columns = usColumns(league);
   const cricket = sport === "cricket";
+  const tennis = sport === "tennis";
+  // Rankings and championships: rank, name and points (tennis adds movement).
+  const pointsOnly = cricket || tennis || sport === "f1";
+  // F1 drivers and constructors can't be followed (there are no matches to pin).
+  const stars = sport !== "f1";
   const showForm = hasForm(sport);
   const linkTeams = hasTeamPages(sport);
   const { isFavorite } = useFavorites();
@@ -98,10 +103,12 @@ export default function Standings({ league }) {
                   <Trophy size={14} />
                 </span>
                 <h2 className="group-title">
-                  {data.length > 1 ? group.name : `${leagueName(league)} Standings`}
+                  {group.title || (data.length > 1 ? group.name : `${leagueName(league)} Standings`)}
                 </h2>
               </div>
-              <span className="table-head-badge">{totalRows} Teams</span>
+              <span className="table-head-badge">
+                {totalRows} {group.unit || "Teams"}
+              </span>
             </div>
 
             <div className="table-scroll">
@@ -109,9 +116,12 @@ export default function Standings({ league }) {
                 <thead>
                   <tr>
                     <th className="col-rank">#</th>
-                    <th className="left col-team">Team</th>
-                    {cricket ? (
-                      <th className="pts" title="Points">Pts</th>
+                    <th className="left col-team">{group.unit ? group.unit.slice(0, -1) : "Team"}</th>
+                    {pointsOnly ? (
+                      <>
+                        <th className="pts" title="Points">Pts</th>
+                        {tennis && <th title="Places moved since the previous ranking">+/-</th>}
+                      </>
                     ) : usStyle ? (
                       columns.map((c) => (
                         <th
@@ -171,16 +181,28 @@ export default function Standings({ league }) {
                               </a>
                             ) : (
                               <span className="table-team">
-                                <TeamLogo src={row.logo} name={row.name} size={24} />
+                                {/* F1 constructors have a colour rather than a logo. */}
+                                {!row.logo && row.color ? (
+                                  <span className="team-swatch" style={{ background: row.color }} aria-hidden="true" />
+                                ) : (
+                                  <TeamLogo src={row.logo} name={row.name} size={24} />
+                                )}
                                 <span className="full team-name-cell">{row.name}</span>
                                 <span className="abbr">{row.short}</span>
                               </span>
                             )}
-                            <StarButton team={row} size={14} />
+                            {stars && <StarButton team={row} size={14} />}
                           </span>
                         </td>
-                        {cricket ? (
-                          <td className="pts">{row.points}</td>
+                        {pointsOnly ? (
+                          <>
+                            <td className="pts">{row.points}</td>
+                            {tennis && (
+                              <td className={row.move > 0 ? "gd-pos" : row.move < 0 ? "gd-neg" : "muted"}>
+                                {row.move > 0 ? `+${row.move}` : row.move || "–"}
+                              </td>
+                            )}
+                          </>
                         ) : usStyle ? (
                           columns.map((c) => {
                             const v = row.stats?.[c.stat] ?? "";

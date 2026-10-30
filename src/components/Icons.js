@@ -277,6 +277,24 @@ export const Baseball = (props) => (
   </Icon>
 );
 
+// Racket and ball (a plain ball would look like the baseball).
+export const Tennis = (props) => (
+  <Icon {...props}>
+    <ellipse cx="14.5" cy="9.5" rx="5.5" ry="6.5" transform="rotate(45 14.5 9.5)" />
+    <path d="m10.3 13.7-6.8 6.8" />
+    <circle cx="18.5" cy="19" r="1.8" />
+  </Icon>
+);
+
+// Chequered flag.
+export const RacingFlag = (props) => (
+  <Icon {...props}>
+    <path d="M5 21V4" />
+    <path d="M5 4h14v10H5" />
+    <path d="M9.7 4v10M14.3 4v10M5 9h14" />
+  </Icon>
+);
+
 const SPORT_ICONS = {
   football: Football,
   basketball: Basketball,
@@ -284,6 +302,8 @@ const SPORT_ICONS = {
   "american-football": AmericanFootball,
   hockey: Hockey,
   baseball: Baseball,
+  tennis: Tennis,
+  f1: RacingFlag,
 };
 
 // Icon for a sport id from sports.js.

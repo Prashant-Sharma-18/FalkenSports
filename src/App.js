@@ -4,7 +4,7 @@ import { leagueName } from "./api";
 import { todayKey } from "./dates";
 import { FavoritesProvider } from "./favorites";
 import { ThemeProvider } from "./theme";
-import { DEFAULT_SPORT, SPORTS, SPORT_IDS, isLeagueOf, leaguesOf } from "./sports";
+import { DEFAULT_SPORT, SPORTS, SPORT_IDS, isLeagueOf, leaguesOf, tableLabel } from "./sports";
 import ThemeToggle from "./components/ThemeToggle";
 import BottomNav from "./components/BottomNav";
 import { navigate, routeHref, useRoute } from "./router";
@@ -13,11 +13,13 @@ import Standings from "./components/Standings";
 import News from "./components/News";
 import MatchDetail from "./components/MatchDetail";
 import TeamPage from "./components/TeamPage";
+import Races from "./components/Races";
+import RaceDetail from "./components/RaceDetail";
 import "./App.css";
 
 const tabsFor = (sport) => [
   { id: "matches", label: SPORTS[sport].games, icon: Timer },
-  { id: "table", label: "Table", icon: Table2 },
+  { id: "table", label: tableLabel(sport), icon: Table2 },
   { id: "news", label: "News", icon: Newspaper },
 ];
 
@@ -122,8 +124,15 @@ function Shell() {
     );
 
   const leagues = leaguesOf(sport);
+  // F1's race calendar is one season, with nothing to pick between.
   const chips =
-    route.view === "matches" ? [{ id: "all", name: "All" }, ...leagues] : detailView ? [] : leagues;
+    route.view === "matches"
+      ? sport === "f1"
+        ? []
+        : [{ id: "all", name: "All" }, ...leagues]
+      : detailView
+      ? []
+      : leagues;
 
   const goBack = () => {
     if (navigatedInApp.current) window.history.back();
@@ -233,7 +242,9 @@ function Shell() {
           </div>
         )}
 
-        {route.view === "matches" && (
+        {/* F1 has race weekends instead of daily fixtures. */}
+        {route.view === "matches" && sport === "f1" && <Races />}
+        {route.view === "matches" && sport !== "f1" && (
           <Scores
             key={`${sport}:${route.league}`}
             sport={sport}
@@ -249,7 +260,8 @@ function Shell() {
         )}
         {route.view === "table" && <Standings league={route.league} />}
         {route.view === "news" && <News league={route.league} />}
-        {route.view === "match" && (
+        {route.view === "match" && sport === "f1" && <RaceDetail key={route.id} id={route.id} onBack={goBack} />}
+        {route.view === "match" && sport !== "f1" && (
           <MatchDetail key={route.id} league={route.league} id={route.id} onBack={goBack} />
         )}
         {route.view === "team" && (
@@ -261,6 +273,7 @@ function Shell() {
       <BottomNav
         currentView={route.view}
         tabHref={tabHref}
+        tableLabel={tableLabel(sport)}
       />
     </div>
   );

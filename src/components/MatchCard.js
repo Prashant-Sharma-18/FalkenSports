@@ -6,7 +6,7 @@ import TeamLogo from "./TeamLogo";
 import StarButton from "./StarButton";
 import { Football, MapPin } from "./Icons";
 import { CricketScore } from "./CricketDetail";
-import { isUsStyle } from "../sports";
+import { hasMatchPages, isUsStyle } from "../sports";
 
 export function MatchStatus({ match }) {
   if (match.state === "in") {
@@ -25,7 +25,8 @@ export function MatchStatus({ match }) {
   }
   return (
     <span className="badge upcoming">
-      {match.date ? formatTime(match.date) : match.detail}
+      {/* Tennis order of play may not be set yet ("TBD"). */}
+      {match.date && !match.timeTbd ? formatTime(match.date) : match.detail}
     </span>
   );
 }
@@ -49,6 +50,20 @@ function Scorers({ goals }) {
   );
 }
 
+// Games per set; the set's loser carries the tie-break points (7-6⁵).
+function TennisSets({ sets }) {
+  return (
+    <span className="tennis-sets">
+      {sets.map((s, i) => (
+        <span key={i} className={`tennis-set ${s.won ? "set-won" : ""}`}>
+          {s.games}
+          {s.tiebreak != null && <sup>{s.tiebreak}</sup>}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export default function MatchCard({ match }) {
   const { isFavorite } = useFavorites();
   const started = match.state !== "pre";
@@ -65,7 +80,10 @@ export default function MatchCard({ match }) {
         <div className="team-info">
           <div className="team-identity">
             {/* The star button beside the name already shows favourite state. */}
-            <span className={`team-name ${fav ? "fav" : ""}`}>{team.name}</span>
+            <span className={`team-name ${fav ? "fav" : ""}`}>
+              {team.name}
+              {team.seed && <span className="seed"> ({team.seed})</span>}
+            </span>
             <StarButton team={team} size={14} />
           </div>
           <Scorers goals={goals} />
@@ -85,6 +103,8 @@ export default function MatchCard({ match }) {
         >
           {started && match.sport === "cricket" && team.score ? (
             <CricketScore score={team.score} />
+          ) : started && match.sport === "tennis" && team.sets?.length ? (
+            <TennisSets sets={team.sets} />
           ) : started ? (
             team.score || "-"
           ) : (
@@ -95,14 +115,22 @@ export default function MatchCard({ match }) {
     );
   };
 
+  // Sports without match pages (tennis) show the whole match on the card.
+  const linked = hasMatchPages(match.sport);
+  const Card = linked ? "a" : "div";
+
   return (
-    <a
-      className={`card match ${match.state === "in" ? "is-live" : ""} ${match.state === "post" ? "is-post" : "is-pre"}`}
-      href={routeHref({ view: "match", league: match.league, id: match.id })}
+    <Card
+      className={`card match ${match.state === "in" ? "is-live" : ""} ${match.state === "post" ? "is-post" : "is-pre"} ${
+        match.sport === "tennis" ? "match-tennis" : ""
+      }`}
+      href={linked ? routeHref({ view: "match", league: match.league, id: match.id }) : undefined}
     >
       <header className="match-head">
         <MatchStatus match={match} />
-        {match.sport === "cricket" && (match.format || match.label) ? (
+        {match.sport === "tennis" && match.label ? (
+          <span className="match-format">{[match.label, match.venue].filter(Boolean).join(" · ")}</span>
+        ) : match.sport === "cricket" && (match.format || match.label) ? (
           <span className="match-format">{[match.format, match.label].filter(Boolean).join(" · ")}</span>
         ) : match.venue && (
           <span className="venue" title={match.venue}>
@@ -126,6 +154,6 @@ export default function MatchCard({ match }) {
         )}
       </div>
       {match.summary && <p className="match-summary">{match.summary}</p>}
-    </a>
+    </Card>
   );
 }

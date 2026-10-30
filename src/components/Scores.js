@@ -214,15 +214,16 @@ export default function Scores({ sport, league, date, onDateChange }) {
 
       {/* Competition Match Groups */}
       {groups.map((g) => (
-        <div className="match-group" key={g.league}>
-          {(all || pinned.length > 0 || filterMode === "favs") && (
+        <div className="match-group" key={g.key || g.league}>
+          {(all || groups.length > 1 || pinned.length > 0 || filterMode === "favs") && (
             <div className="group-heading-wrapper">
               <h2 className="group-heading">
                 <span className="league-icon-pill">
                   <Trophy size={13} />
                 </span>
-                {/* Only configured competitions have their own page; cricket tours don't. */}
-                {all && isLeagueOf(sport, g.league) ? (
+                {/* Only configured competitions have their own page; cricket tours and
+                    tennis tournaments (grouped under ATP / WTA) don't. */}
+                {all && isLeagueOf(sport, g.league) && (!g.name || g.name === leagueName(g.league)) ? (
                   <a href={routeHref({ sport, view: "matches", league: g.league, date })}>
                     {g.name || leagueName(g.league)}
                   </a>

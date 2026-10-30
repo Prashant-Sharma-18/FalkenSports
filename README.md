@@ -1,7 +1,7 @@
 # FalkenSports — free live scores & news
 
 A free, installable, multi-sport web app for live scores, game centres, team
-pages, standings and news. Football, basketball, cricket, American football, hockey and baseball today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
+pages, standings and news. Football, basketball, cricket, American football, hockey, baseball, tennis and Formula 1 today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
 JSON feeds, called directly from the browser.
 
 **Football:** Premier League, LaLiga, Bundesliga, Serie A, Ligue 1, Champions
@@ -13,6 +13,8 @@ League, MLS (team pages also include domestic cups and friendlies).
 IPL, Big Bash, WBBL, PSL, Ranji Trophy, Sheffield Shield, County Championship.
 
 **American football:** NFL, NCAA Football. **Hockey:** NHL. **Baseball:** MLB.
+
+**Tennis:** ATP and WTA tournaments. **Formula 1:** every race weekend.
 
 ## Features
 
@@ -26,6 +28,12 @@ IPL, Big Bash, WBBL, PSL, Ranji Trophy, Sheffield Shield, County Championship.
   pitchers), play-by-play with scoring plays highlighted.
 - **Cricket centre** — innings scores, result or match situation, toss and match
   facts, full batting and bowling scorecards for every innings.
+- **Tennis** — each day's matches grouped by tournament and draw (singles, doubles),
+  set scores with tie-breaks, seeds and flags; ATP and WTA rankings with movement.
+- **Formula 1** — this weekend's sessions with times or podiums, the season
+  calendar, and a page per Grand Prix with full results for every session (race:
+  gaps, laps down, retirements, grid, pit stops, points; qualifying: Q1–Q3;
+  practice: times); drivers' and constructors' championships.
 - **Team pages** — results and fixtures across all competitions, form, next match,
   league position.
 - **Tables** — ESPN's real qualification and relegation zones, last-five form;
@@ -60,7 +68,7 @@ locally: `npm run build && npx serve -s build`.
 | `src/router.js` | Hash routes (`#/matches`, `#/table`, `#/match`, `#/team`, `#/basketball/…`) |
 | `src/useRemoteData.js` | Loading, polling (paused in hidden tabs) and refresh |
 | `src/favorites.js`, `src/theme.js` | Favourite teams and theme, persisted locally |
-| `src/components/` | Screens (`Scores`, `MatchDetail`, `TeamPage`, `Standings`, `News`), game centre sections for North American sports (`GameDetail`) and UI pieces |
+| `src/components/` | Screens (`Scores`, `MatchDetail`, `TeamPage`, `Standings`, `News`, F1 `Races` and `RaceDetail`), game centre sections for North American sports (`GameDetail`) and UI pieces |
 | `src/service-worker.js` | Offline caching (built by Workbox) |
 
 ## Data source caveats

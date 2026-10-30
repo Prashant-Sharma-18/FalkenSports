@@ -90,6 +90,37 @@ export const SPORTS = {
     usStyle: true,
     leagues: [{ id: "mlb", name: "MLB" }],
   },
+  // Individual sports: players and drivers instead of teams, so no team pages
+  // or form, and the table tab holds rankings or championship standings.
+  tennis: {
+    id: "tennis",
+    espn: "tennis",
+    name: "Tennis",
+    games: "Matches",
+    game: "match",
+    draws: false,
+    teamPages: false,
+    form: false,
+    // A tennis card already shows everything ESPN has (sets, seeds, round).
+    matchPages: false,
+    table: "Rankings",
+    leagues: [
+      { id: "atp", name: "ATP" },
+      { id: "wta", name: "WTA" },
+    ],
+  },
+  f1: {
+    id: "f1",
+    espn: "racing",
+    name: "Formula 1",
+    games: "Races",
+    game: "race",
+    draws: false,
+    teamPages: false,
+    form: false,
+    table: "Standings",
+    leagues: [{ id: "f1", name: "F1" }],
+  },
 };
 
 export const SPORT_IDS = Object.keys(SPORTS);
@@ -114,6 +145,8 @@ export function sportOfLeague(league) {
 // Optional features default to on; a sport opts out in its config.
 export const hasTeamPages = (sport) => SPORTS[sport]?.teamPages !== false;
 export const hasForm = (sport) => SPORTS[sport]?.form !== false;
+export const hasMatchPages = (sport) => SPORTS[sport]?.matchPages !== false;
+export const tableLabel = (sport) => SPORTS[sport]?.table || "Table";
 
 // North American conventions: the away team is listed first ("Heat at Hawks"),
 // and games have a line score, box score and play-by-play.
