@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { fetchSportsDay } from "../api";
 import { alertsOn, changes, notify, useAlerts } from "../alerts";
-import { todayKey } from "../dates";
 import { useFavorites } from "../favorites";
 import { DEFAULT_SPORT, SPORT_IDS, canFollow } from "../sports";
 
@@ -27,7 +26,9 @@ export default function ScoreAlerts() {
       ctrl?.abort();
       ctrl = new AbortController();
       try {
-        const day = await fetchSportsDay(sportsKey.split(","), todayKey(), ctrl.signal);
+        // The current scoreboards (no date): what's live now, and the same
+        // requests Home and Live now make, so they're shared.
+        const day = await fetchSportsDay(sportsKey.split(","), null, ctrl.signal);
         const mine = day
           .flatMap((s) => s.matches)
           .filter((m) => followed.current(m.home) || followed.current(m.away));

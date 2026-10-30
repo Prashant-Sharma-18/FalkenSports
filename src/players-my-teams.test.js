@@ -121,9 +121,14 @@ test('finished F1 sessions are loaded once per visit', async () => {
   await fetchSessionResults('e1', session);
   await fetchSessionResults('e1', session);
   expect(global.fetch).toHaveBeenCalledTimes(1);
-  // Live sessions always refresh.
+  // Live sessions refresh: a request is only shared for 20 seconds.
   await fetchSessionResults('e1', { ...session, id: 's2', state: 'in' });
   await fetchSessionResults('e1', { ...session, id: 's2', state: 'in' });
+  expect(global.fetch).toHaveBeenCalledTimes(2); // the second shared the first
+  const later = Date.now() + 21 * 1000;
+  const now = jest.spyOn(Date, 'now').mockReturnValue(later);
+  await fetchSessionResults('e1', { ...session, id: 's2', state: 'in' });
+  now.mockRestore();
   expect(global.fetch).toHaveBeenCalledTimes(3);
 });
 

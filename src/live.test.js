@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import App from './App';
 import { fetchLiveNow, fetchTopStories } from './api';
 import { parseRoute, routeHref } from './router';
@@ -131,4 +131,20 @@ test('top stories take turns between leagues, so one busy league cannot fill the
   // NFL's stories are all newer, but each league still gets its newest in.
   expect(stories.map((s) => s.id)).toEqual(['eng.1-1', 'nba-1', 'nfl-1', 'eng.1-2', 'nba-2']);
   expect(stories[0].source).toBe('Premier League');
+});
+
+test('going from Home to Live now reuses the same requests', async () => {
+  mockEspn();
+  render(<App />);
+  await screen.findByText('3 live now');
+  const scoreboards = () => global.fetch.mock.calls.filter(([u]) => u.includes('/scoreboard')).length;
+  const before = scoreboards();
+  expect(before).toBeGreaterThan(20); // every sport's competitions
+
+  await act(async () => {
+    window.location.hash = '#/live';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+  });
+  expect(await screen.findByText('3 live')).toBeInTheDocument();
+  expect(scoreboards()).toBe(before);
 });
