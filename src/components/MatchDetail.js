@@ -23,6 +23,8 @@ import { BoxScore, Leaders, Linescore, PlayByPlay, Situation } from "./GameDetai
 import { CricketScore, CricketSummary, Scorecard } from "./CricketDetail";
 import { SPORTS, hasTeamPages, isUsStyle } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
+import Pitch, { pitchRows } from "./Pitch";
+import { colourVars, teamPaint } from "../teamColours";
 
 const LIVE_REFRESH = 30 * 1000;
 
@@ -137,41 +139,88 @@ function Form({ team, games }) {
   );
 }
 
+// Left and right as the header has them: US sports put the away team first.
+const sides = (match) => (isUsStyle(match.sport) ? [match.away, match.home] : [match.home, match.away]);
+
+// Team stats in the teams' colours. Possession leads as one split bar; every
+// other stat has a bar per team growing out from the middle, and the leader's
+// number filled in its colour.
 function Stats({ match }) {
-  // Same left/right order as the header: US sports put the away team first.
   const awayFirst = isUsStyle(match.sport);
+  const [leftTeam, rightTeam] = sides(match);
+  const rows = match.stats.map((s) => {
+    const [left, right] = awayFirst ? [s.away, s.home] : [s.home, s.away];
+    const [leftText, rightText] = awayFirst ? [s.awayText, s.homeText] : [s.homeText, s.awayText];
+    const total = left + right;
+    return {
+      ...s,
+      leftText: leftText ?? `${left}${s.suffix}`,
+      rightText: rightText ?? `${right}${s.suffix}`,
+      leftShare: total ? (left / total) * 100 : 0,
+      rightShare: total ? (right / total) * 100 : 0,
+      lead: left === right ? "" : left > right ? "left" : "right",
+    };
+  });
+  const possession = rows.find((s) => s.label === "Possession");
+
   return (
-    <div className="stats">
-      {match.stats.map((s) => {
-        const [left, right] = awayFirst ? [s.away, s.home] : [s.home, s.away];
-        const [leftText, rightText] = awayFirst ? [s.awayText, s.homeText] : [s.homeText, s.awayText];
-        const total = left + right;
-        const leftShare = total ? (left / total) * 100 : 50;
-        const lead = left === right ? "" : left > right ? "left" : "right";
-        return (
+    <div className="stats" style={colourVars(teamPaint(leftTeam), teamPaint(rightTeam))}>
+      <div className="stats-teams">
+        <span className="stats-team">
+          <span className="stats-dot stats-dot-left" aria-hidden="true" />
+          <TeamLogo src={leftTeam.logo} name={leftTeam.name} size={20} />
+          <span>{leftTeam.short || leftTeam.name}</span>
+        </span>
+        <span className="stats-team">
+          <span>{rightTeam.short || rightTeam.name}</span>
+          <TeamLogo src={rightTeam.logo} name={rightTeam.name} size={20} />
+          <span className="stats-dot stats-dot-right" aria-hidden="true" />
+        </span>
+      </div>
+
+      {possession && (
+        <div className="stat-possession">
+          <span className="stat-label">Possession</span>
+          <div className="possession-bar">
+            <span className="possession-left" style={{ width: `${possession.leftShare || 50}%` }}>
+              {possession.leftText}
+            </span>
+            <span className="possession-right" style={{ width: `${possession.rightShare || 50}%` }}>
+              {possession.rightText}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {rows
+        .filter((s) => s !== possession)
+        .map((s) => (
           <div className="stat" key={s.label}>
             <div className="stat-values">
-              <span className={`stat-val-home ${lead === "left" ? "strong stat-lead" : ""}`}>
-                {leftText ?? `${left}${s.suffix}`}
+              <span className={`stat-num stat-val-home ${s.lead === "left" ? "stat-lead" : ""}`}>
+                {s.leftText}
               </span>
-              <span className="stat-label muted">{s.label}</span>
-              <span className={`stat-val-away ${lead === "right" ? "strong stat-lead" : ""}`}>
-                {rightText ?? `${right}${s.suffix}`}
+              <span className="stat-label">{s.label}</span>
+              <span className={`stat-num stat-val-away ${s.lead === "right" ? "stat-lead" : ""}`}>
+                {s.rightText}
               </span>
             </div>
-            <div className="stat-bar" aria-hidden="true">
-              <span
-                className={`home ${lead === "left" ? "lead" : ""}`}
-                style={{ width: `${leftShare}%` }}
-              />
-              <span
-                className={`away ${lead === "right" ? "lead" : ""}`}
-                style={{ width: `${100 - leftShare}%` }}
-              />
+            <div className="stat-bars" aria-hidden="true">
+              <span className="stat-track">
+                <span
+                  className={`stat-fill stat-fill-left ${s.lead === "right" ? "trail" : ""}`}
+                  style={{ width: `${s.leftShare}%` }}
+                />
+              </span>
+              <span className="stat-track">
+                <span
+                  className={`stat-fill stat-fill-right ${s.lead === "left" ? "trail" : ""}`}
+                  style={{ width: `${s.rightShare}%` }}
+                />
+              </span>
             </div>
           </div>
-        );
-      })}
+        ))}
     </div>
   );
 }
@@ -201,6 +250,23 @@ function PlayerList({ players, bench }) {
 }
 
 function Lineups({ match }) {
+  const find = (team) => match.lineups.find((l) => l.teamId === team.id);
+  const [homeLineup, awayLineup] = [find(match.home), find(match.away)];
+  const [homeRows, awayRows] = [pitchRows(homeLineup), pitchRows(awayLineup)];
+  // Both XIs on a pitch when both formations fit; otherwise two lists.
+  if (homeRows && awayRows) {
+    return (
+      <Pitch
+        home={match.home}
+        away={match.away}
+        homeLineup={homeLineup}
+        awayLineup={awayLineup}
+        homeRows={homeRows}
+        awayRows={awayRows}
+        style={colourVars(teamPaint(match.home, homeLineup.kit), teamPaint(match.away, awayLineup.kit))}
+      />
+    );
+  }
   return (
     <div className="lineups">
       {[match.home, match.away].map((team) => {
@@ -306,7 +372,7 @@ function Header({ match }) {
   return (
     <div
       className={`card match-hero ${match.state === "in" ? "is-live" : ""}`}
-      style={{ "--left": left.color || "var(--accent)", "--right": right.color || "var(--accent)" }}
+      style={colourVars(teamPaint(left), teamPaint(right))}
     >
       {/* The two teams' colours along the top. */}
       <span className="mh-strip" aria-hidden="true" />

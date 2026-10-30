@@ -152,43 +152,137 @@
   gap: 14px;
 }
 
-.stat-values {
+/* Stats, in the two teams' colours (--left / --right, set on .stats). */
+.stats-teams {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 6px;
-  font-size: 0.825rem;
-  font-family: var(--font-mono);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
-.stat-label {
-  font-family: var(--font-main);
-  font-weight: 600;
-  font-size: 0.775rem;
-}
-
-.stat-lead {
+.stats-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.8rem;
   font-weight: 800;
-  color: var(--accent);
 }
 
-.stat-bar {
+.stats-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+}
+
+.stats-dot-left { background: var(--left); }
+.stats-dot-right { background: var(--right); }
+
+.stat-possession {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+
+.possession-bar {
   display: flex;
-  gap: 4px;
-  height: 7px;
-  border-radius: 999px;
+  gap: 3px;
+  height: 30px;
   overflow: hidden;
-  background: var(--surface-2);
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 800;
 }
 
-.stat-bar span {
-  border-radius: 999px;
-  background: var(--surface-3);
+.possession-bar span {
+  display: flex;
+  align-items: center;
+  min-width: 46px;
+  padding: 0 10px;
   transition: width 0.4s ease;
 }
 
-.stat-bar span.lead {
-  background: var(--accent);
+.possession-left {
+  background: var(--left);
+  color: var(--left-ink);
+}
+
+.possession-right {
+  justify-content: flex-end;
+  background: var(--right);
+  color: var(--right-ink);
+}
+
+.stat-values {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-family: var(--font-main);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.stat-num {
+  min-width: 34px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.stat-val-home.stat-lead {
+  background: var(--left);
+  color: var(--left-ink);
+}
+
+.stat-val-away.stat-lead {
+  background: var(--right);
+  color: var(--right-ink);
+}
+
+/* One track per team, filling outward from the middle. */
+.stat-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.stat-track {
+  display: flex;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.stat-track:first-child {
+  justify-content: flex-end;
+}
+
+.stat-fill {
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.stat-fill-left { background: var(--left); }
+.stat-fill-right { background: var(--right); }
+
+.stat-fill.trail {
+  opacity: 0.45;
 }
 
 /* Lineups */

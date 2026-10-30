@@ -341,7 +341,361 @@
   text-transform: uppercase;
 }
 
+/* ---- Line-ups on a pitch: home at the top, away at the bottom ---- */
+/* Kept to a real pitch's proportions on wide screens. */
+.pitch-wrap {
+  max-width: 620px;
+  margin: 0 auto;
+  --pitch-a: #2f8a42;
+  --pitch-b: #2a7f3c;
+  --pitch-line: rgba(255, 255, 255, 0.5);
+}
+
+:root[data-theme="dark"] .pitch-wrap {
+  --pitch-a: #1f5f2e;
+  --pitch-b: #1b5629;
+  --pitch-line: rgba(255, 255, 255, 0.32);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .pitch-wrap {
+    --pitch-a: #1f5f2e;
+    --pitch-b: #1b5629;
+    --pitch-line: rgba(255, 255, 255, 0.32);
+  }
+}
+
+.pitch-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 2px;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.pitch-team-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pitch-team-dot {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.pitch-team-left .pitch-team-dot { background: var(--left); }
+.pitch-team-right .pitch-team-dot { background: var(--right); }
+
+.pitch {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: repeating-linear-gradient(
+    180deg,
+    var(--pitch-a) 0 8.33%,
+    var(--pitch-b) 8.33% 16.66%
+  );
+  box-shadow: inset 0 0 0 2px var(--pitch-line);
+}
+
+.pitch-markings span {
+  position: absolute;
+  border: 2px solid var(--pitch-line);
+}
+
+.pm-halfway {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-width: 2px 0 0 !important;
+}
+
+.pm-circle {
+  top: 50%;
+  left: 50%;
+  width: 26%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pm-box,
+.pm-six {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.pm-box { width: 56%; height: 13%; }
+.pm-six { width: 26%; height: 4.5%; }
+
+.pm-box-top,
+.pm-six-top {
+  top: -2px;
+  border-radius: 0 0 6px 6px;
+}
+
+.pm-box-bottom,
+.pm-six-bottom {
+  bottom: -2px;
+  border-radius: 6px 6px 0 0;
+}
+
+.pitch-half {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 330px;
+  padding: 12px 4px 18px;
+}
+
+.pitch-bottom {
+  padding: 18px 4px 12px;
+}
+
+.pitch-line {
+  display: flex;
+  justify-content: space-evenly;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pp {
+  display: flex;
+  flex: 0 1 96px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
+.pp-shirt {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.pitch-top .pp-shirt {
+  background: var(--left);
+  color: var(--left-ink);
+}
+
+.pitch-bottom .pp-shirt {
+  background: var(--right);
+  color: var(--right-ink);
+}
+
+/* Keepers wear their own kit. */
+.pitch-top .pitch-line:first-child .pp-shirt,
+.pitch-bottom .pitch-line:last-child .pp-shirt {
+  background: #f4d03f;
+  color: #111827;
+}
+
+.pp-name {
+  max-width: 100%;
+  padding: 1px 5px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.32);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-min {
+  color: rgba(255, 255, 255, 0.85);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pp-card {
+  position: absolute;
+  top: -3px;
+  left: -5px;
+  width: 9px;
+  height: 12px;
+  border-radius: 2px;
+  background: #facc15;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  transform: rotate(-10deg);
+}
+
+.pp-card-red {
+  background: #ef4444;
+}
+
+.pp-goal {
+  position: absolute;
+  top: -6px;
+  right: -9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  padding: 2px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+.pp-goal b {
+  padding-right: 2px;
+  font-size: 0.58rem;
+}
+
+.pp-og {
+  color: #ef4444;
+}
+
+.pp-off {
+  position: absolute;
+  right: -6px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+/* Benches */
+.bench-heading {
+  margin-top: 18px;
+}
+
+.benches {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.bench-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bench-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bench-player {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.bench-player:last-child {
+  border-bottom: none;
+}
+
+.bench-player.used {
+  color: var(--text);
+}
+
+.bench-player .jersey {
+  flex: none;
+}
+
+.bench-left .bench-player.used .jersey {
+  background: var(--left);
+  color: var(--left-ink);
+}
+
+.bench-right .bench-player.used .jersey {
+  background: var(--right);
+  color: var(--right-ink);
+}
+
+.bench-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.bench-name {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.bench-goal {
+  display: inline-grid;
+  color: var(--accent);
+}
+
+.bench-on {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+.bench-on svg {
+  color: var(--win);
+  vertical-align: -1px;
+}
+
 /* ---- Phones ---- */
+.layout-compact .pitch-half {
+  min-height: 300px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.layout-compact .pp-shirt {
+  width: 30px;
+  height: 30px;
+  font-size: 0.72rem;
+}
+
+.layout-compact .pp-name {
+  font-size: 0.64rem;
+}
+
+.layout-compact .benches {
+  gap: 10px;
+}
+
+.layout-compact .bench-player {
+  font-size: 0.76rem;
+}
+
 .layout-compact .match-hero {
   padding: 18px 12px 14px;
 }

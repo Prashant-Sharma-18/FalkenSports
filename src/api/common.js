@@ -1,6 +1,9 @@
 // Shapes shared by every team sport: teams, matches and team statistics.
 import { leagueName, sportOfLeague, teamKey } from "../sports";
 
+// ESPN colours come as "ff0000"; anything else is no colour.
+export const hexColour = (c) => (/^[0-9a-f]{6}$/i.test(c || "") ? `#${c}` : null);
+
 export function normalizeTeam(c = {}, sport) {
   const id = c.team?.id;
   // Basketball sends a list of leader categories; cricket sends an object, so check.
@@ -15,7 +18,9 @@ export function normalizeTeam(c = {}, sport) {
     name: c.team?.displayName || "TBD",
     short: c.team?.abbreviation || "",
     logo: c.team?.logo || c.team?.logos?.[0]?.href,
-    color: /^[0-9a-f]{6}$/i.test(c.team?.color || "") ? `#${c.team.color}` : null,
+    color: hexColour(c.team?.color),
+    // A second colour, for when both teams' main colours look alike.
+    alt: hexColour(c.team?.alternateColor),
     // Scoreboards send "2"; team schedules send { displayValue: "2" }.
     score: typeof c.score === "object" ? c.score?.displayValue : c.score,
     // Cricket sends "true"/"false" strings.

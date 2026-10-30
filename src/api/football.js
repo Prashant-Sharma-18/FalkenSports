@@ -1,6 +1,6 @@
 // Football (soccer) match centre: key events, line-ups, form and commentary.
 // Rugby uses it too: ESPN gives rugby line-ups and form, but no events or stats.
-import { statRows } from "./common";
+import { hexColour, statRows } from "./common";
 
 const FOOTBALL_STATS = [
   ["possessionPct", "Possession", "%"],
@@ -49,17 +49,35 @@ export function footballDetail(s, home, away) {
   const lineups = (s.rosters || [])
     .filter((r) => r.roster?.length)
     .map((r) => {
-      const player = (p) => ({
-        id: p.athlete?.id,
-        name: p.athlete?.displayName,
-        jersey: p.jersey,
-        position: p.position?.abbreviation,
-        subbedIn: p.subbedIn,
-        subbedOut: p.subbedOut,
-      });
+      const player = (p) => {
+        const plays = p.plays || [];
+        const count = (test) => plays.filter(test).length;
+        const sub = plays.find((pl) => pl.substitution);
+        const swap = p.subbedIn ? p.subbedInFor : p.subbedOutFor;
+        return {
+          id: p.athlete?.id,
+          name: p.athlete?.displayName,
+          // For the pitch, where space is short: "van Dijk".
+          short: p.athlete?.lastName || p.athlete?.displayName,
+          jersey: p.jersey,
+          position: p.position?.abbreviation,
+          formationPlace: Number(p.formationPlace) || 0,
+          subbedIn: p.subbedIn,
+          subbedOut: p.subbedOut,
+          subMinute: sub?.clock?.displayValue,
+          // On for / off for this player.
+          swap: swap?.athlete?.displayName,
+          goals: count((pl) => pl.didScore && !pl.ownGoal),
+          ownGoals: count((pl) => pl.didScore && pl.ownGoal),
+          yellow: plays.some((pl) => pl.yellowCard),
+          red: plays.some((pl) => pl.redCard),
+        };
+      };
       return {
         teamId: r.team?.id,
         formation: r.formation,
+        // The kit colour worn in this match, if ESPN has it.
+        kit: hexColour(r.uniform?.color),
         starters: r.roster
           .filter((p) => p.starter)
           // Football: formation order. Rugby has none; shirt numbers 1-15 are positions.
