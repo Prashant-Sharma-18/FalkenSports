@@ -2,11 +2,12 @@ import React from "react";
 import { fetchLiveNow, fetchTopStories } from "../api";
 import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
-import { SPORTS, SPORT_IDS, leagueName } from "../sports";
+import { SPORTS, leagueName } from "../sports";
+import { useSportPrefs } from "../sportPrefs";
 import useRemoteData from "../useRemoteData";
 import MatchCard, { CompetitionCard } from "./MatchCard";
 import { timeAgo } from "./News";
-import { ArrowUpRight, ChevronRight, Clock, Newspaper, Radio, Search, SportIcon, SPORT_ICONS, Star } from "./Icons";
+import { ArrowUpRight, ChevronRight, Clock, Newspaper, Radio, Search, Sliders, SportIcon, SPORT_ICONS, Star } from "./Icons";
 import { ErrorState } from "./Status";
 
 // Live games refresh every minute; stories every ten.
@@ -115,13 +116,21 @@ function Spotlight({ games }) {
   );
 }
 
-// Every sport as a big icon tile, with how many of its games are live.
-function SportsGrid({ counts }) {
+// The viewer's sports as big icon tiles, with how many of their games are live.
+function SportsGrid({ counts, sports }) {
   return (
     <section className="home-section">
-      <SectionHead title="Browse sports" />
+      <SectionHead
+        title="Browse sports"
+        href={routeHref({ view: "settings" })}
+        linkLabel={
+          <>
+            <Sliders size={14} /> Edit
+          </>
+        }
+      />
       <div className="home-sports">
-        {SPORT_IDS.map((sport) => (
+        {sports.map((sport) => (
           <a key={sport} className="home-sport" href={routeHref({ sport, view: "matches", league: "all" })}>
             {counts[sport] > 0 && (
               <span className="home-sport-live" aria-label={`${counts[sport]} live`}>
@@ -221,7 +230,13 @@ function TopStories() {
 
 // The front page: what's on across every sport, your teams, what's next.
 export default function Home() {
-  const { data, error, loading, refresh } = useRemoteData((signal) => fetchLiveNow(signal), [], LIVE_REFRESH);
+  // Only the viewer's shown sports.
+  const { visible } = useSportPrefs();
+  const { data, error, loading, refresh } = useRemoteData(
+    (signal) => fetchLiveNow(signal, visible),
+    [visible.join(",")],
+    LIVE_REFRESH
+  );
   const live = data ? gamesOf(data.live) : [];
   const soon = data ? gamesOf(data.soon) : [];
 
@@ -230,7 +245,7 @@ export default function Home() {
       <Hero data={data} loading={loading} />
       {error && !data && <ErrorState message={error} onRetry={refresh} />}
       <Spotlight games={live} />
-      <SportsGrid counts={liveCounts(data)} />
+      <SportsGrid counts={liveCounts(data)} sports={visible} />
       {data && <YourTeams games={[...live, ...soon]} />}
       {data && <ComingUp sections={data.soon} />}
       <TopStories />

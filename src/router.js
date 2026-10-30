@@ -14,6 +14,7 @@ import { isDayKey } from "./dates";
  *   #/favourites[/YYYY-MM-DD]                            my teams, every sport
  *   #/search[/query]                                     teams and players, every sport
  *   #/live                                               everything live, every sport
+ *   #/settings                                           your sports: shown, order, start screen
  *   #/  (or anything unknown)                            home
  *   #/basketball/matches/all   #/basketball/match/nba/401909881   ...
  */
@@ -24,6 +25,9 @@ const isId = (id) => /^\d+$/.test(id || "");
 
 export function parseRoute(hash) {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (parts[0] === "settings") {
+    return { sport: DEFAULT_SPORT, view: "settings", league: null };
+  }
   if (parts[0] === "live") {
     return { sport: DEFAULT_SPORT, view: "live", league: null };
   }
@@ -64,6 +68,8 @@ export function routeHref(route) {
   switch (route.view) {
     case "home":
       return "#/";
+    case "settings":
+      return "#/settings";
     case "live":
       return "#/live";
     case "search":

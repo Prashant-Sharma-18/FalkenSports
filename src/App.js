@@ -1,10 +1,11 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { Newspaper, Radio, Table2, Timer, Monitor, Search as SearchIcon, Smartphone, SportIcon, Star } from "./components/Icons";
+import { Newspaper, Radio, Sliders, Table2, Timer, Monitor, Search as SearchIcon, Smartphone, SportIcon, Star } from "./components/Icons";
 import { leagueName } from "./api";
 import { todayKey } from "./dates";
 import { FavoritesProvider } from "./favorites";
+import { SportPrefsProvider, useSportPrefs } from "./sportPrefs";
 import { ThemeProvider } from "./theme";
-import { DEFAULT_SPORT, SPORTS, SPORT_IDS, isLeagueOf, leaguesOf, tableLabel } from "./sports";
+import { DEFAULT_SPORT, SPORTS, SPORT_IDS, isLeagueOf, isSport, leaguesOf, tableLabel } from "./sports";
 import ThemeToggle from "./components/ThemeToggle";
 import BottomNav from "./components/BottomNav";
 import { navigate, routeHref, useRoute } from "./router";
@@ -45,6 +46,7 @@ const PlayerPage = lazy(() => import("./components/PlayerPage"));
 const Favourites = lazy(() => import("./components/Favourites"));
 const Search = lazy(() => import("./components/Search"));
 const Live = lazy(() => import("./components/Live"));
+const SportSettings = lazy(() => import("./components/SportSettings"));
 const Golf = lazy(() => import("./components/Golf"));
 const GolfEvent = lazy(() => import("./components/Golf").then((m) => ({ default: m.GolfEvent })));
 
@@ -98,8 +100,19 @@ function Shell() {
   const liveView = route.view === "live";
   // Home has its own banner: no sport bar or page title.
   const homeView = route.view === "home";
-  const allSportsView = favouritesView || searchView || liveView;
-  const allSportsTitle = favouritesView ? "My Teams" : searchView ? "Search" : "Live now";
+  const settingsView = route.view === "settings";
+  const allSportsView = favouritesView || searchView || liveView || settingsView;
+  const allSportsTitle = favouritesView
+    ? "My Teams"
+    : searchView
+    ? "Search"
+    : settingsView
+    ? "Your sports"
+    : "Live now";
+  // The viewer's sports, in their order; the current sport stays in the row
+  // even if hidden, so its tab is still there when it's opened from a link.
+  const { visible, start } = useSportPrefs();
+  const sportRow = visible.includes(sport) ? visible : [...visible, sport];
   const lastLeagues = useRef(readLastLeagues());
   const navigatedInApp = useRef(false);
   const firstRoute = useRef(true);
@@ -147,6 +160,22 @@ function Shell() {
   useEffect(() => {
     document.querySelector(".sport-tab.active")?.scrollIntoView?.({ block: "nearest", inline: "center" });
   }, [sport]);
+
+  // Opening the app at its front door (no address) goes to the chosen start
+  // screen. The logo and shared links always go where they point.
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (start === "home" || (hash && hash !== "#" && hash !== "#/")) return;
+    const target =
+      start === "live" || start === "favourites"
+        ? { view: start }
+        : isSport(start)
+        ? { sport: start, view: "matches", league: "all" }
+        : null;
+    if (target) navigate(target, { replace: true });
+    // Only when the app first opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (detailView) return; // match, team and player pages set their own title
@@ -281,7 +310,7 @@ function Shell() {
           <div className="leagues-bar">
             <div className="app-container leagues-bar-inner">
               <nav className="sport-switch" aria-label="Sport">
-                {SPORT_IDS.map((s) => {
+                {sportRow.map((s) => {
                   const active = s === sport;
                   return (
                     <a
@@ -296,6 +325,14 @@ function Shell() {
                     </a>
                   );
                 })}
+                <a
+                  href={routeHref({ view: "settings" })}
+                  className="sport-tab sport-edit"
+                  title="Choose your sports"
+                  aria-label="Choose your sports"
+                >
+                  <Sliders size={16} />
+                </a>
               </nav>
 
               <nav className="leagues" aria-label="Competitions">
@@ -327,7 +364,8 @@ function Shell() {
           <div className={`page-header ${allSportsView ? "" : "page-header-list"}`}>
             {allSportsView ? (
               <h1 className="page-title">
-                {allSportsTitle} <span className="title-section-badge">All sports</span>
+                {allSportsTitle}{" "}
+                <span className="title-section-badge">{settingsView ? "Customise" : "All sports"}</span>
               </h1>
             ) : (
               <h1 className="page-title">
@@ -342,6 +380,7 @@ function Shell() {
           {homeView && <Home />}
           {searchView && <Search query={route.query} />}
           {liveView && <Live />}
+          {settingsView && <SportSettings />}
           {favouritesView && (
             <Favourites
               date={date}
@@ -402,7 +441,9 @@ export default function App() {
   return (
     <ThemeProvider>
       <FavoritesProvider>
-        <Shell />
+        <SportPrefsProvider>
+          <Shell />
+        </SportPrefsProvider>
       </FavoritesProvider>
     </ThemeProvider>
   );

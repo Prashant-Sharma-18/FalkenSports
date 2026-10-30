@@ -59,6 +59,9 @@ Rugby Championship, World Cup.
 - **Live now** — everything under way across every sport on one screen
   (`#/live`), grouped by sport and competition, with live golf leaderboards and
   F1 sessions, then what starts in the next three hours.
+- **Your sports** (`#/settings`) — show or hide sports, reorder them, and pick
+  the start screen (Home, Live now, My Teams or a sport). Hidden sports aren't
+  fetched on Home or Live now. Saved in the browser.
 - **Search** — teams and players from every sport (`#/search`).
 - **Calendar export** — add a team's fixtures, or one upcoming match, to your
   calendar (an `.ics` file; no account needed).

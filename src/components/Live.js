@@ -2,6 +2,7 @@ import React from "react";
 import { fetchLiveNow } from "../api";
 import { routeHref } from "../router";
 import { SPORTS, leagueName } from "../sports";
+import { useSportPrefs } from "../sportPrefs";
 import useRemoteData from "../useRemoteData";
 import { CompetitionCard } from "./MatchCard";
 import { GolfTable } from "./Golf";
@@ -86,7 +87,13 @@ function Events({ golf, f1 }) {
 
 // Everything under way right now, across every sport, then what starts soon.
 export default function Live() {
-  const { data, error, loading, refresh } = useRemoteData((signal) => fetchLiveNow(signal), [], REFRESH);
+  // Only the viewer's shown sports.
+  const { visible } = useSportPrefs();
+  const { data, error, loading, refresh } = useRemoteData(
+    (signal) => fetchLiveNow(signal, visible),
+    [visible.join(",")],
+    REFRESH
+  );
 
   if (loading) return <Loading label="Finding live games in every sport…" />;
   if (error && !data) return <ErrorState message={error} onRetry={refresh} />;

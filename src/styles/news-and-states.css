@@ -367,3 +367,152 @@
   font-weight: 800;
   color: var(--text-secondary);
 }
+
+/* Your sports: show, order, start screen. */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 640px;
+}
+
+.settings-card {
+  padding: 18px 18px 8px;
+}
+
+.settings-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.settings-hint {
+  margin: 4px 0 10px;
+}
+
+.settings-sports {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.settings-sport {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.settings-sport-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+}
+
+.settings-sport.is-hidden .sport-icon-img,
+.settings-sport.is-hidden .settings-sport-name {
+  opacity: 0.4;
+}
+
+.settings-move {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.settings-move .icon-btn {
+  width: 30px;
+  height: 30px;
+  box-shadow: none;
+}
+
+.settings-move .icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* On/off switch: a styled checkbox. */
+.switch {
+  position: relative;
+  flex: none;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+}
+
+.switch input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  transition: background 0.2s ease;
+  pointer-events: none;
+}
+
+.switch-track::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.switch input:checked + .switch-track {
+  background: var(--accent);
+}
+
+.switch input:checked + .switch-track::after {
+  transform: translateX(18px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.switch input:disabled {
+  cursor: not-allowed;
+}
+
+.settings-select-wrap {
+  display: block;
+  padding-bottom: 12px;
+}
+
+.settings-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+}
+
+.settings-reset {
+  align-self: flex-start;
+  color: var(--muted);
+}
+
+/* The edit button at the end of the sport row. */
+.sport-tab.sport-edit {
+  color: var(--muted);
+}
+
+.layout-compact .sport-switch .sport-tab.sport-edit {
+  padding: 7px 10px;
+}
