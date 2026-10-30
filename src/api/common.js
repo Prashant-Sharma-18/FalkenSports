@@ -15,6 +15,7 @@ export function normalizeTeam(c = {}, sport) {
     name: c.team?.displayName || "TBD",
     short: c.team?.abbreviation || "",
     logo: c.team?.logo || c.team?.logos?.[0]?.href,
+    color: /^[0-9a-f]{6}$/i.test(c.team?.color || "") ? `#${c.team.color}` : null,
     // Scoreboards send "2"; team schedules send { displayValue: "2" }.
     score: typeof c.score === "object" ? c.score?.displayValue : c.score,
     // Cricket sends "true"/"false" strings.

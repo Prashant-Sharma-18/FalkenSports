@@ -16,13 +16,6 @@
     grid-template-columns: 1fr;
   }
 
-  .hero-main {
-    gap: 8px;
-  }
-
-  .big-score-digit {
-    font-size: 1.9rem;
-  }
 }
 
 @media (max-width: 540px) {
@@ -39,12 +32,6 @@
     font-weight: 700;
   }
 
-  .hero-team-label {
-    max-width: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -185,30 +172,6 @@
     padding: 12px 14px;
   }
 
-  /* Match header: names wrap onto two lines instead of being cut to "Newcast…". */
-  .hero-main {
-    align-items: start;
-    gap: 8px;
-  }
-
-  .hero-logo-box {
-    width: 52px;
-    height: 52px;
-  }
-
-  .hero-name {
-    flex-wrap: wrap;
-    font-size: 0.85rem;
-    line-height: 1.2;
-  }
-
-  .hero-team-label {
-    max-width: none;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: clip;
-    text-align: center;
-  }
 }
 
 /* Desktop "app mode": the same phone treatment for the parts that otherwise

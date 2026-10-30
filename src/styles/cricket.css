@@ -11,10 +11,6 @@
   text-align: center;
 }
 
-.cricket-format {
-  font-size: 1rem;
-}
-
 .hero-summary {
   margin: 0 0 14px;
   text-align: center;
@@ -126,13 +122,6 @@
 }
 
 /* The format is a label, not a scoreboard: override the big-score sizing. */
-.big-score.kickoff.cricket-format {
-  font-size: 0.85rem;
-  font-family: var(--font-main);
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  padding: 6px 12px;
-}
 
 /* Two-innings scores ("406/5d & 79/6") may wrap in the narrow header columns. */
 .hero-cricket-score .cricket-score-main {

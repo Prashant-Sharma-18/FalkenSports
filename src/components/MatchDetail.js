@@ -26,6 +26,51 @@ import { ErrorState, Loading, Empty } from "./Status";
 
 const LIVE_REFRESH = 30 * 1000;
 
+// One event, drawn toward the centre line: home events end at it, away events
+// start from it, so the icon always sits next to the minute.
+function EventBody({ e, score }) {
+  const isGoal = e.kind === "goal";
+  const isSub = e.kind === "sub";
+  return (
+    <div className="tl2-event">
+      <span className={`tl2-icon tl2-icon-${e.kind}`} aria-label={e.label}>
+        {isGoal && <Football size={13} />}
+        {isSub && <ArrowLeftRight size={13} />}
+        {e.kind === "yellow" && <span className="card-graphic yellow-card-graphic" />}
+        {e.kind === "red" && <span className="card-graphic red-card-graphic" />}
+      </span>
+      <div className="tl2-text">
+        {isSub ? (
+          <>
+            <span className="tl2-on">
+              <ArrowUp size={12} /> {e.player || e.label}
+            </span>
+            {e.other && (
+              <span className="tl2-off">
+                <ArrowDown size={12} /> {e.other}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            <span className={`tl2-player ${isGoal ? "tl2-scorer" : ""}`}>
+              {e.player || e.label}
+              {e.penalty && <span className="tag-penalty"> (pen)</span>}
+              {e.ownGoal && <span className="tag-og"> (og)</span>}
+              {/* Beside the name, so it takes no width from the assist line. */}
+              {score && <span className="tl2-score">{score}</span>}
+            </span>
+            {isGoal && e.other && !e.ownGoal && <span className="tl2-detail">Assist: {e.other}</span>}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Key events along a centre line: home on the left, away on the right, the
+// minute between them. Goals carry the score they made, when the goals add
+// up to the actual score (so a missing event never shows a wrong one).
 function Timeline({ match }) {
   if (!match.events.length) {
     return (
@@ -35,45 +80,33 @@ function Timeline({ match }) {
     );
   }
 
+  let home = 0;
+  let away = 0;
+  const running = match.events.map((e) => {
+    if (e.kind !== "goal") return null;
+    if (e.teamId === match.home.id) home += 1;
+    else if (e.teamId === match.away.id) away += 1;
+    return `${home}–${away}`;
+  });
+  const adds = String(home) === String(match.home.score ?? 0) && String(away) === String(match.away.score ?? 0);
+
   return (
-    <ol className="timeline">
+    <ol className="tl2">
       {match.events.map((e, i) => {
         if (e.kind === "period") {
           return (
-            <li key={e.id || i} className="tl-period">
+            <li key={e.id || i} className="tl2-period">
               <span>{e.label}</span>
             </li>
           );
         }
         const side = e.teamId === match.away.id ? "away" : "home";
-        const isGoal = e.kind === "goal";
-        const isYellow = e.kind === "yellow";
-        const isRed = e.kind === "red";
-        const isSub = e.kind === "sub";
-
-        let detail = null;
-        if (isGoal && e.other && !e.ownGoal) detail = `Assist: ${e.other}`;
-        if (isSub && e.other) detail = `Off: ${e.other}`;
-
+        const body = <EventBody e={e} score={adds ? running[i] : null} />;
         return (
-          <li key={e.id || i} className={`tl-event ${side} ${isGoal ? "tl-event-goal" : ""}`}>
-            <span className="tl-minute">{e.minute}</span>
-            <div className="tl-body">
-              <span className={`tl-icon ${e.kind}`} aria-label={e.label}>
-                {isGoal && <Football size={14} />}
-                {isSub && <ArrowLeftRight size={14} />}
-                {isYellow && <span className="card-graphic yellow-card-graphic" />}
-                {isRed && <span className="card-graphic red-card-graphic" />}
-              </span>
-              <div className="tl-text-wrap">
-                <div className={`tl-player ${isGoal ? "strong tl-goal-scorer" : ""}`}>
-                  {e.player || e.label}
-                  {e.penalty && <span className="tag-penalty"> (pen)</span>}
-                  {e.ownGoal && <span className="tag-og"> (og)</span>}
-                </div>
-                {detail && <div className="muted small tl-subdetail">{detail}</div>}
-              </div>
-            </div>
+          <li key={e.id || i} className={`tl2-row ${e.kind === "goal" ? "is-goal" : ""}`}>
+            <div className="tl2-cell tl2-home">{side === "home" && body}</div>
+            <span className="tl2-min">{e.minute}</span>
+            <div className="tl2-cell tl2-away">{side === "away" && body}</div>
           </li>
         );
       })}
@@ -219,35 +252,33 @@ function Header({ match }) {
   // US convention is "away at home", so the away team goes on the left.
   const usStyle = isUsStyle(match.sport);
   const [left, right] = usStyle ? [match.away, match.home] : [match.home, match.away];
-  const scorers = (team) =>
-    match.events
-      .filter((e) => e.kind === "goal" && e.teamId === team.id)
-      .map((e) => `${e.player} ${e.minute}${e.penalty ? " (pen)" : ""}${e.ownGoal ? " (og)" : ""}`);
+  const goalsOf = (team) => match.events.filter((e) => e.kind === "goal" && e.teamId === team.id);
+  const [leftGoals, rightGoals] = [goalsOf(left), goalsOf(right)];
 
   const cricket = match.sport === "cricket";
   const linkTeams = hasTeamPages(match.sport);
   const teamHref = (team) => routeHref({ view: "team", league: match.league, id: team.id });
 
-  const side = (team, align) => (
-    <div className={`hero-team hero-team-${align}`}>
+  const side = (team) => (
+    <div className="mh-team">
       {linkTeams ? (
-        <a className="hero-logo-box" href={teamHref(team)} aria-hidden="true" tabIndex={-1}>
-          <TeamLogo src={team.logo} name={team.name} size={64} />
+        <a className="mh-crest" href={teamHref(team)} aria-hidden="true" tabIndex={-1}>
+          <TeamLogo src={team.logo} name={team.name} size={48} />
         </a>
       ) : (
-        <span className="hero-logo-box">
-          <TeamLogo src={team.logo} name={team.name} size={64} />
+        <span className="mh-crest">
+          <TeamLogo src={team.logo} name={team.name} size={48} />
         </span>
       )}
-      <div className="hero-name">
+      <div className="mh-name">
         {linkTeams ? (
-          <a className="hero-team-label team-link" href={teamHref(team)}>
+          <a className="team-link" href={teamHref(team)}>
             {team.name}
           </a>
         ) : (
-          <span className="hero-team-label">{team.name}</span>
+          <span>{team.name}</span>
         )}
-        <StarButton team={team} size={18} />
+        <StarButton team={team} size={14} />
       </div>
       {/* Cricket scores are innings text, shown under each team rather than as digits. */}
       {cricket && started &&
@@ -257,80 +288,90 @@ function Header({ match }) {
           <span className="hero-cricket-score muted">Yet to bat</span>
         ))}
       {usStyle && team.record && <span className="hero-record">{team.record}</span>}
-      <ul className="hero-scorers">
-        {scorers(team).map((s, i) => (
-          <li key={i} className="hero-scorer-item">
-            <span className="scorer-icon" aria-hidden="true">
-              <Football size={11} />
-            </span>
-            <span>{s}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 
+  const goalList = (goals) => (
+    <ul className="mh-goals">
+      {goals.map((g, i) => (
+        <li key={g.id || i}>
+          {g.player}
+          {g.penalty && " (pen)"}
+          {g.ownGoal && " (og)"} <span className="mh-goal-min">{g.minute}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
-    <div className={`card hero ${match.state === "in" ? "is-live" : ""}`}>
-      <div className="hero-backdrop-glow" aria-hidden="true" />
-      <div className="hero-meta">
-        <span className="hero-meta-league">{match.competition || leagueName(match.league)}</span>
-        {match.date && (
-          <span className="hero-meta-date">
-            · {match.date.toLocaleDateString(undefined, {
-              weekday: "short",
-              day: "numeric",
-              month: "short",
-            })}
-          </span>
-        )}
+    <div
+      className={`card match-hero ${match.state === "in" ? "is-live" : ""}`}
+      style={{ "--left": left.color || "var(--accent)", "--right": right.color || "var(--accent)" }}
+    >
+      {/* The two teams' colours along the top. */}
+      <span className="mh-strip" aria-hidden="true" />
+      <div className="mh-meta">
+        {match.competition || leagueName(match.league)}
+        {match.date &&
+          ` · ${match.date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}`}
       </div>
 
-      <div className="hero-main">
-        {side(left, "left")}
-        <div className="hero-score">
+      <div className="mh-main">
+        {side(left)}
+        <div className="mh-centre">
           {cricket ? (
-            <span className="big-score kickoff cricket-format">
+            <span className="mh-kickoff mh-format">
               {started ? match.format || "Live" : match.date ? formatTime(match.date) : "TBD"}
             </span>
           ) : started ? (
-            <div className="big-score-board">
-              <span className="big-score-digit">{left.score ?? 0}</span>
-              <span className="big-score-divider">:</span>
-              <span className="big-score-digit">{right.score ?? 0}</span>
-            </div>
-          ) : (
-            <span className="big-score kickoff">
-              {match.date ? formatTime(match.date) : "TBD"}
+            <span className="mh-score">
+              <span>{left.score ?? 0}</span>
+              <span className="mh-score-dash">–</span>
+              <span>{right.score ?? 0}</span>
             </span>
+          ) : (
+            <span className="mh-kickoff">{match.date ? formatTime(match.date) : "TBD"}</span>
           )}
           <MatchStatus match={match} />
         </div>
-        {side(right, "right")}
+        {side(right)}
       </div>
+
+      {/* Scorers on their own row, a half each, so names never squeeze. */}
+      {(leftGoals.length > 0 || rightGoals.length > 0) && (
+        <div className="mh-scorers">
+          {goalList(leftGoals)}
+          <span className="mh-scorers-icon" aria-hidden="true">
+            <Football size={13} />
+          </span>
+          {goalList(rightGoals)}
+        </div>
+      )}
 
       {cricket && match.summary && <p className="hero-summary">{match.summary}</p>}
 
-      <div className="hero-info">
-        {match.venue && (
-          <span className="hero-chip">
-            <MapPin size={12} />
-            <span>{match.venue}</span>
-          </span>
-        )}
-        {match.referee && (
-          <span className="hero-chip">
-            <Shield size={12} />
-            <span>Ref: {match.referee}</span>
-          </span>
-        )}
-        {match.attendance && (
-          <span className="hero-chip">
-            <Users size={12} />
-            <span>{match.attendance.toLocaleString()} attendance</span>
-          </span>
-        )}
-      </div>
+      {(match.venue || match.referee || match.attendance) && (
+        <div className="mh-info">
+          {match.venue && (
+            <span className="hero-chip">
+              <MapPin size={12} />
+              <span>{match.venue}</span>
+            </span>
+          )}
+          {match.referee && (
+            <span className="hero-chip">
+              <Shield size={12} />
+              <span>Ref: {match.referee}</span>
+            </span>
+          )}
+          {match.attendance && (
+            <span className="hero-chip">
+              <Users size={12} />
+              <span>{match.attendance.toLocaleString()} attendance</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

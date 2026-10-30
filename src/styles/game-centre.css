@@ -81,15 +81,6 @@
   color: var(--muted);
 }
 
-.scorer-icon,
-.tl-icon {
-  color: var(--text-secondary);
-}
-
-.scorer-icon svg {
-  display: block;
-}
-
 .inline-icon {
   display: inline-block;
   vertical-align: -2px;
@@ -331,7 +322,6 @@
     padding: 8px 6px;
   }
 }
-
 
 /* ==========================================================================
    Airbnb-style Sports Category Icons

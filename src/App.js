@@ -25,6 +25,7 @@ import "./styles/match-rows.css";
 import "./styles/bottom-nav.css";
 import "./styles/standings.css";
 import "./styles/match-detail.css";
+import "./styles/match-centre.css";
 import "./styles/news-and-states.css";
 import "./styles/responsive.css";
 import "./styles/game-centre.css";
