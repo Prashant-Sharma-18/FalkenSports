@@ -52,6 +52,10 @@ Rugby Championship, World Cup.
 - **UFC** — fight cards by day (main card, prelims, early prelims) with weight
   class, records, and how each fight ended (KO/TKO, submission, decision, round
   and time).
+- **Home** (`#/`) — a greeting and today's live count, a swipeable strip of live
+  games, every sport as a 3D icon tile with its live count, your teams' games,
+  what starts in the next three hours, and top stories. A splash screen shows
+  while the app loads, in the saved light or dark theme.
 - **Live now** — everything under way across every sport on one screen
   (`#/live`), grouped by sport and competition, with live golf leaderboards and
   F1 sessions, then what starts in the next three hours.

@@ -7,7 +7,7 @@ export { fetchMatch } from "./match";
 export { periodLabel } from "./us-sports";
 export { fetchStandings, fetchLeagueForm } from "./standings";
 export { fetchTeam } from "./teams";
-export { fetchNews } from "./news";
+export { fetchNews, fetchTopStories } from "./news";
 export { fetchRaceSeason, fetchRace, fetchSessionResults } from "./f1";
 export { fetchPlayer } from "./players";
 export { searchAll } from "./search";

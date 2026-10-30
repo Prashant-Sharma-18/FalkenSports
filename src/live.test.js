@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import App from './App';
-import { fetchLiveNow } from './api';
+import { fetchLiveNow, fetchTopStories } from './api';
 import { parseRoute, routeHref } from './router';
 
 const respond = (body) => Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
@@ -53,6 +53,17 @@ function mockEspn() {
         ],
       });
     }
+    if (url.includes('/news')) {
+      const league = /sports\/\w+\/([\w.]+)\/news/.exec(url)[1];
+      return respond({
+        articles: [1, 2, 3].map((n) => ({
+          id: `${league}-${n}`,
+          headline: `${league} story ${n}`,
+          published: new Date(Date.now() - n * (league === 'nfl' ? 1 : 60) * 60000).toISOString(),
+          links: { web: { href: `https://espn.com/${league}/${n}` } },
+        })),
+      });
+    }
     return respond({ events: [], scores: [] });
   });
 }
@@ -93,4 +104,31 @@ test('the live page shows each sport and competition, then coming up', async () 
   expect(screen.getByText('Everton')).toBeInTheDocument();
   expect(screen.queryByText('Leeds United')).toBeNull(); // tonight, not in the next three hours
   expect(screen.queryByText('Wolves')).toBeNull(); // finished
+});
+
+test('home: greeting, live spotlight, every sport with its live count, and top stories', async () => {
+  mockEspn();
+  render(<App />);
+  expect(await screen.findByText(/^Good (morning|afternoon|evening)$/)).toBeInTheDocument();
+  expect(await screen.findByText('3 live now')).toBeInTheDocument();
+  // Spotlight: the live games, each with its competition.
+  expect(screen.getByText('Arsenal')).toBeInTheDocument();
+  expect(screen.getByText('Lakers')).toBeInTheDocument();
+  // Every sport has a tile; live ones say how many.
+  const football = screen.getByRole('link', { name: /^Football/ });
+  expect(football).toHaveAttribute('href', '#/matches/all');
+  // Football, basketball and golf have one live event each.
+  expect(screen.getAllByLabelText('1 live', { selector: '.home-sport-live' })).toHaveLength(3);
+  expect(screen.getByRole('link', { name: /^NHL/ })).toHaveAttribute('href', '#/hockey/matches/all');
+  // Coming up and top stories.
+  expect(screen.getByText('Everton')).toBeInTheDocument();
+  expect(await screen.findByText('eng.1 story 1')).toBeInTheDocument();
+});
+
+test('top stories take turns between leagues, so one busy league cannot fill them', async () => {
+  mockEspn();
+  const stories = await fetchTopStories(undefined, 5);
+  // NFL's stories are all newer, but each league still gets its newest in.
+  expect(stories.map((s) => s.id)).toEqual(['eng.1-1', 'nba-1', 'nfl-1', 'eng.1-2', 'nba-2']);
+  expect(stories[0].source).toBe('Premier League');
 });

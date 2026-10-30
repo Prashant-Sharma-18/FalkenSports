@@ -14,6 +14,7 @@ import { isDayKey } from "./dates";
  *   #/favourites[/YYYY-MM-DD]                            my teams, every sport
  *   #/search[/query]                                     teams and players, every sport
  *   #/live                                               everything live, every sport
+ *   #/  (or anything unknown)                            home
  *   #/basketball/matches/all   #/basketball/match/nba/401909881   ...
  */
 
@@ -51,7 +52,9 @@ export function parseRoute(hash) {
   if (view === "matches" && (league === "all" || isLeagueOf(sport, league))) {
     return { sport, view, league, date: isDayKey(extra) ? extra : null };
   }
-  return { sport: prefix || DEFAULT_SPORT, view: "matches", league: "all", date: null };
+  // Unknown under a sport: that sport's scores. Anything else: home.
+  if (prefix) return { sport: prefix, view: "matches", league: "all", date: null };
+  return { sport: DEFAULT_SPORT, view: "home", league: null };
 }
 
 export function routeHref(route) {
@@ -59,6 +62,8 @@ export function routeHref(route) {
     route.sport || (route.league && route.league !== "all" ? sportOfLeague(route.league) : DEFAULT_SPORT);
   const prefix = sport === DEFAULT_SPORT ? "" : `/${sport}`;
   switch (route.view) {
+    case "home":
+      return "#/";
     case "live":
       return "#/live";
     case "search":

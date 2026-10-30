@@ -10,6 +10,7 @@ import BottomNav from "./components/BottomNav";
 import { navigate, routeHref, useRoute } from "./router";
 import useMediaQuery from "./useMediaQuery";
 import Scores from "./components/Scores";
+import Home from "./components/Home";
 import ScoreAlerts from "./components/ScoreAlerts";
 import { Loading } from "./components/Status";
 // Styles, in cascade order: later files build on and override earlier ones.
@@ -29,10 +30,11 @@ import "./styles/game-centre.css";
 import "./styles/cricket.css";
 import "./styles/us-sports.css";
 import "./styles/tennis-f1.css";
+import "./styles/home.css";
 // Phones (and the desktop phone preview) last, so they override the wide layout.
 import "./styles/mobile.css";
 
-// Scores is the first screen; every other screen loads when it's first opened.
+// Home and scores load with the app; every other screen loads when it's first opened.
 const Standings = lazy(() => import("./components/Standings"));
 const News = lazy(() => import("./components/News"));
 const MatchDetail = lazy(() => import("./components/MatchDetail"));
@@ -94,6 +96,8 @@ function Shell() {
   const favouritesView = route.view === "favourites";
   const searchView = route.view === "search";
   const liveView = route.view === "live";
+  // Home has its own banner: no sport bar or page title.
+  const homeView = route.view === "home";
   const allSportsView = favouritesView || searchView || liveView;
   const allSportsTitle = favouritesView ? "My Teams" : searchView ? "Search" : "Live now";
   const lastLeagues = useRef(readLastLeagues());
@@ -146,6 +150,10 @@ function Shell() {
 
   useEffect(() => {
     if (detailView) return; // match, team and player pages set their own title
+    if (homeView) {
+      document.title = "FalkenSports – Free Live Scores & News";
+      return;
+    }
     if (allSportsView) {
       document.title = `${allSportsTitle} – FalkenSports`;
       return;
@@ -153,7 +161,7 @@ function Shell() {
     const where = route.league === "all" ? `${SPORTS[sport].name} scores` : leagueName(route.league);
     const what = tabsFor(sport).find((t) => t.id === route.view)?.label;
     document.title = `${where} · ${what} – FalkenSports`;
-  }, [sport, route.view, route.league, detailView, allSportsView, allSportsTitle]);
+  }, [sport, route.view, route.league, detailView, allSportsView, allSportsTitle, homeView]);
 
   const date = route.date || todayKey();
   const singleLeague = isLeagueOf(sport, route.league) ? route.league : lastLeagues.current[sport];
@@ -196,7 +204,7 @@ function Shell() {
       {/* App Header */}
       <header className="site-header">
         <div className="app-container header-inner">
-          <a className="brand" href={routeHref({ sport, view: "matches", league: "all" })}>
+          <a className="brand" href={routeHref({ view: "home" })}>
             <span className="brand-mark-wrapper">
               <BrandMark />
             </span>
@@ -269,7 +277,7 @@ function Shell() {
           </div>
         </div>
 
-        {!detailView && !allSportsView && (
+        {!detailView && !allSportsView && !homeView && (
           <div className="leagues-bar">
             <div className="app-container leagues-bar-inner">
               <nav className="sport-switch" aria-label="Sport">
@@ -315,7 +323,7 @@ function Shell() {
       <main className="app-container main">
         {/* On phones the sport and competition rows already say where you are,
             so list screens drop the title; My Teams and Search keep theirs. */}
-        {!detailView && (
+        {!detailView && !homeView && (
           <div className={`page-header ${allSportsView ? "" : "page-header-list"}`}>
             {allSportsView ? (
               <h1 className="page-title">
@@ -331,6 +339,7 @@ function Shell() {
         )}
 
         <Suspense fallback={<Loading label="Loading…" />}>
+          {homeView && <Home />}
           {searchView && <Search query={route.query} />}
           {liveView && <Live />}
           {favouritesView && (

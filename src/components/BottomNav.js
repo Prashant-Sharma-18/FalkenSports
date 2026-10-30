@@ -1,5 +1,5 @@
 import React from "react";
-import { Newspaper, Radio, Table2, Timer, Star } from "./Icons";
+import { Home, Newspaper, Table2, Timer, Star } from "./Icons";
 import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
 
@@ -7,9 +7,10 @@ export default function BottomNav({ currentView, tabHref, tableLabel = "Table", 
   const { teams } = useFavorites();
   const favCount = teams.length;
 
+  // Home first: it shows what's live (Live now is a tap away from it).
   const items = [
+    { id: "home", label: "Home", icon: Home, href: routeHref({ view: "home" }) },
     { id: "matches", label: "Scores", icon: Timer, badge: liveCount > 0 ? liveCount : null, live: liveCount > 0 },
-    { id: "live", label: "Live", icon: Radio, href: routeHref({ view: "live" }) },
     { id: "table", label: tableLabel, icon: Table2 },
     { id: "news", label: "News", icon: Newspaper },
   ].filter((item) => item.label); // golf and UFC have no table

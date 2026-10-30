@@ -4,7 +4,7 @@ import useRemoteData from "../useRemoteData";
 import { ErrorState, Loading, Empty } from "./Status";
 import { ArrowUpRight, Newspaper } from "./Icons";
 
-function timeAgo(date) {
+export function timeAgo(date) {
   const mins = Math.round((Date.now() - date.getTime()) / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;

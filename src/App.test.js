@@ -23,7 +23,8 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-test('shows every competition by default', async () => {
+test('football scores show every competition by default', async () => {
+  window.location.hash = '#/matches/all';
   mockScoreboard([]);
   render(<App />);
   expect(screen.getByRole('link', { name: 'All' })).toHaveAttribute('aria-current', 'page');
@@ -33,6 +34,7 @@ test('shows every competition by default', async () => {
 });
 
 test('pins matches of favourite teams', async () => {
+  window.location.hash = '#/matches/all';
   localStorage.setItem('favoriteTeams', JSON.stringify([{ id: '382', name: 'Manchester City' }]));
   mockScoreboard([
     {
@@ -124,6 +126,8 @@ test('parses shareable routes', () => {
   expect(parseRoute('#/match/eng.1/401879254')).toEqual({ sport: 'football', view: 'match', league: 'eng.1', id: '401879254' });
   expect(parseRoute('#/matches/esp.1/2026-10-25')).toEqual({ sport: 'football', view: 'matches', league: 'esp.1', date: '2026-10-25' });
   expect(parseRoute('#/table/ita.1')).toEqual({ sport: 'football', view: 'table', league: 'ita.1' });
-  expect(parseRoute('#/table/nope')).toEqual({ sport: 'football', view: 'matches', league: 'all', date: null });
-  expect(parseRoute('')).toEqual({ sport: 'football', view: 'matches', league: 'all', date: null });
+  // Unknown or empty: home; unknown under a sport: that sport's scores.
+  expect(parseRoute('#/table/nope')).toEqual({ sport: 'football', view: 'home', league: null });
+  expect(parseRoute('')).toEqual({ sport: 'football', view: 'home', league: null });
+  expect(parseRoute('#/basketball/nope')).toMatchObject({ sport: 'basketball', view: 'matches', league: 'all' });
 });
