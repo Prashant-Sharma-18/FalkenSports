@@ -1,0 +1,370 @@
+/* ==========================================================================
+   Compact layout: phones and the desktop phone preview.
+   App.js puts .layout-compact on the app below 600px wide, or when "phone
+   view" is switched on, so every phone rule is written once, here. Loaded
+   last, so these override the wide layout.
+   ========================================================================== */
+
+/* Controls that exist for one layout only. */
+.theme-cycle,
+.compact-only {
+  display: none;
+}
+
+.layout-compact .theme-cycle,
+.layout-compact .compact-only {
+  display: grid;
+}
+
+.layout-compact .theme-toggle {
+  display: none;
+}
+
+/* Page frame: a little more width for content, room for the bottom bar. */
+.layout-compact .app-container {
+  padding: 0 12px;
+}
+
+.layout-compact .main {
+  padding-top: 10px;
+  padding-bottom: calc(78px + env(safe-area-inset-bottom));
+}
+
+/* ---- Header: logo and three round buttons ---- */
+.layout-compact .header-inner {
+  height: 52px;
+  gap: 8px;
+}
+
+.layout-compact .brand {
+  gap: 8px;
+}
+
+.layout-compact .brand-mark-wrapper,
+.layout-compact .brand-logo-svg {
+  width: 30px;
+  height: 30px;
+}
+
+.layout-compact .brand-name {
+  font-size: 1.05rem;
+}
+
+.layout-compact .header-actions {
+  gap: 6px;
+}
+
+.layout-compact .header-actions .icon-btn {
+  width: 34px;
+  height: 34px;
+}
+
+/* ---- Sports: a swipeable row of named tabs, competitions below ---- */
+.layout-compact .leagues-bar-inner {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+
+.layout-compact .sport-switch {
+  gap: 6px;
+  margin: 0 -12px;
+  padding: 8px 12px 4px;
+  overflow-x: auto;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.layout-compact .sport-switch::-webkit-scrollbar {
+  display: none;
+}
+
+.layout-compact .sport-switch .sport-tab {
+  flex: none;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.8rem;
+  scroll-snap-align: center;
+}
+
+.layout-compact .sport-switch .sport-tab.active {
+  border-color: transparent;
+  background: var(--accent-gradient);
+}
+
+/* Every sport keeps its name here (the wide layout shows only the active one). */
+.layout-compact .sport-switch .sport-tab .sport-tab-label {
+  display: inline;
+}
+
+.layout-compact .leagues {
+  gap: 6px;
+  margin: 0 -12px;
+  padding: 4px 12px 8px;
+}
+
+.layout-compact .chip {
+  padding: 4px 11px;
+  font-size: 0.76rem;
+  box-shadow: none;
+}
+
+.layout-compact .chip-dot {
+  display: none;
+}
+
+/* ---- Titles: the sport row already names list screens ---- */
+.layout-compact .page-header-list {
+  display: none;
+}
+
+.layout-compact .page-header {
+  margin-bottom: 10px;
+}
+
+.layout-compact .page-title {
+  font-size: 1.2rem;
+}
+
+/* ---- Day picker: slimmer ---- */
+.layout-compact .date-strip-wrapper {
+  margin-bottom: 10px;
+}
+
+.layout-compact .date-strip {
+  padding: 4px;
+  border-radius: var(--radius);
+}
+
+.layout-compact .date-strip .day {
+  padding: 5px 2px 4px;
+}
+
+/* ---- Filters: one row; the search box opens from it ---- */
+.layout-compact .app-controls-bar {
+  display: none;
+  margin-bottom: 8px;
+}
+
+.layout-compact .app-controls-bar.open {
+  display: flex;
+}
+
+/* Refresh moves into the filter row. */
+.layout-compact .app-controls-bar .refresh-btn,
+.layout-compact .filter-pills-row .updated-badge {
+  display: none;
+}
+
+.layout-compact .filter-pills-row {
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.layout-compact .filter-pill {
+  padding: 5px 11px;
+  font-size: 0.76rem;
+}
+
+.layout-compact .pill-icon-btn {
+  width: 30px;
+  height: 30px;
+  box-shadow: none;
+}
+
+.layout-compact .pill-icon-first {
+  margin-left: auto;
+}
+
+.layout-compact .pill-icon-btn.active {
+  color: var(--accent);
+  border-color: var(--border-highlight);
+}
+
+/* ---- Match list: one card per competition, one row per match ---- */
+.layout-compact .match-group + .match-group {
+  margin-top: 16px;
+}
+
+.layout-compact .group-heading-wrapper {
+  margin-bottom: 6px;
+}
+
+.layout-compact .group-heading {
+  font-size: 0.72rem;
+}
+
+.layout-compact .grid {
+  grid-template-columns: 1fr;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Status on the left, teams and scores on the right; extra lines span both. */
+.layout-compact .card.match {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.layout-compact .card.match + .card.match {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.layout-compact .card.match:hover {
+  transform: none;
+  box-shadow: none;
+  background: var(--surface-2);
+}
+
+.layout-compact .card.match.is-live {
+  background: linear-gradient(90deg, var(--live-soft), transparent 45%);
+}
+
+.layout-compact .match-head {
+  grid-column: 1;
+  grid-row: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  margin: 0;
+  min-width: 0;
+}
+
+.layout-compact .match-head .badge {
+  max-width: 58px;
+  padding: 3px 6px;
+  font-size: 0.64rem;
+  line-height: 1.25;
+  white-space: normal;
+  text-align: center;
+}
+
+/* Times and results read as plain text; only live games keep a badge. */
+.layout-compact .match-head .badge:not(.live) {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 0.7rem;
+  text-align: left;
+}
+
+.layout-compact .match-head .badge.upcoming {
+  color: var(--text-secondary);
+}
+
+/* Venue and labels (round, format, weight class) are on the match page. */
+.layout-compact .match-head .venue,
+.layout-compact .match-head .match-format {
+  display: none;
+}
+
+.layout-compact .match-teams-list {
+  grid-column: 2;
+  grid-row: 1;
+  gap: 2px;
+}
+
+.layout-compact .match .match-summary,
+.layout-compact .match .situation-compact {
+  grid-column: 1 / -1;
+}
+
+.layout-compact .match .match-summary {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+}
+
+.layout-compact .team-row {
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.layout-compact .team-logo-wrap {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: none;
+}
+
+.layout-compact .team-name {
+  font-size: 0.875rem;
+}
+
+.layout-compact .team-meta {
+  font-size: 0.68rem;
+}
+
+/* Goal scorers are on the match page; the list stays one line per team. */
+.layout-compact .match .scorers {
+  display: none;
+}
+
+.layout-compact .match .score {
+  min-width: 22px;
+  font-size: 1rem;
+}
+
+.layout-compact .match .star-btn {
+  width: 20px;
+  height: 20px;
+}
+
+/* ---- Tables: the form column doesn't fit ---- */
+.layout-compact .standings .col-form {
+  display: none;
+}
+
+/* ---- Bottom bar: docked full width, not a floating pill ---- */
+.layout-compact .bottom-nav {
+  padding: 0;
+}
+
+.layout-compact .bottom-nav-inner {
+  max-width: none;
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  border-width: 1px 0 0;
+  border-radius: 0;
+  box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.06);
+}
+
+.layout-compact .bottom-nav-item {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+/* The desktop phone preview is a column in a wide window: keep its bar with it. */
+.mode-app-shell.layout-compact .bottom-nav-inner {
+  max-width: 580px;
+  border-width: 1px 1px 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+/* ---- Detail pages ---- */
+/* Tab bars scroll sideways; each tab keeps its full name. */
+.layout-compact .subtabs .subtab {
+  flex: none;
+}
+
+/* A race weekend's finished sessions are in the tabs below; keep only what's to come. */
+.layout-compact .match-detail .session-row.session-post {
+  display: none;
+}

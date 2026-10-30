@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchRace, fetchSessionResults } from "../api";
+import { routeHref } from "../router";
 import useRemoteData from "../useRemoteData";
 import TeamLogo from "./TeamLogo";
 import { SessionList, weekendDates } from "./Races";
@@ -65,7 +66,9 @@ function Results({ eventId, session }) {
                   <span className="team-bar" style={r.color ? { background: r.color } : undefined} aria-hidden="true" />
                   <TeamLogo src={r.flag} name={r.name} size={16} />
                   <span className="race-driver-text">
-                    <span className="box-name">{r.name}</span>
+                    <a className="box-name team-link" href={routeHref({ view: "player", league: "f1", id: r.id })}>
+                      {r.name}
+                    </a>
                     <span className="muted small">
                       {[r.number && `#${r.number}`, r.team].filter(Boolean).join(" · ")}
                     </span>
@@ -101,6 +104,13 @@ export default function RaceDetail({ id, onBack }) {
   // Sessions that have started; the latest one is shown first.
   const started = weekend?.sessions.filter((s) => s.state !== "pre") || [];
   const session = started.find((s) => s.id === picked) || started[started.length - 1];
+
+  // On phones the session tabs scroll sideways, and the latest is the last one.
+  useEffect(() => {
+    document
+      .querySelector('.subtabs[aria-label="Sessions"] .subtab.active')
+      ?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
+  }, [session?.id]);
 
   return (
     <section className="match-detail">

@@ -277,6 +277,14 @@ export const Baseball = (props) => (
   </Icon>
 );
 
+export const Bell = ({ off, ...props }) => (
+  <Icon {...props}>
+    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    <path d="M3.3 15.3A1 1 0 0 0 4 17h16a1 1 0 0 0 .7-1.7C19.4 14 18 12.6 18 8a6 6 0 0 0-12 0c0 4.6-1.4 6-2.7 7.3" />
+    {off && <path d="m2 2 20 20" />}
+  </Icon>
+);
+
 // Racket and ball (a plain ball would look like the baseball).
 export const Tennis = (props) => (
   <Icon {...props}>
@@ -295,6 +303,32 @@ export const RacingFlag = (props) => (
   </Icon>
 );
 
+export const Rugby = (props) => (
+  <Icon {...props}>
+    <ellipse cx="12" cy="12" rx="10" ry="6.5" />
+    <path d="M12 5.5v13" />
+    <path d="M7.5 6.3c1.6 3.6 1.6 7.8 0 11.4M16.5 6.3c-1.6 3.6-1.6 7.8 0 11.4" />
+  </Icon>
+);
+
+// Pin and flag on the green.
+export const Golf = (props) => (
+  <Icon {...props}>
+    <path d="M12 18V3l7 3.5-7 3.5" />
+    <ellipse cx="12" cy="19" rx="7" ry="2.5" />
+  </Icon>
+);
+
+// Fight glove.
+export const Glove = (props) => (
+  <Icon {...props}>
+    <path d="M7 11V7a4 4 0 0 1 4-4h3a4 4 0 0 1 4 4v6a5 5 0 0 1-5 5H9a2 2 0 0 1-2-2" />
+    <path d="M7 11H5.5a2 2 0 0 0 0 4H7" />
+    <path d="M8 18v3h8v-3" />
+    <path d="M11 7.5h4" />
+  </Icon>
+);
+
 const SPORT_ICONS = {
   football: Football,
   basketball: Basketball,
@@ -304,6 +338,9 @@ const SPORT_ICONS = {
   baseball: Baseball,
   tennis: Tennis,
   f1: RacingFlag,
+  rugby: Rugby,
+  golf: Golf,
+  mma: Glove,
 };
 
 // Icon for a sport id from sports.js.

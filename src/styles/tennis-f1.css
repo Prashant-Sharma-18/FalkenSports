@@ -1,0 +1,316 @@
+/* ==========================================================================
+   Tennis and Formula 1
+   ========================================================================== */
+
+/* Tennis cards show the whole match, so they aren't links. */
+.card.match.match-tennis {
+  cursor: default;
+}
+
+.seed {
+  color: var(--muted);
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.tennis-sets {
+  display: inline-flex;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.tennis-set {
+  min-width: 1ch;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tennis-set.set-won {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.tennis-set sup {
+  font-size: 0.6em;
+  margin-left: 1px;
+}
+
+/* F1 constructors: team colour in place of a logo. */
+.team-swatch {
+  flex: none;
+  box-shadow: inset 0 0 0 1px var(--border);
+  width: 6px;
+  height: 22px;
+  margin: 0 9px;
+  border-radius: 3px;
+}
+
+/* Race weekend */
+.weekend-card {
+  padding: 18px 20px;
+}
+
+.weekend-card.is-live {
+  border-color: var(--border-highlight);
+}
+
+.weekend-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.weekend-name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text);
+  text-decoration: none;
+}
+
+a.weekend-name:hover {
+  color: var(--accent);
+}
+
+.weekend-place {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 0;
+}
+
+.session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.875rem;
+}
+
+.session-name {
+  font-weight: 700;
+}
+
+.session-podium {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.podium-driver {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.podium-pos {
+  font-family: var(--font-mono);
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.weekend-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 8px;
+}
+
+/* Season calendar */
+.race-calendar {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.calendar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 18px;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.calendar-row:hover {
+  background: var(--surface-2);
+}
+
+.calendar-round {
+  width: 22px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--muted);
+  text-align: right;
+}
+
+.calendar-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.calendar-done .calendar-name {
+  color: var(--text-secondary);
+}
+
+.calendar-next,
+.calendar-live {
+  background: var(--accent-soft);
+}
+
+/* Session classification */
+.race-results .race-pos {
+  font-family: var(--font-mono);
+  font-weight: 800;
+}
+
+.race-results tr.podium-1 .race-pos {
+  color: var(--star);
+}
+
+.race-driver {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-bar {
+  flex: none;
+  width: 4px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  /* Keeps white team colours (Williams) visible on the light theme. */
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.race-driver-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+@media (max-width: 600px) {
+  .weekend-head {
+    flex-direction: column;
+  }
+
+  .calendar-row {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+  }
+
+  .calendar-dates {
+    width: 100%;
+    padding-left: 34px;
+  }
+}
+
+/* Player and driver pages (layout shared with team pages, see Team.css). */
+.player-photo {
+  flex: none;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+.player-standing {
+  margin: 4px 0;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.team-title .team-logo {
+  vertical-align: -3px;
+  margin-right: 8px;
+}
+
+.player-result {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+/* "My Teams": everyone followed, removable. */
+.fav-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.fav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.fav-chip-name {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.fav-chip-remove {
+  display: inline-flex;
+  padding: 3px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.fav-chip-remove:hover {
+  background: var(--surface-2);
+  color: var(--accent);
+}
+
+.my-teams-btn {
+  color: var(--star);
+}
+
+.my-teams-btn.active {
+  background: var(--star-soft);
+}
+
+/* Golf leaderboards */
+.golf-par {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.golf-par.under {
+  color: var(--live);
+}
+
+.golf-cut td {
+  color: var(--muted);
+}

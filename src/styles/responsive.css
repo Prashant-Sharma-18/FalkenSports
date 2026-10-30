@@ -1,0 +1,254 @@
+/* ==========================================================================
+   Responsive Adaptations
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .app-container,
+  .container {
+    padding: 0 14px;
+  }
+
+  .header-inner {
+    height: 54px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-main {
+    gap: 8px;
+  }
+
+  .big-score-digit {
+    font-size: 1.9rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .day.edge {
+    display: none;
+  }
+
+  .table-team .full {
+    display: none;
+  }
+
+  .table-team .abbr {
+    display: inline;
+    font-weight: 700;
+  }
+
+  .hero-team-label {
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Phone layout
+   Applies to real phones (max-width: 600px) and to the desktop "app mode"
+   preview (.mode-app-shell), which is phone-width on any screen.
+   ========================================================================== */
+
+/* Wide screens show seven days; the extra ones only exist for the phone swipe row. */
+.day.far {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Switching between phone and desktop layouts means nothing on a phone. */
+  .app-mode-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-inner {
+    gap: 8px;
+  }
+
+  .brand-name {
+    font-size: 1.1rem;
+  }
+
+  .main {
+    padding-top: 14px;
+  }
+
+  .page-header {
+    margin-bottom: 12px;
+  }
+
+  .page-title {
+    font-size: 1.25rem;
+    gap: 8px;
+  }
+
+  .title-section-badge {
+    font-size: 0.72rem;
+    padding: 2px 10px;
+  }
+
+  /* Day picker: a swipeable row instead of squeezing seven days and four buttons. */
+  .date-strip {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .date-strip .nav-btn,
+  .today-badge-btn.near {
+    display: none;
+  }
+
+  .date-strip .days {
+    gap: 4px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+    mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  }
+
+  .date-strip .days::-webkit-scrollbar {
+    display: none;
+  }
+
+  .date-strip .day,
+  .date-strip .day.edge,
+  .date-strip .day.far {
+    display: flex;
+    flex: 0 0 56px;
+    scroll-snap-align: center;
+    overflow: visible;
+  }
+
+  .date-strip .day-name {
+    font-size: 0.68rem;
+    overflow: visible;
+  }
+
+  .date-strip .day-num {
+    font-size: 0.7rem;
+  }
+
+  .today-badge-btn {
+    padding: 5px 10px;
+  }
+
+  /* Table: every column fits, so points are never scrolled out of view. */
+  .table-card-head {
+    padding: 12px 14px;
+  }
+
+  .standings th,
+  .standings td {
+    padding: 9px 5px;
+  }
+
+  .standings td {
+    font-size: 0.82rem;
+  }
+
+  .rank-cell {
+    width: 34px;
+  }
+
+  .standings .star-btn {
+    display: none;
+  }
+
+  .table-team .full {
+    display: none;
+  }
+
+  .table-team .abbr {
+    display: inline;
+    font-weight: 700;
+  }
+
+  .table-legend {
+    gap: 8px 14px;
+    padding: 12px 14px;
+  }
+
+  /* Match header: names wrap onto two lines instead of being cut to "Newcast…". */
+  .hero-main {
+    align-items: start;
+    gap: 8px;
+  }
+
+  .hero-logo-box {
+    width: 52px;
+    height: 52px;
+  }
+
+  .hero-name {
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+
+  .hero-team-label {
+    max-width: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    text-align: center;
+  }
+}
+
+/* Desktop "app mode": the same phone treatment for the parts that otherwise
+   key off the viewport width. */
+.mode-app-shell .date-strip {
+  padding: 6px;
+  gap: 6px;
+}
+
+.mode-app-shell .date-strip .nav-btn,
+.mode-app-shell .today-badge-btn.near {
+  display: none;
+}
+
+.mode-app-shell .date-strip .days {
+  gap: 4px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 14px, #000 calc(100% - 14px), transparent);
+}
+
+.mode-app-shell .date-strip .days::-webkit-scrollbar {
+  display: none;
+}
+
+.mode-app-shell .date-strip .day,
+.mode-app-shell .date-strip .day.edge,
+.mode-app-shell .date-strip .day.far {
+  display: flex;
+  flex: 0 0 60px;
+  scroll-snap-align: center;
+  overflow: visible;
+}
+
+.mode-app-shell .date-strip .day-name {
+  overflow: visible;
+}
+
+.mode-app-shell .standings .col-form {
+  display: none;
+}

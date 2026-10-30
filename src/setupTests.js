@@ -3,6 +3,11 @@
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
+import { configure } from '@testing-library/react';
 
 // jsdom has no layout engine, so scrolling is a no-op in tests.
 window.scrollTo = () => {};
+
+// Screens other than scores load lazily (React.lazy); with the whole suite
+// running in parallel that can take longer than the default 1 s wait (more on a busy machine).
+configure({ asyncUtilTimeout: 8000 });

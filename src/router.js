@@ -10,6 +10,9 @@ import { isDayKey } from "./dates";
  *   #/matches/eng.1[/YYYY-MM-DD]           one competition
  *   #/table/eng.1   #/news/eng.1
  *   #/match/eng.1/401879254   #/team/eng.1/382
+ *   #/tennis/player/atp/3782   #/f1/player/f1/5829       tennis players, F1 drivers
+ *   #/favourites[/YYYY-MM-DD]                            my teams, every sport
+ *   #/search[/query]                                     teams and players, every sport
  *   #/basketball/matches/all   #/basketball/match/nba/401909881   ...
  */
 
@@ -19,13 +22,23 @@ const isId = (id) => /^\d+$/.test(id || "");
 
 export function parseRoute(hash) {
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
+  if (parts[0] === "search") {
+    let query = "";
+    try {
+      query = decodeURIComponent(parts.slice(1).join("/"));
+    } catch {}
+    return { sport: DEFAULT_SPORT, view: "search", league: null, query };
+  }
+  if (parts[0] === "favourites") {
+    return { sport: DEFAULT_SPORT, view: "favourites", league: null, date: isDayKey(parts[1]) ? parts[1] : null };
+  }
   const prefixed = isSport(parts[0]);
   const prefix = prefixed ? parts.shift() : null;
   const [view, league, extra] = parts;
   // Without a prefix, a known league still tells us its sport.
   const sport = prefix || (league && league !== "all" ? sportOfLeague(league) : DEFAULT_SPORT);
 
-  if ((view === "match" || view === "team") && isSlug(league) && isId(extra)) {
+  if ((view === "match" || view === "team" || view === "player") && isSlug(league) && isId(extra)) {
     return { sport, view, league, id: extra };
   }
   if ((view === "table" || view === "news") && isLeagueOf(sport, league)) {
@@ -42,8 +55,13 @@ export function routeHref(route) {
     route.sport || (route.league && route.league !== "all" ? sportOfLeague(route.league) : DEFAULT_SPORT);
   const prefix = sport === DEFAULT_SPORT ? "" : `/${sport}`;
   switch (route.view) {
+    case "search":
+      return `#/search${route.query ? `/${encodeURIComponent(route.query)}` : ""}`;
+    case "favourites":
+      return `#/favourites${route.date ? `/${route.date}` : ""}`;
     case "match":
     case "team":
+    case "player":
       return `#${prefix}/${route.view}/${route.league}/${route.id}`;
     case "table":
     case "news":

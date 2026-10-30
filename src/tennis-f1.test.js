@@ -102,8 +102,11 @@ test('tennis cards show sets and seeds, and are not links', async () => {
   global.fetch = jest.fn(() => respond(tennisDay));
   render(<App />);
 
-  await screen.findByText('Carlos Alcaraz');
-  expect(screen.queryByRole('link', { name: /Alcaraz/ })).toBeNull();
+  // The card isn't a link; the player's name links to their page.
+  const name = await screen.findByRole('link', { name: 'Carlos Alcaraz (2)' });
+  expect(name).toHaveAttribute('href', '#/tennis/player/atp/3782');
+  // Doubles pairs have no page.
+  expect(screen.queryByRole('link', { name: /Molteni/ })).toBeNull();
   expect(screen.getByText('(2)')).toBeInTheDocument();
   expect(screen.getByText('Round 2 · Centre Court')).toBeInTheDocument();
   // Several tournaments in one league still get their headings.

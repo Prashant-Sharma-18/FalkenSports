@@ -1,6 +1,7 @@
 import React from "react";
 import { Newspaper, Table2, Timer, Star } from "./Icons";
 import { useFavorites } from "../favorites";
+import { routeHref } from "../router";
 
 export default function BottomNav({ currentView, tabHref, tableLabel = "Table", liveCount = 0 }) {
   const { teams } = useFavorites();
@@ -10,7 +11,7 @@ export default function BottomNav({ currentView, tabHref, tableLabel = "Table", 
     { id: "matches", label: "Scores", icon: Timer, badge: liveCount > 0 ? liveCount : null, live: liveCount > 0 },
     { id: "table", label: tableLabel, icon: Table2 },
     { id: "news", label: "News", icon: Newspaper },
-  ];
+  ].filter((item) => item.label); // golf and UFC have no table
 
   return (
     <nav className="bottom-nav" aria-label="App Navigation">
@@ -40,23 +41,17 @@ export default function BottomNav({ currentView, tabHref, tableLabel = "Table", 
         })}
 
         <a
-          href={tabHref("matches")}
-          className={`bottom-nav-item ${favCount > 0 ? "has-favs" : ""}`}
-          onClick={(e) => {
-            // Smoothly scrolls to pinned favorites if already on matches
-            const pinnedEl = document.querySelector(".pinned-group");
-            if (pinnedEl) {
-              e.preventDefault();
-              pinnedEl.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-          }}
-          title={favCount > 0 ? `${favCount} favorite teams` : "Favorite teams"}
+          href={routeHref({ view: "favourites" })}
+          className={`bottom-nav-item ${favCount > 0 ? "has-favs" : ""} ${currentView === "favourites" ? "active" : ""}`}
+          aria-current={currentView === "favourites" ? "page" : undefined}
+          title={favCount > 0 ? `${favCount} followed` : "My Teams"}
         >
           <div className="nav-icon-wrapper">
             <Star size={20} filled={favCount > 0} />
             {favCount > 0 && <span className="nav-badge nav-badge-fav">{favCount}</span>}
           </div>
-          <span className="nav-label">Favorites</span>
+          <span className="nav-label">My Teams</span>
+          {currentView === "favourites" && <span className="active-pill-dot" />}
         </a>
       </div>
     </nav>

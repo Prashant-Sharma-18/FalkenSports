@@ -1,0 +1,77 @@
+/* ==========================================================================
+   More sports: American football, hockey, baseball
+   ========================================================================== */
+
+/* With many sports, only the active one keeps its label; the rest show icons. */
+.sport-tab:not(.active) .sport-tab-label {
+  display: none;
+}
+
+/* Several box score tables per team (passing, rushing… / skaters, goalies). */
+.table-scroll + .table-scroll {
+  margin-top: 18px;
+}
+
+/* NFL leader lines are long ("28/37, 276 YDS, 3 TD"), so they may wrap. */
+.leader-value {
+  white-space: normal;
+  text-align: right;
+  max-width: 55%;
+}
+
+/* Live situation: down and distance, or count, outs and runners. */
+.situation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.situation-compact {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.situation-full {
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--live-soft);
+  font-weight: 700;
+}
+
+.situation-players {
+  flex-basis: 100%;
+  font-weight: 500;
+}
+
+.situation-full .situation-players {
+  flex-basis: auto;
+}
+
+.bases .base {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.4;
+}
+
+.bases .base.on {
+  fill: var(--live);
+  stroke: var(--live);
+}
+
+.red-zone {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--live);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

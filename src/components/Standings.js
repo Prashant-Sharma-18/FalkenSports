@@ -6,12 +6,13 @@ import useRemoteData from "../useRemoteData";
 import FormPills from "./FormPills";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
-import { hasForm, hasTeamPages, isUsStyle, sportOfLeague } from "../sports";
+import { canFollow, hasForm, hasTeamPages, sportOfLeague } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 import { Trophy } from "./Icons";
 
-// North American table columns: [ESPN stat, header, tooltip]. The first
-// column marked `main` is highlighted, and is the one team pages show.
+// Table columns for North American sports and rugby: [ESPN stat, header,
+// tooltip]. The column marked `main` is highlighted, and team pages show it.
+// Football keeps its own fixed layout below.
 const W = ["wins", "W", "Won"];
 const L = ["losses", "L", "Lost"];
 const PCT = ["winPercent", "PCT", "Win percentage", "main"];
@@ -29,6 +30,15 @@ const US_COLUMNS = {
     STRK,
   ],
   baseball: [W, L, PCT, GB, STRK],
+  rugby: [
+    ["gamesPlayed", "P", "Played"],
+    ["gamesWon", "W", "Won"],
+    ["gamesDrawn", "D", "Drawn"],
+    ["gamesLost", "L", "Lost"],
+    ["pointsDifference", "PD", "Points difference"],
+    ["bonusPoints", "BP", "Bonus points"],
+    ["points", "Pts", "Points", "main"],
+  ],
 };
 // College football ranks within each conference.
 const LEAGUE_COLUMNS = {
@@ -41,7 +51,7 @@ const LEAGUE_COLUMNS = {
   ],
 };
 
-export const usColumns = (league) =>
+export const tableColumns = (league) =>
   (LEAGUE_COLUMNS[league] || US_COLUMNS[sportOfLeague(league)] || []).map(([stat, label, title, main]) => ({
     stat,
     label,
@@ -53,16 +63,19 @@ const streakClass = (v) => (/^W/.test(v) ? "gd-pos" : /^L/.test(v) ? "gd-neg" : 
 
 export default function Standings({ league }) {
   const sport = sportOfLeague(league);
-  const usStyle = isUsStyle(sport);
-  const columns = usColumns(league);
+  const columns = tableColumns(league);
   const cricket = sport === "cricket";
   const tennis = sport === "tennis";
   // Rankings and championships: rank, name and points (tennis adds movement).
   const pointsOnly = cricket || tennis || sport === "f1";
-  // F1 drivers and constructors can't be followed (there are no matches to pin).
-  const stars = sport !== "f1";
+  const stars = canFollow(sport);
   const showForm = hasForm(sport);
   const linkTeams = hasTeamPages(sport);
+  // Tennis players and F1 drivers have player pages (constructors don't).
+  const playerHref = (group, row) =>
+    tennis || (sport === "f1" && group.unit === "Drivers")
+      ? routeHref({ view: "player", league, id: row.id })
+      : null;
   const { isFavorite } = useFavorites();
   const { data, error, loading, refresh } = useRemoteData(
     (signal) => fetchStandings(league, signal),
@@ -122,7 +135,7 @@ export default function Standings({ league }) {
                         <th className="pts" title="Points">Pts</th>
                         {tennis && <th title="Places moved since the previous ranking">+/-</th>}
                       </>
-                    ) : usStyle ? (
+                    ) : columns.length > 0 ? (
                       columns.map((c) => (
                         <th
                           key={c.stat}
@@ -170,10 +183,10 @@ export default function Standings({ league }) {
                         </td>
                         <td className="left">
                           <span className="table-team">
-                            {linkTeams ? (
+                            {linkTeams || playerHref(group, row) ? (
                               <a
                                 className="table-team team-link"
-                                href={routeHref({ view: "team", league, id: row.id })}
+                                href={playerHref(group, row) || routeHref({ view: "team", league, id: row.id })}
                               >
                                 <TeamLogo src={row.logo} name={row.name} size={24} />
                                 <span className="full team-name-cell">{row.name}</span>
@@ -203,14 +216,14 @@ export default function Standings({ league }) {
                               </td>
                             )}
                           </>
-                        ) : usStyle ? (
+                        ) : columns.length > 0 ? (
                           columns.map((c) => {
                             const v = row.stats?.[c.stat] ?? "";
                             const cls =
                               c.main ? "pts"
                               : c.stat === "streak" ? `col-streak ${streakClass(v)}`
-                              : c.stat === "wins" ? "num-w"
-                              : c.stat === "losses" ? "num-l"
+                              : c.stat === "wins" || c.stat === "gamesWon" ? "num-w"
+                              : c.stat === "losses" || c.stat === "gamesLost" ? "num-l"
                               : "";
                             return (
                               <td key={c.stat} className={cls}>

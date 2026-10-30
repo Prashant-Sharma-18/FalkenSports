@@ -6,6 +6,7 @@ import TeamLogo from "./TeamLogo";
 import StarButton from "./StarButton";
 import { Football, MapPin } from "./Icons";
 import { CricketScore } from "./CricketDetail";
+import { Situation } from "./GameDetail";
 import { hasMatchPages, isUsStyle } from "../sports";
 
 export function MatchStatus({ match }) {
@@ -80,14 +81,26 @@ export default function MatchCard({ match }) {
         <div className="team-info">
           <div className="team-identity">
             {/* The star button beside the name already shows favourite state. */}
-            <span className={`team-name ${fav ? "fav" : ""}`}>
-              {team.name}
-              {team.seed && <span className="seed"> ({team.seed})</span>}
-            </span>
+            {/* Tennis singles players link to their page (the card itself isn't a link). */}
+            {match.sport === "tennis" && /^\d+$/.test(team.id || "") ? (
+              <a
+                className={`team-name team-link ${fav ? "fav" : ""}`}
+                href={routeHref({ view: "player", league: match.league, id: team.id })}
+              >
+                {team.name}
+                {team.seed && <span className="seed"> ({team.seed})</span>}
+              </a>
+            ) : (
+              <span className={`team-name ${fav ? "fav" : ""}`}>
+                {team.name}
+                {team.seed && <span className="seed"> ({team.seed})</span>}
+              </span>
+            )}
             <StarButton team={team} size={14} />
           </div>
           <Scorers goals={goals} />
-          {usStyle && (team.record || (started && team.leader)) && (
+          {/* Season record (US sports) or a fighter's record (UFC). */}
+          {(usStyle || match.sport === "mma") && (team.record || (started && team.leader)) && (
             <div className="team-meta">
               {team.record && <span>{team.record}</span>}
               {/* Basketball only: a points leader means little in other sports. */}
@@ -128,7 +141,7 @@ export default function MatchCard({ match }) {
     >
       <header className="match-head">
         <MatchStatus match={match} />
-        {match.sport === "tennis" && match.label ? (
+        {(match.sport === "tennis" || match.sport === "mma") && match.label ? (
           <span className="match-format">{[match.label, match.venue].filter(Boolean).join(" · ")}</span>
         ) : match.sport === "cricket" && (match.format || match.label) ? (
           <span className="match-format">{[match.format, match.label].filter(Boolean).join(" · ")}</span>
@@ -153,6 +166,7 @@ export default function MatchCard({ match }) {
           </>
         )}
       </div>
+      <Situation match={match} compact />
       {match.summary && <p className="match-summary">{match.summary}</p>}
     </Card>
   );

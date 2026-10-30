@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import App from './App';
 import { fetchMatch, fetchStandings, periodLabel } from './api';
+import { situationOf } from './api/common';
 import { parseRoute, routeHref } from './router';
 import { sportOfLeague, teamKey } from './sports';
 
@@ -211,4 +212,87 @@ test('NHL table shows points and overtime losses, playoff places marked', async 
   ]);
   expect(within(table).getByText('24')).toHaveClass('pts');
   expect(screen.getByText('Playoffs')).toBeInTheDocument();
+});
+
+test('live situations: down and distance, count, outs and runners', () => {
+  expect(situationOf({ downDistanceText: '3rd & 7 at GB 27', possession: '9', isRedZone: true }, 'american-football')).toEqual({
+    kind: 'downs', text: '3rd & 7 at GB 27', possession: '9', redZone: true,
+  });
+  expect(
+    situationOf(
+      { balls: 2, strikes: 1, outs: 1, onFirst: true, onThird: true, batter: { athlete: { shortName: 'J. Chourio' } } },
+      'baseball'
+    )
+  ).toMatchObject({ kind: 'bases', balls: 2, strikes: 1, outs: 1, bases: [true, false, true], batter: 'J. Chourio' });
+  expect(situationOf({ lastPlay: {} }, 'american-football')).toBeNull();
+  expect(situationOf({ balls: 1 }, 'hockey')).toBeNull();
+});
+
+test('a live MLB game card shows the count, outs and runners', async () => {
+  window.location.hash = '#/baseball/matches/mlb/2026-10-29';
+  global.fetch = jest.fn(() =>
+    respond({
+      events: [
+        {
+          id: '1',
+          date: '2026-10-29T23:00Z',
+          status: { type: { state: 'in', shortDetail: 'Top 5th' } },
+          competitions: [
+            {
+              competitors: [side('home', '30', 'Tampa Bay Rays', 1, []), side('away', '8', 'Milwaukee Brewers', 2, [])],
+              situation: { balls: 3, strikes: 2, outs: 2, onFirst: true, onSecond: true, onThird: true },
+            },
+          ],
+        },
+      ],
+    })
+  );
+  render(<App />);
+  expect(await screen.findByLabelText('3-2 count, 2 outs, 3 on base')).toBeInTheDocument();
+  expect(screen.getByText('3-2, 2 outs')).toBeInTheDocument();
+});
+
+test("MLB game leaders come from the game's scoreboard entry: top batter and pitchers of record", async () => {
+  const board = {
+    id: '401908046',
+    competitions: [
+      {
+        status: {
+          type: { state: 'post' },
+          featuredAthletes: [
+            {
+              name: 'winningPitcher',
+              team: { id: '8' },
+              athlete: { displayName: 'Jacob Misiorowski', headshot: 'w.png' },
+              statistics: [
+                { abbreviation: 'W', displayValue: '2' },
+                { abbreviation: 'L', displayValue: '0' },
+                { abbreviation: 'ERA', displayValue: '1.89' },
+              ],
+            },
+          ],
+        },
+        competitors: [
+          {
+            team: { id: '8' },
+            leaders: [{ name: 'avg', leaders: [{ displayValue: '2-3, 2 RBI', athlete: { displayName: 'Cooper Pratt' } }] }],
+          },
+        ],
+      },
+    ],
+  };
+  global.fetch = jest.fn((url) =>
+    respond(url.includes('/scoreboard/') ? board : summary([side('home', '30', 'Rays', 1, [1]), side('away', '8', 'Brewers', 4, [4])]))
+  );
+  const m = await fetchMatch('mlb', '401908046');
+  expect(global.fetch.mock.calls.map(([u]) => u.split('/mlb/')[1])).toEqual(['summary?event=401908046', 'scoreboard/401908046']);
+  expect(m.leaders).toEqual([
+    {
+      teamId: '8',
+      items: [
+        { category: 'Batting', player: 'Cooper Pratt', headshot: undefined, value: '2-3, 2 RBI' },
+        { category: 'Winning pitcher', player: 'Jacob Misiorowski', headshot: 'w.png', value: '2-0, 1.89 ERA' },
+      ],
+    },
+  ]);
 });

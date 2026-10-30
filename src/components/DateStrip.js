@@ -3,7 +3,7 @@ import { addDays, fromKey, todayKey } from "../dates";
 import { CalendarDays, ChevronLeft, ChevronRight } from "./Icons";
 
 // Two weeks around the selected day. Wide screens show the middle seven;
-// phones get all of them in a swipeable row (see .day.far in App.css).
+// phones get all of them in a swipeable row (see .day.far in styles/responsive.css).
 const OFFSETS = Array.from({ length: 15 }, (_, i) => i - 7);
 
 function nextMatchDay(date, matchDays, direction) {

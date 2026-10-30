@@ -15,7 +15,17 @@ export const SPORTS = {
       { id: "ita.1", name: "Serie A" },
       { id: "fra.1", name: "Ligue 1" },
       { id: "uefa.champions", name: "Champions League" },
+      { id: "uefa.europa", name: "Europa League" },
+      { id: "uefa.europa.conf", name: "Conference League" },
+      { id: "eng.2", name: "Championship" },
+      { id: "ned.1", name: "Eredivisie" },
+      { id: "por.1", name: "Primeira Liga" },
+      { id: "sco.1", name: "Scottish Premiership" },
+      { id: "tur.1", name: "Süper Lig" },
+      { id: "ksa.1", name: "Saudi Pro League" },
       { id: "usa.1", name: "MLS" },
+      { id: "mex.1", name: "Liga MX" },
+      { id: "bra.1", name: "Brasileirão" },
     ],
   },
   basketball: {
@@ -55,6 +65,27 @@ export const SPORTS = {
       { id: "8050", name: "Ranji Trophy" },
       { id: "8043", name: "Sheffield Shield" },
       { id: "8052", name: "County Championship" },
+    ],
+  },
+  rugby: {
+    id: "rugby",
+    espn: "rugby",
+    name: "Rugby",
+    games: "Matches",
+    game: "match",
+    draws: true,
+    // ESPN's rugby team schedules fail, so there are no team pages.
+    teamPages: false,
+    // ESPN ids are numbers, like cricket's; "rugby." keeps them apart (see api/espn.js).
+    leagues: [
+      { id: "rugby.180659", name: "Six Nations" },
+      { id: "rugby.267979", name: "Premiership" },
+      { id: "rugby.270557", name: "URC" },
+      { id: "rugby.270559", name: "Top 14" },
+      { id: "rugby.271937", name: "Champions Cup" },
+      { id: "rugby.242041", name: "Super Rugby" },
+      { id: "rugby.244293", name: "Rugby Championship" },
+      { id: "rugby.164205", name: "World Cup" },
     ],
   },
   "american-football": {
@@ -119,7 +150,43 @@ export const SPORTS = {
     teamPages: false,
     form: false,
     table: "Standings",
+    // Drivers have pages but there are no matches to pin, so nothing to follow.
+    follow: false,
     leagues: [{ id: "f1", name: "F1" }],
+  },
+  golf: {
+    id: "golf",
+    espn: "golf",
+    name: "Golf",
+    games: "Tournaments",
+    game: "tournament",
+    draws: false,
+    teamPages: false,
+    form: false,
+    // ESPN publishes leaderboards, not standings.
+    table: false,
+    follow: false,
+    leagues: [
+      { id: "pga", name: "PGA Tour" },
+      { id: "eur", name: "DP World Tour" },
+      { id: "lpga", name: "LPGA" },
+      { id: "liv", name: "LIV Golf" },
+      { id: "champions-tour", name: "Champions Tour" },
+    ],
+  },
+  mma: {
+    id: "mma",
+    espn: "mma",
+    name: "UFC",
+    games: "Fights",
+    game: "fight",
+    draws: false,
+    teamPages: false,
+    form: false,
+    // A fight card shows the whole fight (fighters, records, method, round).
+    matchPages: false,
+    table: false,
+    leagues: [{ id: "ufc", name: "UFC" }],
   },
 };
 
@@ -132,13 +199,13 @@ export const leaguesOf = (sport) => SPORTS[sport]?.leagues || [];
 
 export const isLeagueOf = (sport, league) => leaguesOf(sport).some((l) => l.id === league);
 
-// Sport for a league slug. Cricket series ids are purely numeric (no other
-// sport's slugs are); other unknown slugs (cups, friendlies) only ever come
+// Sport for a league slug. Cricket series ids are purely numeric, rugby's are
+// prefixed "rugby."; other unknown slugs (cups, friendlies) only ever come
 // from football team schedules, so they default to football.
 export function sportOfLeague(league) {
   return (
     SPORT_IDS.find((s) => isLeagueOf(s, league)) ||
-    (/^\d+$/.test(league || "") ? "cricket" : DEFAULT_SPORT)
+    (/^\d+$/.test(league || "") ? "cricket" : /^rugby\./.test(league || "") ? "rugby" : DEFAULT_SPORT)
   );
 }
 
@@ -146,7 +213,10 @@ export function sportOfLeague(league) {
 export const hasTeamPages = (sport) => SPORTS[sport]?.teamPages !== false;
 export const hasForm = (sport) => SPORTS[sport]?.form !== false;
 export const hasMatchPages = (sport) => SPORTS[sport]?.matchPages !== false;
-export const tableLabel = (sport) => SPORTS[sport]?.table || "Table";
+// The table tab's name, or null for sports without one (golf, UFC).
+export const tableLabel = (sport) => (SPORTS[sport]?.table === false ? null : SPORTS[sport]?.table || "Table");
+// Whether a sport's teams or players can be starred (and pinned, alerted).
+export const canFollow = (sport) => SPORTS[sport]?.follow !== false;
 
 // North American conventions: the away team is listed first ("Heat at Hawks"),
 // and games have a line score, box score and play-by-play.

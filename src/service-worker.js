@@ -37,6 +37,20 @@ registerRoute(
   })
 );
 
+// ESPN's core API (F1 session results): one response per driver, so a session
+// is ~25 entries. A cache of its own keeps it from pushing out the scores above.
+registerRoute(
+  ({ url }) => url.origin === "https://sports.core.api.espn.com",
+  new NetworkFirst({
+    cacheName: "espn-core-data",
+    networkTimeoutSeconds: 6,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({ maxEntries: 300, maxAgeSeconds: 7 * 24 * 60 * 60 }),
+    ],
+  })
+);
+
 // Team logos and news photos. These are opaque cross-origin responses, which
 // browsers charge heavily against storage quota, so keep the cache small.
 registerRoute(

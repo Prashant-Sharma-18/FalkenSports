@@ -32,6 +32,8 @@ export default function Scores({ sport, league, date, onDateChange }) {
   const games = SPORTS[sport].games; // "Matches" / "Games"
   const [filterMode, setFilterMode] = useState("all"); // "all" | "live" | "favs"
   const [searchQuery, setSearchQuery] = useState("");
+  // Phones keep the filter box folded away until the search button opens it.
+  const [searchOpen, setSearchOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { isFavorite, teams: favTeams } = useFavorites();
   const all = league === "all";
@@ -94,12 +96,13 @@ export default function Scores({ sport, league, date, onDateChange }) {
       <DateStrip date={date} matchDays={data?.matchDays} onChange={onDateChange} />
 
       {/* App Quick Controls Bar */}
-      <div className="app-controls-bar">
+      <div className={`app-controls-bar ${searchOpen || searchQuery ? "open" : ""}`}>
         <div className="app-search-wrap">
           <Search size={15} className="search-icon" />
           <input
             type="text"
             className="app-search-input"
+            autoFocus={searchOpen}
             placeholder={`Search teams or ${games.toLowerCase()}...`}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -166,6 +169,28 @@ export default function Scores({ sport, league, date, onDateChange }) {
             {formatTime(updatedAt)}
           </span>
         )}
+
+        {/* Phones only (styles/mobile.css): the search box and refresh live here. */}
+        <button
+          type="button"
+          className={`icon-btn pill-icon-btn compact-only pill-icon-first ${searchOpen || searchQuery ? "active" : ""}`}
+          onClick={() => {
+            if (searchOpen) setSearchQuery("");
+            setSearchOpen(!searchOpen);
+          }}
+          aria-label={searchOpen ? "Close search" : `Search ${games.toLowerCase()}`}
+          aria-expanded={searchOpen}
+        >
+          {searchOpen ? <X size={14} /> : <Search size={14} />}
+        </button>
+        <button
+          type="button"
+          className={`icon-btn pill-icon-btn compact-only refresh-btn ${isRefreshing ? "refreshing" : ""}`}
+          onClick={handleManualRefresh}
+          aria-label="Refresh scores"
+        >
+          <RefreshCw size={14} />
+        </button>
       </div>
 
       {loading && <Loading label="Syncing live scores…" />}

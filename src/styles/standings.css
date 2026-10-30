@@ -1,0 +1,200 @@
+/* ==========================================================================
+   Standings View (Table)
+   ========================================================================== */
+
+.table-card {
+  overflow: hidden;
+}
+
+.table-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.table-head-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trophy-pill {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.group-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.table-head-badge {
+  font-size: 0.725rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+.standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.standings th,
+.standings td {
+  padding: 10px 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.standings th {
+  color: var(--muted);
+  font-size: 0.725rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.standings tbody tr {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.standings tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.standings tbody tr.fav-row {
+  background: var(--accent-soft);
+}
+
+.standings .left {
+  text-align: left;
+}
+
+.col-team {
+  width: 100%;
+}
+
+.rank-cell {
+  width: 40px;
+}
+
+.rank-badge {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.rank-badge.zone-ucl {
+  background: rgba(14, 165, 233, 0.15);
+  color: #0284c7;
+  border: 1px solid rgba(14, 165, 233, 0.3);
+}
+
+.rank-badge.zone-uel {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.rank-badge.zone-rel {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.standings tr.zone-ucl td:first-child { box-shadow: inset 3px 0 0 #0284c7; }
+.standings tr.zone-uel td:first-child { box-shadow: inset 3px 0 0 #d97706; }
+.standings tr.zone-rel td:first-child { box-shadow: inset 3px 0 0 #dc2626; }
+.standings tr.fav-row td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
+
+.table-team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team-name-cell {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.fav-row .team-name-cell {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.table-team .abbr {
+  display: none;
+}
+
+.table-team .star-btn {
+  margin-left: auto;
+}
+
+.gd-cell {
+  font-family: var(--font-mono);
+}
+
+.gd-pos { color: var(--win); }
+.gd-neg { color: var(--live); }
+
+.standings .pts {
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: var(--text);
+  font-size: 0.925rem;
+}
+
+.table-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 18px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border);
+  font-size: 0.725rem;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.legend-dot.ucl { background: #0284c7; }
+.legend-dot.uel { background: #d97706; }
+.legend-dot.rel { background: #dc2626; }

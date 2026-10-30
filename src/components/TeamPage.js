@@ -1,17 +1,16 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { fetchStandings, fetchTeam, resultFor } from "../api";
-import { formatTime } from "../dates";
+import { formatTime, fromKey, toKey, todayKey } from "../dates";
 import { routeHref } from "../router";
-import { SPORTS, isUsStyle, sportOfLeague } from "../sports";
+import { SPORTS, isUsStyle, leagueName, sportOfLeague } from "../sports";
 import useRemoteData from "../useRemoteData";
 import MatchCard from "./MatchCard";
-import FormPills from "./FormPills";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
-import { ArrowLeft, ExternalLink } from "./Icons";
+import { ArrowLeft, CalendarDays, ExternalLink } from "./Icons";
+import { downloadIcs } from "../calendar";
 import { ErrorState, Loading, Empty } from "./Status";
-import { usColumns } from "./Standings";
-import "./Team.css";
+import { tableColumns } from "./Standings";
 
 // "29 Oct": fits the narrow date column on phones without wrapping.
 const shortDate = (d) => d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
@@ -25,7 +24,10 @@ function MatchRow({ match, teamId }) {
 
   return (
     <li>
-      <a className="match-row" href={routeHref({ view: "match", league: match.league, id: match.id })}>
+      <a
+        className={`match-row ${result ? `result-${result}` : ""}`}
+        href={routeHref({ view: "match", league: match.league, id: match.id })}
+      >
         <span className="mr-date">
           <span>{shortDate(match.date)}</span>
           <span className="muted small">{match.competition}</span>
@@ -56,7 +58,7 @@ function MatchRow({ match, teamId }) {
 function TablePosition({ league, teamId }) {
   const usStyle = isUsStyle(sportOfLeague(league));
   // Record and the table's main column (college football: conference and overall records).
-  const miniColumns = usColumns(league).filter((c) => c.main || ["wins", "losses", "overall"].includes(c.stat));
+  const miniColumns = tableColumns(league).filter((c) => c.main || ["wins", "losses", "overall"].includes(c.stat));
   const { data } = useRemoteData((signal) => fetchStandings(league, signal), [league], null);
   const group = data?.find((g) => g.rows.some((r) => r.id === teamId));
   if (!group) return null;
@@ -122,6 +124,205 @@ function TablePosition({ league, teamId }) {
   );
 }
 
+// Days until kick-off in words: "Today", "Tomorrow", "In 3 days".
+function countdown(date) {
+  const days = Math.round((fromKey(toKey(date)) - fromKey(todayKey())) / 86400000);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Tomorrow";
+  return `In ${days} days`;
+}
+
+// Season numbers from the results (every competition): played, won, drawn,
+// lost, and goals for and against. Sports without draws show points per game.
+function seasonStats(team) {
+  const games = team.results.filter((m) => m.home.score != null && m.away.score != null);
+  if (!games.length) return [];
+  const tally = { W: 0, D: 0, L: 0 };
+  let scored = 0;
+  let conceded = 0;
+  games.forEach((m) => {
+    tally[resultFor(m, team.id)] += 1;
+    const us = m.home.id === team.id ? m.home : m.away;
+    const them = us === m.home ? m.away : m.home;
+    scored += Number(us.score) || 0;
+    conceded += Number(them.score) || 0;
+  });
+  const draws = SPORTS[team.sport].draws;
+  const perGame = (n) => (n / games.length).toFixed(1);
+  return [
+    ["Played", games.length],
+    ["Won", tally.W],
+    draws && ["Drawn", tally.D],
+    ["Lost", tally.L],
+    draws ? ["Scored", scored] : ["Pts / game", perGame(scored)],
+    draws ? ["Conceded", conceded] : ["Allowed / game", perGame(conceded)],
+  ].filter(Boolean);
+}
+
+// Light club colours (Dortmund yellow, white kits) get dark text instead of white.
+// Relative luminance per WCAG, from "#rrggbb".
+function isLight(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.4;
+}
+
+// The club banner: crest, name, position, and the season in numbers.
+function Banner({ team }) {
+  const stats = seasonStats(team);
+  const kicker = [leagueName(team.homeLeague), SPORTS[team.sport].name].filter(
+    (x, i, all) => x && all.indexOf(x) === i
+  );
+  return (
+    <header
+      className={`team-banner ${team.color && isLight(team.color) ? "team-banner-light" : ""}`}
+      style={team.color ? { "--team": team.color } : undefined}
+    >
+      {team.logo && <img className="team-watermark" src={team.logo} alt="" aria-hidden="true" />}
+      <div className="team-banner-top">
+        <span className="team-crest">
+          <TeamLogo src={team.logo} name={team.name} size={64} />
+        </span>
+        <div className="team-banner-text">
+          <span className="team-kicker">{kicker.join(" · ")}</span>
+          <h1 className="team-title">
+            {team.name}
+            <StarButton team={team} size={18} />
+          </h1>
+          {(team.standing || team.record) && (
+            <p className="team-standing">
+              {[isUsStyle(team.sport) && team.record, team.standing].filter(Boolean).join(" · ")}
+            </p>
+          )}
+        </div>
+      </div>
+      {stats.length > 0 && (
+        <dl className="team-stats" aria-label="This season, all competitions">
+          {stats.map(([label, value]) => (
+            <div key={label} className="team-stat">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </header>
+  );
+}
+
+// The next game, given room: both crests, when (with a countdown) and where.
+function NextMatch({ match, team }) {
+  const [left, right] = isUsStyle(match.sport) ? [match.away, match.home] : [match.home, match.away];
+  const home = match.home.id === team.id;
+  const side = (t) => (
+    <span className={`nm-team ${t.id === team.id ? "nm-us" : ""}`}>
+      <TeamLogo src={t.logo} name={t.name} size={48} />
+      <span className="nm-name">{t.name}</span>
+    </span>
+  );
+  return (
+    <div className="card team-section next-match">
+      <div className="section-head">
+        <h2 className="panel-title">Next {SPORTS[team.sport].game}</h2>
+        <button
+          type="button"
+          className="text-link small calendar-btn"
+          onClick={() => downloadIcs(team.fixtures, `${team.name} fixtures`, team.name)}
+          title="Download every upcoming fixture as a calendar file"
+        >
+          <CalendarDays size={14} /> Add to calendar
+        </button>
+      </div>
+      <a className="nm-body" href={routeHref({ view: "match", league: match.league, id: match.id })}>
+        {side(left)}
+        <span className="nm-when">
+          <span className="nm-countdown">{countdown(match.date)}</span>
+          <span className="nm-time">{match.timeTbd ? "TBD" : formatTime(match.date)}</span>
+          <span className="muted small">
+            {match.date.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })}
+          </span>
+        </span>
+        {side(right)}
+      </a>
+      <p className="nm-meta muted small">
+        {[match.competition, home ? "Home" : "Away", match.venue].filter(Boolean).join(" · ")}
+      </p>
+    </div>
+  );
+}
+
+// The last five results as tiles, oldest first: result, opponent, score.
+function FormStrip({ team }) {
+  const games = team.results.slice(0, 5).reverse();
+  if (!games.length) return null;
+  return (
+    <div className="card team-section">
+      <h2 className="panel-title">Recent form</h2>
+      <ol className="form-strip">
+        {games.map((m) => {
+          const result = resultFor(m, team.id);
+          const home = m.home.id === team.id;
+          const opponent = home ? m.away : m.home;
+          const word = result === "W" ? "Won" : result === "L" ? "Lost" : "Drew";
+          return (
+            <li key={m.id}>
+              <a
+                className={`form-tile form-tile-${result}`}
+                href={routeHref({ view: "match", league: m.league, id: m.id })}
+                title={`${word} ${m.home.score}–${m.away.score} ${home ? "vs" : "at"} ${opponent.name}`}
+              >
+                <span className="form-tile-result">{result}</span>
+                <TeamLogo src={opponent.logo} name={opponent.name} size={26} />
+                <span className="form-tile-score">
+                  {m.home.score}–{m.away.score}
+                </span>
+                <span className="form-tile-venue">{home ? "Home" : "Away"}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+// Results and fixtures, one list at a time.
+function Schedule({ team, upcoming }) {
+  const [tab, setTab] = useState(team.results.length ? "results" : "fixtures");
+  const list = tab === "results" ? team.results.slice(0, 15) : upcoming.slice(0, 15);
+  return (
+    <div className="card team-section">
+      <nav className="subtabs team-tabs" aria-label="Results and fixtures">
+        {[
+          ["results", "Results", team.results.length],
+          ["fixtures", "Fixtures", upcoming.length],
+        ].map(([id, label, count]) => (
+          <button
+            key={id}
+            type="button"
+            className={`subtab ${tab === id ? "active" : ""}`}
+            aria-current={tab === id ? "true" : undefined}
+            onClick={() => setTab(id)}
+          >
+            {label} <span className="tab-count">{count}</span>
+          </button>
+        ))}
+      </nav>
+      {list.length ? (
+        <ul className={`match-rows ${tab === "fixtures" ? "compact" : ""}`}>
+          {list.map((m) => (
+            <MatchRow key={m.id} match={m} teamId={team.id} />
+          ))}
+        </ul>
+      ) : (
+        <Empty label={tab === "results" ? "No results this season yet." : "No further fixtures announced."} />
+      )}
+    </div>
+  );
+}
+
 export default function TeamPage({ league, id, onBack }) {
   const { data: team, error, loading, refresh } = useRemoteData(
     (signal) => fetchTeam(league, id, signal),
@@ -133,18 +334,6 @@ export default function TeamPage({ league, id, onBack }) {
     if (team) document.title = `${team.name} – FalkenSports`;
   }, [team]);
 
-  const form = team
-    ? team.results
-        .slice(0, 5)
-        .reverse()
-        .map((m) => ({
-          id: m.id,
-          result: resultFor(m, team.id),
-          score: `${m.home.score}-${m.away.score}`,
-          home: m.home.id === team.id,
-          opponent: (m.home.id === team.id ? m.away : m.home).name,
-        }))
-    : [];
   const [next, ...later] = team?.fixtures || [];
 
   return (
@@ -158,69 +347,29 @@ export default function TeamPage({ league, id, onBack }) {
 
       {team && (
         <>
-          <div className="card team-hero" style={team.color ? { "--team": team.color } : undefined}>
-            <TeamLogo src={team.logo} name={team.name} size={72} />
-            <div className="team-hero-text">
-              <h1 className="team-title">
-                {team.name}
-                <StarButton team={team} size={18} />
-              </h1>
-              {(team.standing || team.record) && (
-                <p className="muted">
-                  {[isUsStyle(team.sport) && team.record, team.standing].filter(Boolean).join(" · ")}
-                </p>
-              )}
-              {form.length > 0 && (
-                <div className="team-form">
-                  <span className="muted small">Form</span>
-                  <FormPills games={form} />
-                </div>
-              )}
-            </div>
-          </div>
+          <Banner team={team} />
 
           <div className="team-grid">
             <div className="team-main">
-              {(team.live.length > 0 || next) && (
+              {team.live.length > 0 ? (
                 <div className="team-section">
-                  <h2 className="panel-title">{team.live.length ? "Live now" : `Next ${SPORTS[team.sport].game}`}</h2>
+                  <h2 className="panel-title">Live now</h2>
                   <div className="grid">
-                    {(team.live.length ? team.live : [next]).map((m) => (
+                    {team.live.map((m) => (
                       <MatchCard key={m.id} match={m} />
                     ))}
                   </div>
                 </div>
+              ) : (
+                next && <NextMatch match={next} team={team} />
               )}
-
-              <div className="card team-section">
-                <h2 className="panel-title">Results</h2>
-                {team.results.length ? (
-                  <ul className="match-rows">
-                    {team.results.slice(0, 10).map((m) => (
-                      <MatchRow key={m.id} match={m} teamId={team.id} />
-                    ))}
-                  </ul>
-                ) : (
-                  <Empty label="No results this season yet." />
-                )}
-              </div>
+              <FormStrip team={team} />
+              {/* With a game on, the next fixture isn't featured, so it stays in the list. */}
+              <Schedule team={team} upcoming={team.live.length ? team.fixtures : later} />
             </div>
 
             <aside className="team-side">
               <TablePosition league={team.homeLeague} teamId={team.id} />
-
-              <div className="card team-section">
-                <h2 className="panel-title">Upcoming</h2>
-                {later.length ? (
-                  <ul className="match-rows compact">
-                    {later.slice(0, 8).map((m) => (
-                      <MatchRow key={m.id} match={m} teamId={team.id} />
-                    ))}
-                  </ul>
-                ) : (
-                  <Empty label="No further fixtures announced." />
-                )}
-              </div>
             </aside>
           </div>
 

@@ -6,8 +6,10 @@ import useRemoteData from "../useRemoteData";
 import { MatchStatus } from "./MatchCard";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
+import { downloadIcs, matchTitle } from "../calendar";
 import {
   ArrowDown,
+  CalendarDays,
   ArrowLeft,
   ArrowLeftRight,
   ArrowUp,
@@ -17,7 +19,7 @@ import {
   Users,
   Shield,
 } from "./Icons";
-import { BoxScore, Leaders, Linescore, PlayByPlay } from "./GameDetail";
+import { BoxScore, Leaders, Linescore, PlayByPlay, Situation } from "./GameDetail";
 import { CricketScore, CricketSummary, Scorecard } from "./CricketDetail";
 import { SPORTS, hasTeamPages, isUsStyle } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
@@ -183,7 +185,7 @@ function Lineups({ match }) {
               </div>
             </div>
             <div className="starters-section">
-              <h4 className="lineup-subheading">Starting XI</h4>
+              <h4 className="lineup-subheading">{match.sport === "rugby" ? "Starting XV" : "Starting XI"}</h4>
               <PlayerList players={lineup.starters} />
             </div>
             {lineup.subs.length > 0 && (
@@ -397,6 +399,7 @@ export default function MatchDetail({ league, id, onBack }) {
           <div className="card panel">
             {activeTab === "summary" && usStyle && (
               <>
+                <Situation match={match} />
                 <Linescore match={match} />
                 <Leaders match={match} />
               </>
@@ -405,7 +408,8 @@ export default function MatchDetail({ league, id, onBack }) {
             {activeTab === "scorecard" && <Scorecard match={match} />}
             {activeTab === "summary" && !usStyle && !cricket && (
               <>
-                <Timeline match={match} />
+                {/* ESPN has no rugby match events, so there's no timeline to show. */}
+                {(match.sport !== "rugby" || match.events.length > 0) && <Timeline match={match} />}
                 {(match.form[match.home.id]?.length > 0 ||
                   match.form[match.away.id]?.length > 0) && (
                   <div className="form-block">
@@ -428,6 +432,16 @@ export default function MatchDetail({ league, id, onBack }) {
             {activeTab === "plays" && <PlayByPlay match={match} />}
           </div>
 
+          {match.state === "pre" && match.date && (
+            <button
+              type="button"
+              className="match-link calendar-btn"
+              onClick={() => downloadIcs([match], "FalkenSports", matchTitle(match))}
+            >
+              <CalendarDays size={14} />
+              <span>Add to calendar</span>
+            </button>
+          )}
           <a className="match-link" href={match.link} target="_blank" rel="noreferrer">
             <span>Full {SPORTS[match.sport].game} centre on ESPN</span>
             <ExternalLink size={14} />

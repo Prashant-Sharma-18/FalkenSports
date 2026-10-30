@@ -2,6 +2,65 @@ import React, { useState } from "react";
 import TeamLogo from "./TeamLogo";
 import { Empty } from "./Status";
 
+// First, second and third base, drawn as a diamond; occupied bases are filled.
+function Bases({ bases, size }) {
+  const spots = [
+    [17, 12], // first
+    [12, 7], // second
+    [7, 12], // third
+  ];
+  return (
+    <svg className="bases" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+      {spots.map(([x, y], i) => (
+        <rect
+          key={i}
+          x={x - 3}
+          y={y - 3}
+          width="6"
+          height="6"
+          transform={`rotate(45 ${x} ${y})`}
+          className={bases[i] ? "base on" : "base"}
+        />
+      ))}
+    </svg>
+  );
+}
+
+// Live game state: down and distance with the team in possession (American
+// football), or count, outs and runners (baseball). `compact` fits a score card.
+export function Situation({ match, compact = false }) {
+  const s = match.situation;
+  if (!s || match.state !== "in") return null;
+  const cls = `situation ${compact ? "situation-compact" : "situation-full"}`;
+
+  if (s.kind === "downs") {
+    const team = [match.home, match.away].find((t) => t.id === s.possession);
+    return (
+      <div className={cls}>
+        {team && <TeamLogo src={team.logo} name={team.name} size={compact ? 14 : 18} />}
+        <span className="situation-text">{s.text}</span>
+        {s.redZone && <span className="red-zone">Red zone</span>}
+      </div>
+    );
+  }
+
+  const outs = `${s.outs} out${s.outs === 1 ? "" : "s"}`;
+  const runners = s.bases.filter(Boolean).length;
+  return (
+    <div className={cls} aria-label={`${s.balls}-${s.strikes} count, ${outs}, ${runners} on base`}>
+      <Bases bases={s.bases} size={compact ? 18 : 30} />
+      <span className="situation-text">
+        {s.balls}-{s.strikes}, {outs}
+      </span>
+      {!compact && (s.batter || s.pitcher) && (
+        <span className="muted small situation-players">
+          {[s.batter && `At bat: ${s.batter}`, s.pitcher && `Pitching: ${s.pitcher}`].filter(Boolean).join(" · ")}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // Score by period (quarter, half, period or inning) plus the total;
 // baseball adds hits and errors.
 export function Linescore({ match }) {

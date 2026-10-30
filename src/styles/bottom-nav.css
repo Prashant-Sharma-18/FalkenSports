@@ -1,0 +1,137 @@
+/* ==========================================================================
+   Mobile Bottom Dock (Hidden on Desktop by default)
+   ========================================================================== */
+
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 990;
+  padding: 8px 16px calc(10px + env(safe-area-inset-bottom));
+  pointer-events: none;
+  justify-content: center;
+}
+
+.bottom-nav-inner {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface-translucent);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  text-decoration: none;
+  position: relative;
+  min-width: 56px;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.92);
+}
+
+.bottom-nav-item.active {
+  color: var(--accent);
+}
+
+.nav-icon-wrapper {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.nav-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.active-pill-dot {
+  position: absolute;
+  bottom: 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+}
+
+.nav-badge {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #ffffff;
+  font-size: 0.625rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+.nav-badge-live {
+  background: var(--live);
+  box-shadow: 0 0 8px var(--live);
+}
+
+.nav-badge-pulse {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: pulse-ring 1.5s infinite;
+}
+
+.nav-badge-fav {
+  background: var(--star);
+  color: #ffffff;
+}
+
+/* Responsive bottom nav display rules */
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+  }
+  .desktop-tabs {
+    display: none !important;
+  }
+  .main {
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+}
+
+.mode-app-shell .bottom-nav {
+  display: flex;
+}
+
+.mode-app-shell .desktop-tabs {
+  display: none !important;
+}
+
+.mode-app-shell .main {
+  padding-bottom: calc(84px + env(safe-area-inset-bottom));
+}

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Newspaper, Table2, Timer, Monitor, Smartphone, SportIcon } from "./components/Icons";
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Newspaper, Table2, Timer, Monitor, Search as SearchIcon, Smartphone, SportIcon, Star } from "./components/Icons";
 import { leagueName } from "./api";
 import { todayKey } from "./dates";
 import { FavoritesProvider } from "./favorites";
@@ -8,20 +8,49 @@ import { DEFAULT_SPORT, SPORTS, SPORT_IDS, isLeagueOf, leaguesOf, tableLabel } f
 import ThemeToggle from "./components/ThemeToggle";
 import BottomNav from "./components/BottomNav";
 import { navigate, routeHref, useRoute } from "./router";
+import useMediaQuery from "./useMediaQuery";
 import Scores from "./components/Scores";
-import Standings from "./components/Standings";
-import News from "./components/News";
-import MatchDetail from "./components/MatchDetail";
-import TeamPage from "./components/TeamPage";
-import Races from "./components/Races";
-import RaceDetail from "./components/RaceDetail";
-import "./App.css";
+import ScoreAlerts from "./components/ScoreAlerts";
+import { Loading } from "./components/Status";
+// Styles, in cascade order: later files build on and override earlier ones.
+// Team.css came first when team pages imported it, so it stays first.
+import "./components/Team.css";
+import "./styles/base.css";
+import "./styles/header.css";
+import "./styles/date-strip-and-filters.css";
+import "./styles/match-cards.css";
+import "./styles/bottom-nav.css";
+import "./styles/standings.css";
+import "./styles/match-detail.css";
+import "./styles/news-and-states.css";
+import "./styles/responsive.css";
+import "./styles/game-centre.css";
+import "./styles/cricket.css";
+import "./styles/us-sports.css";
+import "./styles/tennis-f1.css";
+// Phones (and the desktop phone preview) last, so they override the wide layout.
+import "./styles/mobile.css";
 
-const tabsFor = (sport) => [
-  { id: "matches", label: SPORTS[sport].games, icon: Timer },
-  { id: "table", label: tableLabel(sport), icon: Table2 },
-  { id: "news", label: "News", icon: Newspaper },
-];
+// Scores is the first screen; every other screen loads when it's first opened.
+const Standings = lazy(() => import("./components/Standings"));
+const News = lazy(() => import("./components/News"));
+const MatchDetail = lazy(() => import("./components/MatchDetail"));
+const TeamPage = lazy(() => import("./components/TeamPage"));
+const Races = lazy(() => import("./components/Races"));
+const RaceDetail = lazy(() => import("./components/RaceDetail"));
+const PlayerPage = lazy(() => import("./components/PlayerPage"));
+const Favourites = lazy(() => import("./components/Favourites"));
+const Search = lazy(() => import("./components/Search"));
+const Golf = lazy(() => import("./components/Golf"));
+const GolfEvent = lazy(() => import("./components/Golf").then((m) => ({ default: m.GolfEvent })));
+
+// Golf and UFC have no table tab.
+const tabsFor = (sport) =>
+  [
+    { id: "matches", label: SPORTS[sport].games, icon: Timer },
+    { id: "table", label: tableLabel(sport), icon: Table2 },
+    { id: "news", label: "News", icon: Newspaper },
+  ].filter((t) => t.label);
 
 // Table and News need a single competition; remember the last one picked per sport.
 // Football keeps the original "league" key so returning visitors keep their choice.
@@ -58,7 +87,11 @@ function BrandMark() {
 function Shell() {
   const route = useRoute();
   const sport = route.sport;
-  const detailView = route.view === "match" || route.view === "team";
+  const detailView = route.view === "match" || route.view === "team" || route.view === "player";
+  // "My Teams" and search span every sport, so they have no sport or competition bar.
+  const favouritesView = route.view === "favourites";
+  const searchView = route.view === "search";
+  const allSportsView = favouritesView || searchView;
   const lastLeagues = useRef(readLastLeagues());
   const navigatedInApp = useRef(false);
   const firstRoute = useRef(true);
@@ -73,6 +106,10 @@ function Shell() {
       return false;
     }
   });
+
+  // Phones, and the desktop phone preview, get the compact layout (styles/mobile.css).
+  const isPhone = useMediaQuery("(max-width: 600px)");
+  const compact = isPhone || isAppMode;
 
   const toggleAppMode = () => {
     setIsAppMode((prev) => {
@@ -98,12 +135,21 @@ function Shell() {
     window.scrollTo(0, 0);
   }, [sport, route.view, route.league, route.id]);
 
+  // The sport row scrolls sideways on phones: keep the chosen sport in view.
   useEffect(() => {
-    if (detailView) return; // match and team pages set their own title
+    document.querySelector(".sport-tab.active")?.scrollIntoView?.({ block: "nearest", inline: "center" });
+  }, [sport]);
+
+  useEffect(() => {
+    if (detailView) return; // match, team and player pages set their own title
+    if (allSportsView) {
+      document.title = `${favouritesView ? "My Teams" : "Search"} – FalkenSports`;
+      return;
+    }
     const where = route.league === "all" ? `${SPORTS[sport].name} scores` : leagueName(route.league);
     const what = tabsFor(sport).find((t) => t.id === route.view)?.label;
     document.title = `${where} · ${what} – FalkenSports`;
-  }, [sport, route.view, route.league, detailView]);
+  }, [sport, route.view, route.league, detailView, allSportsView, favouritesView]);
 
   const date = route.date || todayKey();
   const singleLeague = isLeagueOf(sport, route.league) ? route.league : lastLeagues.current[sport];
@@ -140,7 +186,7 @@ function Shell() {
   };
 
   return (
-    <div className={`app ${isAppMode ? "mode-app-shell" : "mode-dashboard"}`}>
+    <div className={`app ${isAppMode ? "mode-app-shell" : "mode-dashboard"} ${compact ? "layout-compact" : ""}`}>
       <div className="ambient-mesh" aria-hidden="true" />
 
       {/* App Header */}
@@ -175,6 +221,26 @@ function Shell() {
           </nav>
 
           <div className="header-actions">
+            <a
+              href={routeHref({ view: "search" })}
+              className={`icon-btn ${searchView ? "active" : ""}`}
+              aria-current={searchView ? "page" : undefined}
+              title="Search teams and players in every sport"
+              aria-label="Search"
+            >
+              <SearchIcon size={15} />
+            </a>
+
+            <a
+              href={routeHref({ view: "favourites" })}
+              className={`icon-btn my-teams-btn ${favouritesView ? "active" : ""}`}
+              aria-current={favouritesView ? "page" : undefined}
+              title="My Teams: your teams' games from every sport"
+              aria-label="My Teams"
+            >
+              <Star size={15} filled={favouritesView} />
+            </a>
+
             <button
               type="button"
               className={`icon-btn app-mode-toggle ${isAppMode ? "active" : ""}`}
@@ -189,7 +255,7 @@ function Shell() {
           </div>
         </div>
 
-        {!detailView && (
+        {!detailView && !allSportsView && (
           <div className="leagues-bar">
             <div className="app-container leagues-bar-inner">
               <nav className="sport-switch" aria-label="Sport">
@@ -233,41 +299,70 @@ function Shell() {
 
       {/* Main Content Area */}
       <main className="app-container main">
+        {/* On phones the sport and competition rows already say where you are,
+            so list screens drop the title; My Teams and Search keep theirs. */}
         {!detailView && (
-          <div className="page-header">
-            <h1 className="page-title">
-              {route.league === "all" ? SPORTS[sport].name : leagueName(route.league)}{" "}
-              <span className="title-section-badge">{tabs.find((t) => t.id === route.view).label}</span>
-            </h1>
+          <div className={`page-header ${allSportsView ? "" : "page-header-list"}`}>
+            {allSportsView ? (
+              <h1 className="page-title">
+                {favouritesView ? "My Teams" : "Search"} <span className="title-section-badge">All sports</span>
+              </h1>
+            ) : (
+              <h1 className="page-title">
+                {route.league === "all" ? SPORTS[sport].name : leagueName(route.league)}{" "}
+                <span className="title-section-badge">{tabs.find((t) => t.id === route.view).label}</span>
+              </h1>
+            )}
           </div>
         )}
 
-        {/* F1 has race weekends instead of daily fixtures. */}
-        {route.view === "matches" && sport === "f1" && <Races />}
-        {route.view === "matches" && sport !== "f1" && (
-          <Scores
-            key={`${sport}:${route.league}`}
-            sport={sport}
-            league={route.league}
-            date={date}
-            onDateChange={(key) =>
-              navigate(
-                { sport, view: "matches", league: route.league, date: key === todayKey() ? null : key },
-                { replace: true }
-              )
-            }
-          />
-        )}
-        {route.view === "table" && <Standings league={route.league} />}
-        {route.view === "news" && <News league={route.league} />}
-        {route.view === "match" && sport === "f1" && <RaceDetail key={route.id} id={route.id} onBack={goBack} />}
-        {route.view === "match" && sport !== "f1" && (
-          <MatchDetail key={route.id} league={route.league} id={route.id} onBack={goBack} />
-        )}
-        {route.view === "team" && (
-          <TeamPage key={route.id} league={route.league} id={route.id} onBack={goBack} />
-        )}
+        <Suspense fallback={<Loading label="Loading…" />}>
+          {searchView && <Search query={route.query} />}
+          {favouritesView && (
+            <Favourites
+              date={date}
+              onDateChange={(key) =>
+                navigate({ view: "favourites", date: key === todayKey() ? null : key }, { replace: true })
+              }
+            />
+          )}
+
+          {/* F1 has race weekends and golf has tournaments instead of daily fixtures. */}
+          {route.view === "matches" && sport === "f1" && <Races />}
+          {route.view === "matches" && sport === "golf" && <Golf key={route.league} league={route.league} />}
+          {route.view === "matches" && sport !== "f1" && sport !== "golf" && (
+            <Scores
+              key={`${sport}:${route.league}`}
+              sport={sport}
+              league={route.league}
+              date={date}
+              onDateChange={(key) =>
+                navigate(
+                  { sport, view: "matches", league: route.league, date: key === todayKey() ? null : key },
+                  { replace: true }
+                )
+              }
+            />
+          )}
+          {route.view === "table" && <Standings league={route.league} />}
+          {route.view === "news" && <News league={route.league} />}
+          {route.view === "match" && sport === "f1" && <RaceDetail key={route.id} id={route.id} onBack={goBack} />}
+          {route.view === "match" && sport === "golf" && (
+            <GolfEvent key={route.id} league={route.league} id={route.id} onBack={goBack} />
+          )}
+          {route.view === "match" && sport !== "f1" && sport !== "golf" && (
+            <MatchDetail key={route.id} league={route.league} id={route.id} onBack={goBack} />
+          )}
+          {route.view === "team" && (
+            <TeamPage key={route.id} league={route.league} id={route.id} onBack={goBack} />
+          )}
+          {route.view === "player" && (
+            <PlayerPage key={route.id} league={route.league} id={route.id} onBack={goBack} />
+          )}
+        </Suspense>
       </main>
+
+      <ScoreAlerts />
 
       {/* Fixed Native Bottom App Dock for Mobile */}
       <BottomNav

@@ -1,5 +1,4 @@
 import React from "react";
-import "./Team.css";
 
 // Last results, oldest first; hover shows score and opponent.
 export default function FormPills({ games }) {
