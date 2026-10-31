@@ -41,5 +41,7 @@ test('stories without a date show no time, not "Invalid Date"', async () => {
   render(<News league="rugby.180659" />);
   expect(await screen.findByText('Story 2')).toBeInTheDocument();
   expect(screen.queryByText(/invalid date/i)).not.toBeInTheDocument();
-  expect(screen.getByText('28 Oct')).toBeInTheDocument();
+  // The dated story keeps its date, in the machine's own format ("28 Oct", "Oct 28").
+  const day = new Date('2026-10-28T10:00Z').toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+  expect(screen.getByText(day)).toBeInTheDocument();
 });
