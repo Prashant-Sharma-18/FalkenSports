@@ -6,8 +6,11 @@ import rugbyImg from "../assets/sports/rugby.png";
 import americanFootballImg from "../assets/sports/american-football.png";
 import hockeyImg from "../assets/sports/ice-hockey.png";
 import baseballImg from "../assets/sports/baseball.png";
+import lacrosseImg from "../assets/sports/lacrosse.png";
+import volleyballImg from "../assets/sports/volleyball.png";
 import tennisImg from "../assets/sports/tennis.png";
 import f1Img from "../assets/sports/f1.png";
+import motorsportImg from "../assets/sports/motorsport.png";
 import golfImg from "../assets/sports/golf.png";
 import mmaImg from "../assets/sports/mma.png";
 
@@ -287,8 +290,11 @@ export const SPORT_ICONS = {
   "american-football": americanFootballImg,
   hockey: hockeyImg,
   baseball: baseballImg,
+  lacrosse: lacrosseImg,
+  volleyball: volleyballImg,
   tennis: tennisImg,
   f1: f1Img,
+  motorsport: motorsportImg,
   golf: golfImg,
   mma: mmaImg,
 };

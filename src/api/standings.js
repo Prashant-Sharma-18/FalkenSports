@@ -1,9 +1,9 @@
-// League tables (and tennis rankings, F1 championships) and the form column.
-import { isUsStyle, sportOfLeague, teamKey } from "../sports";
+// League tables (and tennis rankings, racing championships) and the form column.
+import { hasRaces, isUsStyle, sportOfLeague, teamKey } from "../sports";
 import { getJson, site, standingsUrl } from "./espn";
 import { isPlayed, normalizeMatch, resultFor } from "./common";
 import { fetchCricketTable } from "./cricket";
-import { fetchF1Standings } from "./f1";
+import { fetchRaceStandings } from "./racing";
 import { fetchTennisRankings } from "./tennis";
 
 // North American leagues without ESPN zone notes: their fixed post-season
@@ -27,7 +27,7 @@ export async function fetchStandings(league, signal) {
   const sport = sportOfLeague(league);
   if (sport === "cricket") return fetchCricketTable(league, signal);
   if (sport === "tennis") return fetchTennisRankings(league, signal);
-  if (sport === "f1") return fetchF1Standings(signal);
+  if (hasRaces(sport)) return fetchRaceStandings(league, signal);
   const data = await getJson(standingsUrl(league), signal);
   const stat = (entry, name) =>
     entry.stats?.find((s) => s.name === name)?.displayValue ?? "";
@@ -35,7 +35,8 @@ export async function fetchStandings(league, signal) {
 
   const usStyle = isUsStyle(sport);
 
-  return tableGroups(data.children).map((group) => {
+  // A league without conferences (lacrosse) sends its table at the top level.
+  return tableGroups(data.children?.length ? data.children : [data]).map((group) => {
     const entries = group.standings?.entries || [];
     const rows = entries.map((entry) => ({
       id: entry.team?.id,

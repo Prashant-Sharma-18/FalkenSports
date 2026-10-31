@@ -44,8 +44,8 @@ function SportSection({ sport, groups }) {
   );
 }
 
-// Golf and F1 under way: the top of the leaderboard, the session running.
-function Events({ golf, f1 }) {
+// Golf and racing under way: the top of the leaderboard, the session running.
+function Events({ golf, races }) {
   return (
     <>
       {golf.map((board) => (
@@ -66,21 +66,21 @@ function Events({ golf, f1 }) {
           </div>
         </div>
       ))}
-      {f1 && (
-        <div className="live-sport">
+      {races.map((weekend) => (
+        <div className="live-sport" key={`${weekend.league}:${weekend.id}`}>
           <div className="group-heading-wrapper">
             <h2 className="group-heading live-sport-heading">
               <span className="league-icon-pill">
-                <SportIcon sport="f1" size={13} />
+                <SportIcon sport={weekend.sport} size={13} />
               </span>
-              <a href={routeHref({ view: "match", league: "f1", id: f1.id })}>{f1.name}</a>
+              <a href={routeHref({ view: "match", league: weekend.league, id: weekend.id })}>{weekend.name}</a>
             </h2>
           </div>
           <div className="card panel live-event">
-            <SessionList weekend={f1} />
+            <SessionList weekend={weekend} />
           </div>
         </div>
-      )}
+      ))}
     </>
   );
 }
@@ -98,7 +98,7 @@ export default function Live() {
   if (loading) return <Loading label="Finding live games in every sport…" />;
   if (error && !data) return <ErrorState message={error} onRetry={refresh} />;
 
-  const liveCount = count(data.live) + data.golf.length + (data.f1 ? 1 : 0);
+  const liveCount = count(data.live) + data.golf.length + data.races.length;
   return (
     <section className="scores-section live-page">
       <p className="live-summary">
@@ -119,7 +119,7 @@ export default function Live() {
       {data.live.map((s) => (
         <SportSection key={s.sport} sport={s.sport} groups={s.groups} />
       ))}
-      <Events golf={data.golf} f1={data.f1} />
+      <Events golf={data.golf} races={data.races} />
 
       {data.soon.length > 0 && (
         <>

@@ -87,7 +87,7 @@ test('live now: games under way by sport, golf in progress, and what starts in t
   ]);
   expect(r.soon.map((s) => [s.sport, s.groups.map((g) => g.matches.map((m) => m.id))])).toEqual([['football', [['2']]]]);
   expect(r.golf.map((b) => b.name)).toEqual(['Mexico Open']);
-  expect(r.f1).toBeNull();
+  expect(r.races).toEqual([]);
 });
 
 test('the live page shows each sport and competition, then coming up', async () => {

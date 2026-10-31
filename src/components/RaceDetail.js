@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchRace, fetchSessionResults } from "../api";
 import { routeHref } from "../router";
+import { hasRaces, sportOfLeague } from "../sports";
 import useRemoteData from "../useRemoteData";
 import TeamLogo from "./TeamLogo";
 import { SessionList, weekendDates } from "./Races";
@@ -32,6 +33,8 @@ const COLUMNS = {
     ["Gap", (r) => r.gap],
     ["Laps", (r) => r.laps ?? ""],
   ],
+  // NASCAR and IndyCar: ESPN has the finishing order and the cars, no times.
+  series: [["Make", (r) => r.make || ""]],
 };
 
 function Results({ eventId, session }) {
@@ -44,7 +47,8 @@ function Results({ eventId, session }) {
   if (error && !rows) return <ErrorState message={error} onRetry={refresh} />;
   if (!rows?.length) return <Empty label="No results for this session yet." />;
 
-  const columns = COLUMNS[session.kind];
+  const f1 = (session.league || "f1") === "f1";
+  const columns = f1 ? COLUMNS[session.kind] : COLUMNS.series;
   return (
     <div className="table-scroll">
       <table className="boxscore race-results">
@@ -66,9 +70,14 @@ function Results({ eventId, session }) {
                   <span className="team-bar" style={r.color ? { background: r.color } : undefined} aria-hidden="true" />
                   <TeamLogo src={r.flag} name={r.name} size={16} />
                   <span className="race-driver-text">
-                    <a className="box-name team-link" href={routeHref({ view: "player", league: "f1", id: r.id })}>
-                      {r.name}
-                    </a>
+                    {/* Only F1 drivers have pages. */}
+                    {f1 ? (
+                      <a className="box-name team-link" href={routeHref({ view: "player", league: "f1", id: r.id })}>
+                        {r.name}
+                      </a>
+                    ) : (
+                      <span className="box-name">{r.name}</span>
+                    )}
                     <span className="muted small">
                       {[r.number && `#${r.number}`, r.team].filter(Boolean).join(" · ")}
                     </span>
@@ -88,11 +97,14 @@ function Results({ eventId, session }) {
   );
 }
 
-// One Grand Prix: its sessions, and the classification of the chosen one.
-export default function RaceDetail({ id, onBack }) {
+// One Grand Prix (or NASCAR / IndyCar race): its sessions, and the
+// classification of the chosen one.
+export default function RaceDetail({ league, id, onBack }) {
+  // Anything that isn't a racing series goes to F1.
+  const series = hasRaces(sportOfLeague(league)) ? league : "f1";
   const { data: weekend, error, loading, refresh } = useRemoteData(
-    (signal) => fetchRace(id, signal),
-    [id],
+    (signal) => fetchRace(id, signal, series),
+    [id, series],
     (w) => (w?.sessions.some((s) => s.state === "in") ? LIVE_REFRESH : null)
   );
   const [picked, setPicked] = useState(null);
@@ -127,10 +139,12 @@ export default function RaceDetail({ id, onBack }) {
             <div className="weekend-head">
               <div>
                 <h1 className="weekend-name">{weekend.name}</h1>
-                <p className="muted small weekend-place">
-                  <MapPin size={12} />
-                  <span>{[weekend.circuit, weekend.place].filter(Boolean).join(" · ")}</span>
-                </p>
+                {(weekend.circuit || weekend.place) && (
+                  <p className="muted small weekend-place">
+                    <MapPin size={12} />
+                    <span>{[weekend.circuit, weekend.place].filter(Boolean).join(" · ")}</span>
+                  </p>
+                )}
               </div>
               <span className="table-head-badge">{weekendDates(weekend.start, weekend.end)}</span>
             </div>
@@ -156,7 +170,7 @@ export default function RaceDetail({ id, onBack }) {
               </div>
             </>
           ) : (
-            <Empty label="Results appear here once practice starts." />
+            <Empty label={`Results appear here once ${series === "f1" ? "practice" : "the race"} starts.`} />
           )}
 
           {weekend.link && (

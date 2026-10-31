@@ -33,7 +33,7 @@ GRID = [
 ]
 
 # The icons the app uses (see SPORT_ICONS in src/components/Icons.js).
-APP_ICONS = ["football", "basketball", "cricket", "rugby", "american-football", "ice-hockey", "baseball", "tennis", "f1", "golf", "mma"]
+APP_ICONS = ["football", "basketball", "cricket", "rugby", "american-football", "ice-hockey", "baseball", "lacrosse", "volleyball", "tennis", "f1", "motorsport", "golf", "mma"]
 
 # Light objects whose edge is almost exactly the sheet colour, so the
 # background would leak into them: circles (x, y, radius, in tile pixels)

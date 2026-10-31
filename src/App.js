@@ -5,7 +5,7 @@ import { todayKey } from "./dates";
 import { FavoritesProvider } from "./favorites";
 import { SportPrefsProvider, useSportPrefs } from "./sportPrefs";
 import { ThemeProvider } from "./theme";
-import { DEFAULT_SPORT, SPORTS, SPORT_IDS, isLeagueOf, isSport, leaguesOf, tableLabel } from "./sports";
+import { DEFAULT_SPORT, SPORTS, SPORT_IDS, hasRaces, isLeagueOf, isSport, leaguesOf, tableLabel } from "./sports";
 import ThemeToggle from "./components/ThemeToggle";
 import BottomNav from "./components/BottomNav";
 import { navigate, routeHref, useRoute } from "./router";
@@ -393,10 +393,10 @@ function Shell() {
               />
             )}
   
-            {/* F1 has race weekends and golf has tournaments instead of daily fixtures. */}
-            {route.view === "matches" && sport === "f1" && <Races />}
+            {/* Racing has race weekends and golf has tournaments instead of daily fixtures. */}
+            {route.view === "matches" && hasRaces(sport) && <Races key={route.league} sport={sport} league={route.league} />}
             {route.view === "matches" && sport === "golf" && <Golf key={route.league} league={route.league} />}
-            {route.view === "matches" && sport !== "f1" && sport !== "golf" && (
+            {route.view === "matches" && !hasRaces(sport) && sport !== "golf" && (
               <Scores
                 key={`${sport}:${route.league}`}
                 sport={sport}
@@ -412,11 +412,13 @@ function Shell() {
             )}
             {route.view === "table" && <Standings league={route.league} />}
             {route.view === "news" && <News league={route.league} />}
-            {route.view === "match" && sport === "f1" && <RaceDetail key={route.id} id={route.id} onBack={goBack} />}
+            {route.view === "match" && hasRaces(sport) && (
+              <RaceDetail key={route.id} league={route.league} id={route.id} onBack={goBack} />
+            )}
             {route.view === "match" && sport === "golf" && (
               <GolfEvent key={route.id} league={route.league} id={route.id} onBack={goBack} />
             )}
-            {route.view === "match" && sport !== "f1" && sport !== "golf" && (
+            {route.view === "match" && !hasRaces(sport) && sport !== "golf" && (
               <MatchDetail key={route.id} league={route.league} id={route.id} onBack={goBack} />
             )}
             {route.view === "team" && (

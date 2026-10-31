@@ -1,9 +1,11 @@
+import { sportOfLeague } from "../sports";
 import { getJson, site, standingsUrl } from "./espn";
 
-// Formula 1: race weekends, each a set of sessions (practice, qualifying,
-// sprint, race). Results detail comes from ESPN's core API, which also allows
-// browser requests.
-const CORE = "https://sports.core.api.espn.com/v2/sports/racing/leagues/f1";
+// Racing series, Formula 1 by default. F1 race weekends are a set of sessions
+// (practice, qualifying, sprint, race); NASCAR and IndyCar events are just the
+// race, with finishing order, car and team but no times. Results detail comes
+// from ESPN's core API, which also allows browser requests.
+const core = (league) => `https://sports.core.api.espn.com/v2/sports/racing/leagues/${league}`;
 const SESSION_NAMES = {
   FP1: "Practice 1",
   FP2: "Practice 2",
@@ -19,12 +21,12 @@ const sessionKind = (type = {}) =>
     ? "qualifying"
     : "practice";
 
-function raceWeekend(e) {
+function raceWeekend(e, league) {
   const city = e.circuit?.address?.city;
   return {
     id: e.id,
-    sport: "f1",
-    league: "f1",
+    sport: sportOfLeague(league),
+    league,
     name: e.name,
     circuit: e.circuit?.fullName,
     place: [city && city.replace(/\b\w/g, (ch) => ch.toUpperCase()), e.circuit?.address?.country]
@@ -46,8 +48,10 @@ function raceWeekend(e) {
         .sort((a, b) => a.position - b.position);
       return {
         id: c.id,
-        name: SESSION_NAMES[c.type?.abbreviation] || c.type?.abbreviation || "Session",
-        kind: sessionKind(c.type),
+        league,
+        // NASCAR and IndyCar sessions have no type: they're the race.
+        name: c.type ? SESSION_NAMES[c.type.abbreviation] || c.type.abbreviation || "Session" : "Race",
+        kind: c.type ? sessionKind(c.type) : "race",
         date: new Date(c.date),
         state: c.status?.type?.state,
         detail: c.status?.type?.shortDetail || "",
@@ -59,8 +63,8 @@ function raceWeekend(e) {
 }
 
 // This (or the next) race weekend, plus the season calendar.
-export async function fetchRaceSeason(signal) {
-  const data = await getJson(`${site("f1")}/scoreboard`, signal);
+export async function fetchRaceSeason(signal, league = "f1") {
+  const data = await getJson(`${site(league)}/scoreboard`, signal);
   const calendar = (data.leagues?.[0]?.calendar || [])
     .map((c, i) => ({
       id: /events\/(\d+)/.exec(c.event?.$ref || "")?.[1],
@@ -70,18 +74,23 @@ export async function fetchRaceSeason(signal) {
       end: new Date(c.endDate),
     }))
     .filter((c) => c.id);
-  return { current: data.events?.[0] ? raceWeekend(data.events[0]) : null, calendar };
+  return { league, current: data.events?.[0] ? raceWeekend(data.events[0], league) : null, calendar };
 }
 
 // One race weekend by id. The scoreboard is only searchable by date, so the
-// weekend's start date comes from the core API first.
-export async function fetchRace(id, signal) {
-  const event = await getJson(`${CORE}/events/${id}`, signal);
-  const days = [event.date, event.endDate].filter(Boolean).map((d) => d.slice(0, 10).replace(/-/g, ""));
-  for (const day of days) {
-    const data = await getJson(`${site("f1")}/scoreboard?dates=${day}`, signal);
+// weekend's start date comes from the core API first. Scoreboard days follow
+// US Eastern time, so an evening race in the US is filed under the day before
+// its UTC date.
+export async function fetchRace(id, signal, league = "f1") {
+  const event = await getJson(`${core(league)}/events/${id}`, signal);
+  const dayKey = (d) => d.toISOString().slice(0, 10).replace(/-/g, "");
+  const days = [event.date, event.endDate]
+    .filter(Boolean)
+    .flatMap((d) => [dayKey(new Date(d)), dayKey(new Date(new Date(d).getTime() - 864e5))]);
+  for (const day of new Set(days)) {
+    const data = await getJson(`${site(league)}/scoreboard?dates=${day}`, signal);
     const found = data.events?.find((e) => e.id === String(id));
-    if (found) return raceWeekend(found);
+    if (found) return raceWeekend(found, league);
   }
   throw new Error("Race weekend not found");
 }
@@ -94,9 +103,9 @@ const lapTime = (v) => (v && !/^0(\.0+)?$/.test(v) ? v : "");
 const finishedSessions = new Map();
 
 // Full classification of one session: team and car from the competitor list,
-// times from each driver's statistics (one request per driver).
+// and for F1 times from each driver's statistics (one request per driver).
 export async function fetchSessionResults(eventId, session, signal) {
-  const cacheKey = `${eventId}:${session.id}`;
+  const cacheKey = `${session.league || "f1"}:${eventId}:${session.id}`;
   if (session.state === "post" && finishedSessions.has(cacheKey)) return finishedSessions.get(cacheKey);
   const rows = await loadSessionResults(eventId, session, signal);
   if (session.state === "post") finishedSessions.set(cacheKey, rows);
@@ -104,9 +113,11 @@ export async function fetchSessionResults(eventId, session, signal) {
 }
 
 async function loadSessionResults(eventId, session, signal) {
-  const base = `${CORE}/events/${eventId}/competitions/${session.id}/competitors`;
-  const list = await getJson(`${base}?limit=40`, signal);
+  const league = session.league || "f1";
+  const base = `${core(league)}/events/${eventId}/competitions/${session.id}/competitors`;
+  const list = await getJson(`${base}?limit=50`, signal);
   const items = list.items || [];
+  if (league !== "f1") return seriesResults(items, session);
   const stats = await Promise.allSettled(items.map((i) => getJson(`${base}/${i.id}/statistics`, signal)));
 
   const rows = items.map((item, n) => {
@@ -156,18 +167,42 @@ async function loadSessionResults(eventId, session, signal) {
   return rows;
 }
 
-// Drivers' and constructors' championships.
-export async function fetchF1Standings(signal) {
-  const data = await getJson(standingsUrl("f1"), signal);
+// NASCAR and IndyCar: finishing order, car, team and make. ESPN keeps no
+// times or laps for them, so there's nothing more to fetch.
+function seriesResults(items, session) {
+  return items
+    .filter((item) => item.order != null)
+    .map((item) => {
+      const who = session.drivers.find((d) => d.id === item.id) || {};
+      return {
+        id: item.id,
+        position: item.order,
+        name: who.name || "Driver",
+        flag: who.flag,
+        country: who.country,
+        number: item.vehicle?.number,
+        team: item.vehicle?.team,
+        make: item.vehicle?.manufacturer,
+        color: null,
+      };
+    })
+    .sort((a, b) => a.position - b.position);
+}
+
+// The championship: F1 has drivers' and constructors', NASCAR and IndyCar one
+// drivers' table.
+export async function fetchRaceStandings(league, signal) {
+  const data = await getJson(standingsUrl(league), signal);
+  const sport = sportOfLeague(league);
   return (data.children || []).map((group) => {
-    const drivers = /driver/i.test(group.name || "");
+    const drivers = league !== "f1" || /driver/i.test(group.name || "");
     const rows = (group.standings?.entries || []).map((e) => {
       const who = e.athlete || e.team || {};
       const stat = (name) => e.stats?.find((s) => s.name === name);
       return {
         id: who.id,
         key: null,
-        sport: "f1",
+        sport,
         rank: Number(stat("rank")?.value) || 0,
         name: who.displayName,
         short: drivers ? who.abbreviation : who.shortDisplayName || who.displayName,

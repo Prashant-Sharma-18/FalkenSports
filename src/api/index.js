@@ -8,7 +8,7 @@ export { periodLabel } from "./us-sports";
 export { fetchStandings, fetchLeagueForm } from "./standings";
 export { fetchTeam } from "./teams";
 export { fetchNews, fetchTeamNews, fetchTopStories } from "./news";
-export { fetchRaceSeason, fetchRace, fetchSessionResults } from "./f1";
+export { fetchRaceSeason, fetchRace, fetchSessionResults } from "./racing";
 export { fetchPlayer } from "./players";
 export { searchAll } from "./search";
 export { fetchGolfTour, fetchGolfTours, fetchGolfEvent } from "./golf";

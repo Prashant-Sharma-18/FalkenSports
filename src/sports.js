@@ -124,6 +124,36 @@ export const SPORTS = {
     usStyle: true,
     leagues: [{ id: "mlb", name: "MLB" }],
   },
+  // ESPN has scores, line scores, tables and team pages for lacrosse and
+  // volleyball, but no box scores, leaders or play-by-play.
+  lacrosse: {
+    id: "lacrosse",
+    espn: "lacrosse",
+    name: "Lacrosse",
+    games: "Games",
+    game: "game",
+    draws: false,
+    usStyle: true,
+    leagues: [
+      { id: "pll", name: "PLL" },
+      { id: "nll", name: "NLL" },
+      { id: "mens-college-lacrosse", name: "NCAA Men" },
+    ],
+  },
+  // College only: ESPN carries no professional volleyball.
+  volleyball: {
+    id: "volleyball",
+    espn: "volleyball",
+    name: "Volleyball",
+    games: "Matches",
+    game: "match",
+    draws: false,
+    usStyle: true,
+    leagues: [
+      { id: "womens-college-volleyball", name: "NCAA Women" },
+      { id: "mens-college-volleyball", name: "NCAA Men" },
+    ],
+  },
   // Individual sports: players and drivers instead of teams, so no team pages
   // or form, and the table tab holds rankings or championship standings.
   tennis: {
@@ -155,7 +185,29 @@ export const SPORTS = {
     table: "Standings",
     // Drivers have pages but there are no matches to pin, so nothing to follow.
     follow: false,
+    // Race weekends instead of games on a day (Races, RaceDetail).
+    races: true,
     leagues: [{ id: "f1", name: "F1" }],
+  },
+  // American racing series. ESPN has their races, finishing order and
+  // championships, but no times. (It also lists NASCAR's O'Reilly Series, but
+  // without finishing positions, so it's left out.)
+  motorsport: {
+    id: "motorsport",
+    espn: "racing",
+    name: "Motorsport",
+    games: "Races",
+    game: "race",
+    draws: false,
+    teamPages: false,
+    form: false,
+    table: "Standings",
+    follow: false,
+    races: true,
+    leagues: [
+      { id: "nascar-premier", name: "NASCAR Cup" },
+      { id: "irl", name: "IndyCar" },
+    ],
   },
   golf: {
     id: "golf",
@@ -218,6 +270,8 @@ export const hasForm = (sport) => SPORTS[sport]?.form !== false;
 export const hasMatchPages = (sport) => SPORTS[sport]?.matchPages !== false;
 // The table tab's name, or null for sports without one (golf, UFC).
 export const tableLabel = (sport) => (SPORTS[sport]?.table === false ? null : SPORTS[sport]?.table || "Table");
+// Racing: race weekends and a championship instead of games and a table.
+export const hasRaces = (sport) => SPORTS[sport]?.races === true;
 // Whether a sport's teams or players can be starred (and pinned, alerted).
 export const canFollow = (sport) => SPORTS[sport]?.follow !== false;
 

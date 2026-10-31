@@ -20,14 +20,16 @@ const greeting = (hour) => (hour < 5 ? "Good evening" : hour < 12 ? "Good mornin
 const gamesOf = (sections) =>
   sections.flatMap((s) => s.groups.flatMap((g) => g.matches.map((m) => ({ ...m, competition: g.name || leagueName(g.league) }))));
 
-// Live games per sport, golf tournaments and an F1 session included.
+// Live games per sport, golf tournaments and race sessions included.
 function liveCounts(data) {
   const counts = {};
   data?.live.forEach((s) => {
     counts[s.sport] = s.groups.reduce((n, g) => n + g.matches.length, 0);
   });
   if (data?.golf.length) counts.golf = data.golf.length;
-  if (data?.f1) counts.f1 = 1;
+  data?.races.forEach((w) => {
+    counts[w.sport] = (counts[w.sport] || 0) + 1;
+  });
   return counts;
 }
 

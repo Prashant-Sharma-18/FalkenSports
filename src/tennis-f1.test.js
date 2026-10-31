@@ -128,7 +128,7 @@ test('F1 race results: gap, laps down or retirement', async () => {
   };
   const stats = { 1: ['1:35:16.650', '', '56', '25'], 2: ['1:35:29.728', '+13.078', '56', '18'], 3: ['', '', '55', '0'], 4: ['', '', '24', '0'] };
   global.fetch = vi.fn((url) => {
-    if (url.endsWith('/competitors?limit=40')) {
+    if (url.endsWith('/competitors?limit=50')) {
       return respond({
         items: ['3', '1', '4', '2'].map((id) => ({
           id,

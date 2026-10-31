@@ -1,7 +1,7 @@
 # FalkenSports — free live scores & news
 
 A free, installable, multi-sport web app for live scores, game centres, team
-pages, standings and news. Football, basketball, cricket, rugby, American football, NHL (ice hockey), baseball, tennis, Formula 1, golf and UFC today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
+pages, standings and news. Football, basketball, cricket, rugby, American football, NHL (ice hockey), baseball, lacrosse, volleyball, tennis, Formula 1, NASCAR and IndyCar, golf and UFC today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
 JSON feeds, called directly from the browser.
 
 **Football:** Premier League, LaLiga, Bundesliga, Serie A, Ligue 1, Champions
@@ -16,10 +16,13 @@ IPL, Big Bash, WBBL, PSL, Ranji Trophy, Sheffield Shield, County Championship.
 
 **American football:** NFL, NCAA Football. **NHL** (ice hockey). **Baseball:** MLB.
 
+**Lacrosse:** PLL, NLL, NCAA Men. **Volleyball:** NCAA Women, NCAA Men.
+
 **Rugby:** Six Nations, Premiership, URC, Top 14, Champions Cup, Super Rugby,
 Rugby Championship, World Cup.
 
 **Tennis:** ATP and WTA tournaments. **Formula 1:** every race weekend.
+**Motorsport:** NASCAR Cup, IndyCar.
 **Golf:** PGA Tour, DP World Tour, LPGA, LIV Golf, Champions Tour. **UFC:** every card.
 
 ## Features
@@ -31,7 +34,8 @@ Rugby Championship, World Cup.
 - **Game centre (basketball, American football, NHL, baseball)** — score by
   period (baseball: by inning with runs, hits and errors), game leaders, team
   stats, box score per team (passing/rushing/…, skaters and goalies, batters and
-  pitchers), play-by-play with scoring plays highlighted. Live NFL games show
+  pitchers), play-by-play with scoring plays highlighted. Lacrosse and volleyball
+  games show the score by quarter or set (ESPN has no box scores for them). Live NFL games show
   down, distance and possession; live MLB games show the count, outs and runners
   (also on the score cards). MLB leaders: top batter and the pitchers of record.
 - **Cricket centre** — innings scores, result or match situation, toss and match
@@ -42,6 +46,9 @@ Rugby Championship, World Cup.
   calendar, and a page per Grand Prix with full results for every session (race:
   gaps, laps down, retirements, grid, pit stops, points; qualifying: Q1–Q3;
   practice: times); drivers' and constructors' championships.
+- **NASCAR and IndyCar** — each series' current race, its season calendar, the
+  finishing order with car, team and make, and the drivers' championship. ESPN
+  has no lap times for them.
 - **Team pages** — results and fixtures across all competitions, form, next match,
   league position.
 - **Tables** — ESPN's real qualification and relegation zones, last-five form;
@@ -102,7 +109,7 @@ locally: `npm run build && npm run preview`.
 | Path | What it does |
 | --- | --- |
 | `src/sports.js` | Sports and their competitions — add a sport here first |
-| `src/api/` | All ESPN requests and the normalised data shapes: one module per sport (`football`, `us-sports`, `cricket`, `tennis`, `f1`) plus scores, match pages, standings, teams and news; `index.js` is what screens import |
+| `src/api/` | All ESPN requests and the normalised data shapes: one module per sport (`football`, `us-sports`, `cricket`, `tennis`, `racing` for F1, NASCAR and IndyCar) plus scores, match pages, standings, teams and news; `index.js` is what screens import |
 | `src/router.js` | Hash routes (`#/matches`, `#/table`, `#/match`, `#/team`, `#/basketball/…`) |
 | `src/useRemoteData.js` | Loading, polling (paused in hidden tabs) and refresh |
 | `src/favorites.js`, `src/theme.js` | Favourite teams and theme, persisted locally |
@@ -129,6 +136,8 @@ anything breaks it opens an issue. Known quirks handled in `src/api/`:
   (no team pages) and only partial points tables (shown only when complete).
 - ESPN reuses team ids across sports, so favourites are stored with a sport
   prefix for non-football teams (`basketball:13`).
+- NASCAR's O'Reilly Series has no finishing positions, so it isn't included,
+  and NASCAR has no news.
 - Rugby news stories have no dates, and some rugby competitions (Premiership,
   URC, Top 14, Super Rugby) have no news at all.
 - Days follow US Eastern time, so late kick-offs in Asia may appear under the

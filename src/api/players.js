@@ -3,7 +3,7 @@
 // so each result costs one request (kept by the offline cache).
 import { leagueName, teamKey } from "../sports";
 import { getJson } from "./espn";
-import { fetchF1Standings, fetchRaceSeason } from "./f1";
+import { fetchRaceStandings, fetchRaceSeason } from "./racing";
 import { fetchTennisRankings } from "./tennis";
 
 const CORE = "https://sports.core.api.espn.com/v2/sports";
@@ -103,7 +103,7 @@ async function fetchDriver(id, signal) {
   const [athlete, log, standings, season] = await Promise.all([
     getJson(`${CORE}/racing/athletes/${id}`, signal),
     getJson(`${CORE}/racing/leagues/f1/athletes/${id}/eventlog`, signal).catch(() => null),
-    fetchF1Standings(signal).catch(() => []),
+    fetchRaceStandings("f1", signal).catch(() => []),
     fetchRaceSeason(signal).catch(() => ({ calendar: [] })),
   ]);
   const row = standings.find((g) => g.unit === "Drivers")?.rows.find((r) => r.id === String(id));

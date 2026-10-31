@@ -7,17 +7,30 @@
 // scores, table rows, headlines. GitHub Actions runs it every day
 // (.github/workflows/espn-feeds.yml); run it yourself with `npm run check:feeds`.
 import { describe, expect, test } from "vitest";
-import { fetchGolfTour, fetchMatch, fetchNews, fetchPlayer, fetchRaceSeason, fetchStandings, fetchTeam, searchAll } from "../src/api";
+import {
+  fetchGolfTour,
+  fetchMatch,
+  fetchNews,
+  fetchPlayer,
+  fetchRace,
+  fetchRaceSeason,
+  fetchSessionResults,
+  fetchStandings,
+  fetchTeam,
+  searchAll,
+} from "../src/api";
 import { normalizeMatch } from "../src/api/common";
 import { fetchCricketPanel } from "../src/api/cricket";
 import { getJson, site } from "../src/api/espn";
 import { fetchFights } from "../src/api/mma";
 import { fetchTennis } from "../src/api/tennis";
 import { addDays, todayKey } from "../src/dates";
-import { isUsStyle, sportOfLeague } from "../src/sports";
+import { sportOfLeague } from "../src/sports";
 
 // One competition per team sport.
-const LEAGUES = ["eng.1", "nba", "nfl", "nhl", "mlb", "rugby.267979"];
+const LEAGUES = ["eng.1", "nba", "nfl", "nhl", "mlb", "rugby.267979", "pll", "womens-college-volleyball"];
+// The sports ESPN sends team stats and box scores for (not lacrosse or volleyball).
+const BOX_SCORE_SPORTS = ["basketball", "american-football", "hockey", "baseball"];
 
 // "202610" for this month, "202609" for offset -1, ...
 function monthKey(offset) {
@@ -79,7 +92,7 @@ describe.each(LEAGUES)("%s", (league) => {
       expect(match.lineups.length, "no line-ups").toBeGreaterThan(0);
       expect(match.events.length, "no timeline").toBeGreaterThan(0);
     }
-    if (isUsStyle(sport)) {
+    if (BOX_SCORE_SPORTS.includes(sport)) {
       expect(match.stats.length, "no team stats").toBeGreaterThan(0);
       expect(match.box?.some((b) => b.groups.length), "no box score").toBe(true);
     }
@@ -100,7 +113,7 @@ describe.each(LEAGUES)("%s", (league) => {
 
 // ESPN has no news for some rugby competitions (the Premiership among them),
 // so rugby's news is checked on the Six Nations.
-describe.each(["eng.1", "nba", "nfl", "nhl", "mlb", "rugby.180659"])("%s", (league) => {
+describe.each(["eng.1", "nba", "nfl", "nhl", "mlb", "rugby.180659", "pll", "womens-college-volleyball"])("%s", (league) => {
   test("news: headlines with links", async () => {
     const articles = await fetchNews(league);
     expect(articles.length, "no news").toBeGreaterThan(0);
@@ -180,6 +193,31 @@ describe("tennis", () => {
     const played = matches.filter((m) => m.state === "post" && m.home.sets.length > 0);
     expect(played.length, "no set scores").toBeGreaterThan(0);
     expect(played.every((m) => named(m.home) && named(m.away)), "played matches without players").toBe(true);
+  });
+});
+
+describe.each(["nascar-premier", "irl"])("%s", (league) => {
+  test("season calendar, and the finishing order of the latest race", async () => {
+    const { calendar } = await fetchRaceSeason(undefined, league);
+    expect(calendar.length).toBeGreaterThanOrEqual(10);
+    const now = new Date();
+    // The newest race that should have finished (allow a day for results).
+    const last = calendar.filter((r) => r.end < new Date(now - 864e5)).at(-1);
+    expect(last, "no finished race this season").toBeTruthy();
+    const weekend = await fetchRace(last.id, undefined, league);
+    const raceSession = weekend.sessions.find((s) => s.kind === "race");
+    expect(raceSession?.state).toBe("post");
+    const rows = await fetchSessionResults(weekend.id, raceSession);
+    expect(rows.length, "no finishing order").toBeGreaterThanOrEqual(10);
+    expect(rows.map((r) => r.position).slice(0, 3)).toEqual([1, 2, 3]);
+    expect(rows.every((r) => r.name !== "Driver"), "drivers without names").toBe(true);
+    expect(rows.some((r) => r.number && r.make), "no car numbers or makes").toBe(true);
+  });
+
+  test("drivers' championship", async () => {
+    const rows = (await fetchStandings(league)).flatMap((g) => g.rows);
+    expect(rows.length).toBeGreaterThanOrEqual(10);
+    expect(rows.every((r) => r.name && r.rank > 0)).toBe(true);
   });
 });
 

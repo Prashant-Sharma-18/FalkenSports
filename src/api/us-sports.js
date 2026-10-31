@@ -1,5 +1,6 @@
 // Game centre for North American sports (basketball, American football,
 // hockey, baseball): line score, leaders, team stats, box score, plays.
+// Lacrosse and volleyball get the line score; ESPN sends them nothing else.
 import { situationOf, statRows } from "./common";
 import {
   formOf,
@@ -112,9 +113,10 @@ const BOX_GROUPS = {
 
 // Period names. Basketball: college men play halves, everyone else quarters.
 // American football: quarters. Hockey: three periods. Then overtimes (2OT…).
-// Baseball: innings, extra innings just keep counting.
+// Baseball: innings, extra innings just keep counting. Volleyball: sets.
 export function periodLabel(sport, league, index) {
   if (sport === "baseball") return String(index + 1);
+  if (sport === "volleyball") return `S${index + 1}`;
   const halves = league === "mens-college-basketball";
   const regular = sport === "hockey" ? 3 : halves ? 2 : 4;
   if (index < regular) return `${sport === "hockey" ? "P" : halves ? "H" : "Q"}${index + 1}`;
@@ -150,7 +152,7 @@ function playsOf(s, sport) {
 function boxScoreOf(s, sport) {
   return (s.boxscore?.players || []).map((t) => ({
     teamId: t.team?.id,
-    groups: BOX_GROUPS[sport]
+    groups: (BOX_GROUPS[sport] || [])
       .map((cfg) => {
         const group =
           cfg.key == null
@@ -196,7 +198,7 @@ export function usDetail(s, sport, league, detail, home, away, homeRaw, awayRaw)
     home: homeLines,
     away: awayLines,
     // Baseball's line score is runs, hits and errors.
-    totalLabel: baseball ? "R" : "T",
+    totalLabel: baseball ? "R" : sport === "volleyball" ? "Sets" : "T",
     extra: baseball
       ? [
           { label: "H", home: homeRaw?.hits, away: awayRaw?.hits },
@@ -237,7 +239,7 @@ export function usDetail(s, sport, league, detail, home, away, homeRaw, awayRaw)
     }));
 
   return {
-    stats: statRows(s, home, away, STATS[sport]),
+    stats: statRows(s, home, away, STATS[sport] || []),
     linescore,
     box: boxScoreOf(s, sport),
     leaders,

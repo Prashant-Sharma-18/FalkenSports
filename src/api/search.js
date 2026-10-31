@@ -10,6 +10,8 @@ const TEAM_SPORTS = {
   football: "american-football",
   hockey: "hockey",
   baseball: "baseball",
+  lacrosse: "lacrosse",
+  volleyball: "volleyball",
 };
 
 const search = (query, type, signal) =>

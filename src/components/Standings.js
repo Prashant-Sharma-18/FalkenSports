@@ -6,7 +6,7 @@ import useRemoteData from "../useRemoteData";
 import FormPills from "./FormPills";
 import StarButton from "./StarButton";
 import TeamLogo from "./TeamLogo";
-import { canFollow, hasForm, hasTeamPages, sportOfLeague } from "../sports";
+import { canFollow, hasForm, hasRaces, hasTeamPages, sportOfLeague } from "../sports";
 import { ErrorState, Loading, Empty } from "./Status";
 import { Trophy } from "./Icons";
 
@@ -30,6 +30,16 @@ const US_COLUMNS = {
     STRK,
   ],
   baseball: [W, L, PCT, GB, STRK],
+  lacrosse: [
+    W,
+    L,
+    PCT,
+    ["pointsFor", "GF", "Goals for"],
+    ["pointsAgainst", "GA", "Goals against"],
+    ["pointDifferential", "DIFF", "Goal difference"],
+  ],
+  // College volleyball: overall record, then the conference's.
+  volleyball: [W, L, PCT, ["leagueWinPercent", "CONF", "Conference win percentage"]],
   rugby: [
     ["gamesPlayed", "P", "Played"],
     ["gamesWon", "W", "Won"],
@@ -67,7 +77,7 @@ export default function Standings({ league }) {
   const cricket = sport === "cricket";
   const tennis = sport === "tennis";
   // Rankings and championships: rank, name and points (tennis adds movement).
-  const pointsOnly = cricket || tennis || sport === "f1";
+  const pointsOnly = cricket || tennis || hasRaces(sport);
   const stars = canFollow(sport);
   const showForm = hasForm(sport);
   const linkTeams = hasTeamPages(sport);
