@@ -5,7 +5,8 @@ const article = (a) => ({
   id: a.id,
   headline: a.headline,
   description: a.description,
-  published: new Date(a.published),
+  // Rugby stories come without a date.
+  published: a.published ? new Date(a.published) : null,
   image: a.images?.[0]?.url,
   link: a.links.web.href,
   premium: a.premium,

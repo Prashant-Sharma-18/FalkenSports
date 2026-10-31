@@ -1,5 +1,7 @@
+import { render, screen } from '@testing-library/react';
 import { fetchTeamNews } from './api';
 import { clearRequestCache } from './api/espn';
+import News from './components/News';
 
 const respond = (body) => Promise.resolve({ ok: true, json: () => Promise.resolve(body) });
 const tags = (...ids) => ids.map((teamId) => ({ type: 'team', teamId }));
@@ -30,4 +32,14 @@ test("team news keeps the team's own stories, newest first, and drops league rou
   const news = await fetchTeamNews('eng.1', '364');
   expect(global.fetch.mock.calls[0][0]).toContain('/news?team=364');
   expect(news.map((a) => a.id)).toEqual([5, 2, 1]);
+});
+
+test('stories without a date show no time, not "Invalid Date"', async () => {
+  global.fetch = vi.fn(() =>
+    respond({ articles: [story(1, '2026-10-28T10:00Z', []), story(2, undefined, [])] })
+  );
+  render(<News league="rugby.180659" />);
+  expect(await screen.findByText('Story 2')).toBeInTheDocument();
+  expect(screen.queryByText(/invalid date/i)).not.toBeInTheDocument();
+  expect(screen.getByText('28 Oct')).toBeInTheDocument();
 });

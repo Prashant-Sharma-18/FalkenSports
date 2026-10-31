@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import App from './App';
 import { fetchStandings } from './api';
 import { parseRoute, routeHref } from './router';
@@ -104,5 +104,6 @@ test('basketball game page shows the score by quarter, leaders and box score', a
   expect(screen.getAllByText('Giannis Antetokounmpo').length).toBeGreaterThan(0); // game leaders
   expect(screen.getByRole('button', { name: 'Box score' })).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Plays' })).toBeInTheDocument();
-  expect(document.title).toBe('Miami Heat 129–117 Atlanta Hawks – FalkenSports');
+  // The page sets its title just after it draws.
+  await waitFor(() => expect(document.title).toBe('Miami Heat 129–117 Atlanta Hawks – FalkenSports'));
 });

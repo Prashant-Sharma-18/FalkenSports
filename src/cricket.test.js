@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import App from './App';
 import { fetchAllMatches, fetchMatch, fetchStandings } from './api';
 import { parseRoute, routeHref } from './router';
@@ -147,7 +147,8 @@ test('cricket match page shows the result and a scorecard tab, without team link
   expect(screen.getByRole('button', { name: 'Scorecard' })).toBeInTheDocument();
   expect(screen.getAllByText('320/9').length).toBeGreaterThan(0); // header and innings list
   expect(screen.queryByRole('link', { name: 'Jersey' })).not.toBeInTheDocument();
-  expect(document.title).toBe('Kenya v Jersey: Jersey won by 123 runs – FalkenSports');
+  // The page sets its title just after it draws.
+  await waitFor(() => expect(document.title).toBe('Kenya v Jersey: Jersey won by 123 runs – FalkenSports'));
 });
 
 // Kenya chasing, live: 60/2 after 9.2 overs.
