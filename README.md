@@ -2,7 +2,8 @@
 
 A free, installable, multi-sport web app for live scores, game centres, team
 pages, standings and news. Football, basketball, cricket, rugby, American football, NHL (ice hockey), baseball, lacrosse, volleyball, tennis, Formula 1, NASCAR and IndyCar, golf and UFC today; built to add more sports. No accounts, no API keys: data comes from ESPN's public
-JSON feeds, called directly from the browser.
+JSON feeds, called directly from the browser, with news from BBC Sport's RSS
+feeds alongside ESPN's.
 
 **Football:** Premier League, LaLiga, Bundesliga, Serie A, Ligue 1, Champions
 League, Europa League, Conference League, Championship, Eredivisie, Primeira Liga,
@@ -139,7 +140,18 @@ anything breaks it opens an issue. Known quirks handled in `src/api/`:
 - NASCAR's O'Reilly Series has no finishing positions, so it isn't included,
   and NASCAR has no news.
 - Rugby news stories have no dates, and some rugby competitions (Premiership,
-  URC, Top 14, Super Rugby) have no news at all.
+  URC, Top 14, Super Rugby) have no ESPN news at all; BBC Sport's rugby feed
+  fills the gap.
+
+**BBC Sport news.** Each competition's news mixes ESPN's stories with BBC
+Sport's (`src/api/news.js` maps competitions to BBC feeds: the Premier League,
+Champions League, Europa League, Championship and Scottish football have their
+own; cricket, rugby, tennis, F1, golf, NBA, NFL, NHL, MLB and UFC use the sport's
+feed; LaLiga and other leagues BBC doesn't cover stay ESPN-only). BBC sends no
+CORS header, so the browser reads the feeds from this site's `/feeds/bbc/…`,
+which Netlify rewrites to `feeds.bbci.co.uk/sport/…` (`netlify.toml`; Vite does
+the same for `npm start` and `npm run preview`). BBC's RSS feeds are for
+personal, non-commercial use, with a link back to the story.
 - Days follow US Eastern time, so late kick-offs in Asia may appear under the
   previous day.
 
@@ -148,4 +160,5 @@ anything breaks it opens an issue. Known quirks handled in `src/api/`:
 The repo includes `netlify.toml`: create a site on [Netlify](https://app.netlify.com)
 from this GitHub repo and it builds and deploys with no further settings. Any
 static host works (Vercel, Cloudflare Pages, GitHub Pages) since routing is
-hash-based and there is no server.
+hash-based and there is no server. Elsewhere, set up the same `/feeds/bbc/*`
+rewrite as `netlify.toml`, or news is ESPN's only.

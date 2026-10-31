@@ -6,6 +6,13 @@
 [build.environment]
   NODE_VERSION = "20"
 
+# BBC Sport's RSS feeds, served from this site: BBC sends no CORS header, so
+# the browser can't read them from bbc.co.uk itself (src/api/news.js).
+[[redirects]]
+  from = "/feeds/bbc/*"
+  to = "https://feeds.bbci.co.uk/sport/:splat"
+  status = 200
+
 # The service worker and the HTML shell must always be revalidated so new
 # releases reach installed apps; hashed bundles can be cached forever.
 [[headers]]

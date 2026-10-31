@@ -55,17 +55,22 @@
   color: var(--muted);
 }
 
-.article-badge-source {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  color: #ffffff;
-  font-size: 0.675rem;
-  font-weight: 800;
+/* "BBC Sport · 3h ago": where the story is from, and when. */
+.article-meta {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.article-meta > * + *::before {
+  content: "·";
+  margin: 0 5px;
+}
+
+.article-publisher {
+  font-weight: 700;
+  color: var(--text);
 }
 
 .article-body {

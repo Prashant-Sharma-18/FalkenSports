@@ -5,7 +5,8 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     include: ["tools/check-feeds.js"],
-    environment: "node",
+    // jsdom for DOMParser (BBC's RSS); fetch is still Node's, so no CORS.
+    environment: "jsdom",
     testTimeout: 60000,
     // A dropped connection isn't a changed feed.
     retry: 2,

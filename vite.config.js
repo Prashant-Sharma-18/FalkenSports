@@ -6,6 +6,15 @@ import { VitePWA } from "vite-plugin-pwa";
 // esbuild to read them as JSX both when building and when pre-bundling.
 const jsxInJs = { loader: "jsx", include: /src[\\/].*\.js$/, exclude: [] };
 
+// BBC Sport's RSS feeds, served from this site as Netlify does (netlify.toml).
+const feeds = {
+  "/feeds/bbc": {
+    target: "https://feeds.bbci.co.uk",
+    changeOrigin: true,
+    rewrite: (path) => path.replace(/^\/feeds\/bbc/, "/sport"),
+  },
+};
+
 export default defineConfig({
   plugins: [
     react(),
@@ -24,7 +33,8 @@ export default defineConfig({
   ],
   esbuild: jsxInJs,
   optimizeDeps: { esbuildOptions: { loader: { ".js": "jsx" } } },
-  server: { port: 3000 },
+  server: { port: 3000, proxy: feeds },
+  preview: { proxy: feeds },
   build: {
     // Netlify publishes build/, as it did with Create React App.
     outDir: "build",

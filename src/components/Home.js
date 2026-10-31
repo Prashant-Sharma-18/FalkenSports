@@ -209,15 +209,18 @@ function TopStories() {
                 <img src={a.image} alt="" loading="lazy" />
               ) : (
                 <div className="article-placeholder">
-                  <Newspaper size={32} />
+                  <Newspaper size={28} />
                 </div>
               )}
-              <span className="article-badge-source">{a.source}</span>
             </div>
             <div className="article-body">
               <h3 className="article-title">{a.headline}</h3>
               <div className="article-footer">
-                <span className="article-time">{timeAgo(a.published)}</span>
+                <span className="article-meta">
+                  <span className="article-publisher">{a.source}</span>
+                  {a.publisher !== "ESPN" && <span>{a.publisher}</span>}
+                  {a.published && <span className="article-time">{timeAgo(a.published)}</span>}
+                </span>
                 <span className="article-read-more">
                   Read <ArrowUpRight size={14} />
                 </span>

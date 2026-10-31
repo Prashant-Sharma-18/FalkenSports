@@ -51,10 +51,25 @@ registerRoute(
   })
 );
 
+// BBC Sport's news feeds (served from this site, see netlify.toml): the last
+// copy is kept for offline, like ESPN's data.
+registerRoute(
+  ({ url }) => url.origin === self.location.origin && url.pathname.startsWith("/feeds/"),
+  new NetworkFirst({
+    cacheName: "news-feeds",
+    networkTimeoutSeconds: 6,
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [200] }),
+      new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 2 * 24 * 60 * 60 }),
+    ],
+  })
+);
+
 // Team logos and news photos. These are opaque cross-origin responses, which
 // browsers charge heavily against storage quota, so keep the cache small.
 registerRoute(
-  ({ url, request }) => request.destination === "image" && url.hostname.endsWith("espncdn.com"),
+  ({ url, request }) =>
+    request.destination === "image" && (url.hostname.endsWith("espncdn.com") || url.hostname === "ichef.bbci.co.uk"),
   new CacheFirst({
     cacheName: "espn-images",
     plugins: [

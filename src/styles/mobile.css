@@ -246,3 +246,56 @@
 .layout-compact .golf-table td.left {
   white-space: normal;
 }
+
+/* News (and Home's top stories): the newest story leads with a shorter photo;
+   the rest are compact rows, headline beside a thumbnail, so a screenful
+   holds several stories instead of two. */
+.layout-compact .news-grid {
+  gap: 10px;
+}
+
+.layout-compact .article-lead .article-img-wrap {
+  aspect-ratio: 2 / 1;
+}
+
+.layout-compact .news-grid .article:not(.article-lead),
+.layout-compact .home-story {
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+}
+
+.layout-compact .news-grid .article:not(.article-lead) .article-img-wrap,
+.layout-compact .home-story .article-img-wrap {
+  flex: none;
+  width: 88px;
+  aspect-ratio: 1;
+  border-radius: 10px;
+}
+
+.layout-compact .news-grid .article:not(.article-lead) .article-body,
+.layout-compact .home-story .article-body {
+  padding: 0;
+  gap: 6px;
+}
+
+.layout-compact .news-grid .article:not(.article-lead) .article-title,
+.layout-compact .home-story .article-title {
+  font-size: 0.875rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.layout-compact .news-grid .article:not(.article-lead) .article-snippet,
+.layout-compact .news-grid .article:not(.article-lead) .article-read-more,
+.layout-compact .home-story .article-read-more {
+  display: none;
+}
+
+.layout-compact .news-grid .article:not(.article-lead) .article-footer,
+.layout-compact .home-story .article-footer {
+  padding-top: 0;
+}

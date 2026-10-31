@@ -23,6 +23,7 @@ import { normalizeMatch } from "../src/api/common";
 import { fetchCricketPanel } from "../src/api/cricket";
 import { getJson, site } from "../src/api/espn";
 import { fetchFights } from "../src/api/mma";
+import { bbcFeedOf, parseBbcFeed } from "../src/api/news";
 import { fetchTennis } from "../src/api/tennis";
 import { addDays, todayKey } from "../src/dates";
 import { sportOfLeague } from "../src/sports";
@@ -251,5 +252,28 @@ describe("UFC", () => {
     expect(fights.length).toBeGreaterThan(0);
     expect(fights.every((f) => named(f.home) && named(f.away))).toBe(true);
     expect(fights.some((f) => f.summary), "no fight results").toBe(true);
+  });
+});
+
+// BBC Sport's RSS feeds, the second news source. The app reads them through
+// this site (netlify.toml); here they're fetched straight from the BBC.
+const BBC_FEEDS = [
+  ...new Set(
+    ["eng.1", "uefa.champions", "uefa.europa", "eng.2", "sco.1", "rugby.267979", "rugby.180659", "nba", "nfl", "nhl", "mlb", "ufc", "8048", "atp", "f1", "pga"].map(bbcFeedOf)
+  ),
+];
+
+describe.each(BBC_FEEDS)("BBC Sport %s", (feed) => {
+  test("RSS feed: stories with headlines, links, dates and photos", async () => {
+    const res = await fetch(`https://feeds.bbci.co.uk/sport/${feed}/rss.xml`);
+    expect(res.status).toBe(200);
+    const stories = parseBbcFeed(await res.text());
+    expect(stories.length, "no stories").toBeGreaterThanOrEqual(3);
+    for (const a of stories) {
+      expect(a.headline).toBeTruthy();
+      expect(a.link).toMatch(/^https:\/\/www\.bbc\.co\.uk\//);
+      expect(a.published?.getTime(), `no date on "${a.headline}"`).not.toBeNaN();
+    }
+    expect(stories.some((a) => a.image), "no photos").toBe(true);
   });
 });
