@@ -21,7 +21,8 @@
     "build": "vite build",
     "preview": "vite preview --port 3000",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "check:feeds": "vitest run --config vitest.feeds.config.js"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.7.0",

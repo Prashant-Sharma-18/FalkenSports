@@ -87,6 +87,7 @@ npm start          # dev server (Vite) at http://localhost:3000
 npm test           # unit + component tests (Vitest); npm run test:watch to re-run on save
 npm run build      # production build in build/
 npm run preview    # serve the production build at http://localhost:3000
+npm run check:feeds  # check the real ESPN feeds still give the app what it needs (~1 min)
 ```
 
 Built with [Vite](https://vite.dev) (`vite.config.js`); JSX lives in plain `.js`
@@ -116,7 +117,10 @@ locally: `npm run build && npm run preview`.
 ## Data source caveats
 
 ESPN's feeds are public but **unofficial and undocumented**, so they can change
-without notice. Known quirks handled in `src/api/`:
+without notice. Every morning a GitHub Actions job (`.github/workflows/espn-feeds.yml`)
+runs `tools/check-feeds.js`, which calls the app's own fetchers against the real
+feeds and checks for real content (team names, scores, tables, headlines); if
+anything breaks it opens an issue. Known quirks handled in `src/api/`:
 
 - The team info endpoint (`/teams/{id}`) sends no CORS header (in every sport), so
   team details are read from the schedule feed instead.
@@ -125,6 +129,8 @@ without notice. Known quirks handled in `src/api/`:
   (no team pages) and only partial points tables (shown only when complete).
 - ESPN reuses team ids across sports, so favourites are stored with a sport
   prefix for non-football teams (`basketball:13`).
+- Rugby news stories have no dates, and some rugby competitions (Premiership,
+  URC, Top 14, Super Rugby) have no news at all.
 - Days follow US Eastern time, so late kick-offs in Asia may appear under the
   previous day.
 
