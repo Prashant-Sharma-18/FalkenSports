@@ -340,6 +340,13 @@ function Header({ match }) {
       <h1 className="sr-only">
         {left.name} {usStyle ? "at" : "v"} {right.name}
       </h1>
+      {/* Screen readers hear the score each time it changes while the page is open
+          (cricket: the summary below, which is a live region itself). */}
+      {!cricket && (
+        <p className="sr-only" aria-live="polite" aria-atomic="true">
+          {started && `${left.name} ${left.score ?? 0}, ${right.name} ${right.score ?? 0}`}
+        </p>
+      )}
       <div className="mh-meta">
         {match.competition || leagueName(match.league)}
         {match.date &&
@@ -379,7 +386,11 @@ function Header({ match }) {
         </div>
       )}
 
-      {cricket && match.summary && <p className="hero-summary">{match.summary}</p>}
+      {cricket && (
+        <p className="hero-summary" aria-live="polite" hidden={!match.summary}>
+          {match.summary}
+        </p>
+      )}
 
       {(match.venue || match.referee || match.attendance) && (
         <div className="mh-info">

@@ -14,6 +14,7 @@ import Scores from "./components/Scores";
 import Home from "./components/Home";
 import ScoreAlerts from "./components/ScoreAlerts";
 import { Loading } from "./components/Status";
+import ErrorBoundary from "./components/ErrorBoundary";
 // Styles, in cascade order: later files build on and override earlier ones.
 // Team.css came first when team pages imported it, so it stays first.
 import "./components/Team.css";
@@ -377,53 +378,55 @@ function Shell() {
           </div>
         )}
 
-        <Suspense fallback={<Loading label="Loading…" />}>
-          {homeView && <Home />}
-          {searchView && <Search query={route.query} />}
-          {liveView && <Live />}
-          {settingsView && <SportSettings />}
-          {favouritesView && (
-            <Favourites
-              date={date}
-              onDateChange={(key) =>
-                navigate({ view: "favourites", date: key === todayKey() ? null : key }, { replace: true })
-              }
-            />
-          )}
-
-          {/* F1 has race weekends and golf has tournaments instead of daily fixtures. */}
-          {route.view === "matches" && sport === "f1" && <Races />}
-          {route.view === "matches" && sport === "golf" && <Golf key={route.league} league={route.league} />}
-          {route.view === "matches" && sport !== "f1" && sport !== "golf" && (
-            <Scores
-              key={`${sport}:${route.league}`}
-              sport={sport}
-              league={route.league}
-              date={date}
-              onDateChange={(key) =>
-                navigate(
-                  { sport, view: "matches", league: route.league, date: key === todayKey() ? null : key },
-                  { replace: true }
-                )
-              }
-            />
-          )}
-          {route.view === "table" && <Standings league={route.league} />}
-          {route.view === "news" && <News league={route.league} />}
-          {route.view === "match" && sport === "f1" && <RaceDetail key={route.id} id={route.id} onBack={goBack} />}
-          {route.view === "match" && sport === "golf" && (
-            <GolfEvent key={route.id} league={route.league} id={route.id} onBack={goBack} />
-          )}
-          {route.view === "match" && sport !== "f1" && sport !== "golf" && (
-            <MatchDetail key={route.id} league={route.league} id={route.id} onBack={goBack} />
-          )}
-          {route.view === "team" && (
-            <TeamPage key={route.id} league={route.league} id={route.id} onBack={goBack} />
-          )}
-          {route.view === "player" && (
-            <PlayerPage key={route.id} league={route.league} id={route.id} onBack={goBack} />
-          )}
-        </Suspense>
+        <ErrorBoundary resetKey={`${sport}/${route.view}/${route.league}/${route.id}`}>
+          <Suspense fallback={<Loading label="Loading…" />}>
+            {homeView && <Home />}
+            {searchView && <Search query={route.query} />}
+            {liveView && <Live />}
+            {settingsView && <SportSettings />}
+            {favouritesView && (
+              <Favourites
+                date={date}
+                onDateChange={(key) =>
+                  navigate({ view: "favourites", date: key === todayKey() ? null : key }, { replace: true })
+                }
+              />
+            )}
+  
+            {/* F1 has race weekends and golf has tournaments instead of daily fixtures. */}
+            {route.view === "matches" && sport === "f1" && <Races />}
+            {route.view === "matches" && sport === "golf" && <Golf key={route.league} league={route.league} />}
+            {route.view === "matches" && sport !== "f1" && sport !== "golf" && (
+              <Scores
+                key={`${sport}:${route.league}`}
+                sport={sport}
+                league={route.league}
+                date={date}
+                onDateChange={(key) =>
+                  navigate(
+                    { sport, view: "matches", league: route.league, date: key === todayKey() ? null : key },
+                    { replace: true }
+                  )
+                }
+              />
+            )}
+            {route.view === "table" && <Standings league={route.league} />}
+            {route.view === "news" && <News league={route.league} />}
+            {route.view === "match" && sport === "f1" && <RaceDetail key={route.id} id={route.id} onBack={goBack} />}
+            {route.view === "match" && sport === "golf" && (
+              <GolfEvent key={route.id} league={route.league} id={route.id} onBack={goBack} />
+            )}
+            {route.view === "match" && sport !== "f1" && sport !== "golf" && (
+              <MatchDetail key={route.id} league={route.league} id={route.id} onBack={goBack} />
+            )}
+            {route.view === "team" && (
+              <TeamPage key={route.id} league={route.league} id={route.id} onBack={goBack} />
+            )}
+            {route.view === "player" && (
+              <PlayerPage key={route.id} league={route.league} id={route.id} onBack={goBack} />
+            )}
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       <ScoreAlerts />

@@ -13,17 +13,17 @@ export function Loading({ label }) {
   );
 }
 
-export function ErrorState({ message, onRetry }) {
+export function ErrorState({ message, onRetry, title = "Unable to load data", retryLabel = "Try again" }) {
   return (
     <div className="state-card error-state" role="alert">
       <div className="error-icon-circle" aria-hidden="true">
         <AlertTriangle size={22} />
       </div>
-      <h3 className="error-title">Unable to load data</h3>
+      <h3 className="error-title">{title}</h3>
       <p className="error-message">{message}</p>
       {onRetry && (
         <button className="primary-btn retry-btn" onClick={onRetry}>
-          <RefreshCw size={14} /> Try again
+          <RefreshCw size={14} /> {retryLabel}
         </button>
       )}
     </div>
