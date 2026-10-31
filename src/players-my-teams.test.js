@@ -51,7 +51,7 @@ test('tennis player: profile, ranking and recent matches; an unplayed round is u
       rankings: [{ ranks: [{ current: 3, previous: 3, points: 5610, athlete: { id: '3782', displayName: 'Carlos Alcaraz' } }] }],
     },
   };
-  global.fetch = jest.fn((url) => respond(responses[url]));
+  global.fetch = vi.fn((url) => respond(responses[url]));
 
   const p = await fetchPlayer('atp', '3782');
   // Core API links come over http and are followed over https.
@@ -107,7 +107,7 @@ test('F1 driver: grid and finish per Grand Prix, points from the standings', asy
       events: [],
     },
   };
-  global.fetch = jest.fn((url) => respond(responses[url]));
+  global.fetch = vi.fn((url) => respond(responses[url]));
 
   const p = await fetchPlayer('f1', '5829');
   expect(p).toMatchObject({ team: 'Mercedes', number: '12', rank: 1, points: '365' });
@@ -116,7 +116,7 @@ test('F1 driver: grid and finish per Grand Prix, points from the standings', asy
 });
 
 test('finished F1 sessions are loaded once per visit', async () => {
-  global.fetch = jest.fn((url) => respond(url.includes('?limit') ? { items: [] } : {}));
+  global.fetch = vi.fn((url) => respond(url.includes('?limit') ? { items: [] } : {}));
   const session = { id: 's1', kind: 'practice', state: 'post', drivers: [] };
   await fetchSessionResults('e1', session);
   await fetchSessionResults('e1', session);
@@ -126,7 +126,7 @@ test('finished F1 sessions are loaded once per visit', async () => {
   await fetchSessionResults('e1', { ...session, id: 's2', state: 'in' });
   expect(global.fetch).toHaveBeenCalledTimes(2); // the second shared the first
   const later = Date.now() + 21 * 1000;
-  const now = jest.spyOn(Date, 'now').mockReturnValue(later);
+  const now = vi.spyOn(Date, 'now').mockReturnValue(later);
   await fetchSessionResults('e1', { ...session, id: 's2', state: 'in' });
   now.mockRestore();
   expect(global.fetch).toHaveBeenCalledTimes(3);
@@ -182,7 +182,7 @@ test("My Teams shows followed teams' games from every sport, and unfollowing rem
       },
     ],
   };
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     respond(url.includes('/soccer/eng.1/') ? football : url.includes('/tennis/atp/') ? tennis : { events: [] })
   );
   render(<App />);

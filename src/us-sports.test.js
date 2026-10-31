@@ -47,7 +47,7 @@ test('period names per sport', () => {
 });
 
 test('MLB: runs, hits and errors, batting and pitching tables, at-bat results only', async () => {
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond(
       summary(
         [
@@ -111,7 +111,7 @@ test('NFL: plays come from drives; possession and third downs keep their text', 
     { name: 'thirdDownEff', displayValue: third },
     { name: 'possessionTime', displayValue: possession },
   ];
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond(
       summary([side('home', '9', 'Green Bay Packers', 27, [6, 14, 7, 0]), side('away', '29', 'Carolina Panthers', 19, [3, 7, 3, 6])], {
         boxscore: {
@@ -145,7 +145,7 @@ test('NFL: plays come from drives; possession and third downs keep their text', 
 });
 
 test('NHL: a game decided in a shootout labels its last period SO', async () => {
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond(summary([side('home', '20', 'Tampa Bay Lightning', 3, [1, 1, 0, 0, 1]), side('away', '28', 'Winnipeg Jets', 2, [0, 2, 0, 0, 0])], {}, 'Final/SO'))
   );
   const m = await fetchMatch('nhl', '1');
@@ -161,7 +161,7 @@ test('college football tables split conferences into their divisions', async () 
       { name: 'vs. Conf.', displayValue: '4-0' },
     ],
   });
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       children: [
         { name: 'Big Ten Conference', standings: { entries: [entry('a', 2), entry('b', 1)] } },
@@ -197,7 +197,7 @@ test('NHL table shows points and overtime losses, playoff places marked', async 
       { name: 'streak', displayValue: 'W3' },
     ],
   });
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     respond(
       url.includes('/standings')
         ? { children: [{ name: 'Eastern Conference', standings: { entries: [entry('car', 1, 24), entry('phi', 9, 12)] } }] }
@@ -230,7 +230,7 @@ test('live situations: down and distance, count, outs and runners', () => {
 
 test('a live MLB game card shows the count, outs and runners', async () => {
   window.location.hash = '#/baseball/matches/mlb/2026-10-29';
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       events: [
         {
@@ -281,7 +281,7 @@ test("MLB game leaders come from the game's scoreboard entry: top batter and pit
       },
     ],
   };
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     respond(url.includes('/scoreboard/') ? board : summary([side('home', '30', 'Rays', 1, [1]), side('away', '8', 'Brewers', 4, [4])]))
   );
   const m = await fetchMatch('mlb', '401908046');

@@ -87,7 +87,7 @@ beforeEach(() => {
   clearRequestCache();
   window.location.hash = '';
   localStorage.clear();
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     respond(url.includes('/summary') ? (url.includes('/nba/') ? nbaSummary() : summary()) : { events: [] })
   );
 });

@@ -42,7 +42,7 @@ test('NBA standings: seeds order the table, playoff and play-in zones are marked
       { name: 'winPercent', displayValue: '.500', value: 0.5 },
     ],
   });
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({ children: [{ name: 'Eastern Conference', standings: { entries: [entry('c', 7, 3), entry('a', 1, 9), entry('d', 11, 1), entry('b', 6, 5)] } }] })
   );
   const [east] = await fetchStandings('nba');
@@ -67,7 +67,7 @@ test('basketball game page shows the score by quarter, leaders and box score', a
     linescores: lines.map((v) => ({ displayValue: String(v) })),
     record: [{ summary: '2-3' }],
   });
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       header: {
         league: { name: 'National Basketball Association' },

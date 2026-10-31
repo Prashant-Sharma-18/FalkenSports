@@ -28,7 +28,7 @@ const game = (id, state, date, home, away) => ({
 // Premier League: one live, one soon, one tonight, one finished. NBA: one live.
 // Golf: the PGA Tour in progress. Everything else: nothing on.
 function mockEspn() {
-  global.fetch = jest.fn((url) => {
+  global.fetch = vi.fn((url) => {
     if (url.includes('/soccer/eng.1/scoreboard')) {
       return respond({
         events: [

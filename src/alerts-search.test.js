@@ -71,7 +71,7 @@ const searchResponses = (url) => {
 };
 
 test('search keeps the teams and players the app has pages for', async () => {
-  global.fetch = jest.fn(searchResponses);
+  global.fetch = vi.fn(searchResponses);
   const results = await searchAll('a b');
   expect(global.fetch.mock.calls.map(([u]) => u)).toEqual([
     'https://site.api.espn.com/apis/common/v3/search?query=a%20b&type=team&limit=15',
@@ -88,7 +88,7 @@ test('search keeps the teams and players the app has pages for', async () => {
 
 test('the search page links each result to its page', async () => {
   window.location.hash = '#/search/arsenal';
-  global.fetch = jest.fn(searchResponses);
+  global.fetch = vi.fn(searchResponses);
   render(<App />);
   expect(await screen.findByRole('link', { name: /Arsenal/ })).toHaveAttribute('href', '#/team/eng.1/359');
   expect(screen.getByRole('link', { name: /Alcaraz/ })).toHaveAttribute('href', '#/tennis/player/atp/3782');

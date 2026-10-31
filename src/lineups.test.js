@@ -137,7 +137,7 @@ beforeEach(() => {
   clearRequestCache();
   window.location.hash = '';
   localStorage.clear();
-  global.fetch = jest.fn((url) => respond(url.includes('/summary') ? summary() : { events: [] }));
+  global.fetch = vi.fn((url) => respond(url.includes('/summary') ? summary() : { events: [] }));
 });
 
 test('line-ups carry goals, cards, subs and the kit colour', async () => {

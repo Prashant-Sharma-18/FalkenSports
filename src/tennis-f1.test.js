@@ -79,7 +79,7 @@ test('tennis and F1 leagues, routes and favourite keys', () => {
 });
 
 test("tennis: one group per tournament and draw, that day's matches, tie-breaks on the set loser", async () => {
-  global.fetch = jest.fn(() => respond(tennisDay));
+  global.fetch = vi.fn(() => respond(tennisDay));
   const { groups, matchDays } = await fetchMatches('atp', '2026-10-29');
   expect(global.fetch.mock.calls[0][0]).toContain('/tennis/atp/scoreboard?dates=20261029');
   expect(matchDays).toBeNull();
@@ -99,7 +99,7 @@ test("tennis: one group per tournament and draw, that day's matches, tie-breaks 
 
 test('tennis cards show sets and seeds, and are not links', async () => {
   window.location.hash = '#/tennis/matches/atp/2026-10-29';
-  global.fetch = jest.fn(() => respond(tennisDay));
+  global.fetch = vi.fn(() => respond(tennisDay));
   render(<App />);
 
   // The card isn't a link; the player's name links to their page.
@@ -127,7 +127,7 @@ test('F1 race results: gap, laps down or retirement', async () => {
     ],
   };
   const stats = { 1: ['1:35:16.650', '', '56', '25'], 2: ['1:35:29.728', '+13.078', '56', '18'], 3: ['', '', '55', '0'], 4: ['', '', '24', '0'] };
-  global.fetch = jest.fn((url) => {
+  global.fetch = vi.fn((url) => {
     if (url.endsWith('/competitors?limit=40')) {
       return respond({
         items: ['3', '1', '4', '2'].map((id) => ({
@@ -176,7 +176,7 @@ test("F1 standings: drivers' and constructors' championships, points only", asyn
       { name: key === 'athlete' ? 'championshipPts' : 'points', displayValue: String(pts) },
     ],
   });
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       children: [
         {

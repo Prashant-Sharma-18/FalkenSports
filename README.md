@@ -83,13 +83,18 @@ Rugby Championship, World Cup.
 
 ```bash
 npm install
-npm start          # http://localhost:3000
-npm test           # unit + component tests
+npm start          # dev server (Vite) at http://localhost:3000
+npm test           # unit + component tests (Vitest); npm run test:watch to re-run on save
 npm run build      # production build in build/
+npm run preview    # serve the production build at http://localhost:3000
 ```
 
+Built with [Vite](https://vite.dev) (`vite.config.js`); JSX lives in plain `.js`
+files. Every push and pull request runs the tests and a build on GitHub Actions
+(`.github/workflows/ci.yml`).
+
 The offline service worker is only registered in production builds. To try it
-locally: `npm run build && npx serve -s build`.
+locally: `npm run build && npm run preview`.
 
 ## Project layout
 
@@ -105,7 +110,8 @@ locally: `npm run build && npx serve -s build`.
 | `design/sport-icons/` | The full 3D icon library (45 sports) and its source sheet, for future sports |
 | `tools/cut_sport_icons.py` | Re-cuts every icon from the sheet: `python tools/cut_sport_icons.py` |
 | `src/styles/` | Styles, one file per area, imported in cascade order by `App.js` |
-| `src/service-worker.js` | Offline caching (built by Workbox) |
+| `src/service-worker.js` | Offline caching (Workbox, built by vite-plugin-pwa) |
+| `src/components/ErrorBoundary.js` | Shows a message instead of a blank app when a screen fails to load or render |
 
 ## Data source caveats
 

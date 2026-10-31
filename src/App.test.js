@@ -4,7 +4,7 @@ import { parseRoute } from './router';
 import { leaguesOf } from './sports';
 
 function mockScoreboard(events) {
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     Promise.resolve({
       ok: true,
       json: () => Promise.resolve({ events: url.includes('/eng.1/') ? events : [] }),
@@ -51,7 +51,7 @@ test('pins matches of favourite teams', async () => {
 
 test('team links open the team page', async () => {
   window.location.hash = '#/team/ita.1/4057';
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     Promise.resolve({
       ok: true,
       json: () =>
@@ -83,7 +83,7 @@ test('team page: season numbers, next match, form, and results and fixtures as t
     ],
   });
   const later = new Date(Date.now() + 2 * 86400000).toISOString();
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     Promise.resolve({
       ok: true,
       json: () =>

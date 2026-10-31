@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-// Built by react-scripts (Workbox InjectManifest) into build/service-worker.js.
+// Built by vite-plugin-pwa (Workbox injectManifest) into build/service-worker.js.
 // Only registered in production; see serviceWorkerRegistration.js.
 import { clientsClaim } from "workbox-core";
 import { ExpirationPlugin } from "workbox-expiration";
@@ -20,7 +20,7 @@ precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(
   ({ request, url }) =>
     request.mode === "navigate" && !url.pathname.startsWith("/_") && !/\.[a-z0-9]+$/i.test(url.pathname),
-  createHandlerBoundToURL(process.env.PUBLIC_URL + "/index.html")
+  createHandlerBoundToURL(import.meta.env.BASE_URL + "index.html")
 );
 
 // ESPN data: always try for fresh scores, fall back to the last copy when

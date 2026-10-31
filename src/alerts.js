@@ -87,7 +87,7 @@ export function changes(seen, matches) {
 
 // Through the service worker where there is one (required on Android), else directly.
 export async function notify({ tag, title, body }) {
-  const options = { body, tag, icon: `${process.env.PUBLIC_URL}/logo192.png`, badge: `${process.env.PUBLIC_URL}/logo192.png` };
+  const options = { body, tag, icon: `${import.meta.env.BASE_URL}logo192.png`, badge: `${import.meta.env.BASE_URL}logo192.png` };
   try {
     const registration = await navigator.serviceWorker?.getRegistration?.();
     if (registration?.showNotification) return registration.showNotification(title, options);

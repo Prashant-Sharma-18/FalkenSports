@@ -28,7 +28,7 @@ test('numeric ESPN series ids are cricket, with prefixed routes', () => {
 });
 
 test('all cricket comes from the score panel, one group per series', async () => {
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       scores: [
         {
@@ -67,14 +67,14 @@ test('cricket points tables are only shown when ranked cleanly from 1', async ()
     team: { id, displayName: `Team ${id}` },
     stats: [{ name: 'rank', value: rank }, { name: 'matchPoints', value: pts, displayValue: String(pts) }],
   });
-  global.fetch = jest.fn(() => respond({ standings: [entry('b', 2, 4), entry('a', 1, 6)] }));
+  global.fetch = vi.fn(() => respond({ standings: [entry('b', 2, 4), entry('a', 1, 6)] }));
   const [table] = await fetchStandings('8044');
   expect(table.rows.map((r) => [r.rank, r.id, r.points])).toEqual([[1, 'a', '6'], [2, 'b', '4']]);
 
   // Early season: only ranks 3-4 listed. Group stages: repeated ranks.
-  global.fetch = jest.fn(() => respond({ standings: [entry('c', 3, 0), entry('d', 4, 0)] }));
+  global.fetch = vi.fn(() => respond({ standings: [entry('c', 3, 0), entry('d', 4, 0)] }));
   expect(await fetchStandings('21284')).toEqual([]);
-  global.fetch = jest.fn(() => respond({ standings: [entry('e', 1, 7), entry('f', 1, 6)] }));
+  global.fetch = vi.fn(() => respond({ standings: [entry('e', 1, 7), entry('f', 1, 6)] }));
   expect(await fetchStandings('8050')).toEqual([]);
 });
 
@@ -125,7 +125,7 @@ const summary = () => ({
 });
 
 test('the scorecard is built from rosters, innings in order, with dismissals where known', async () => {
-  global.fetch = jest.fn(() => respond(summary()));
+  global.fetch = vi.fn(() => respond(summary()));
   const m = await fetchMatch('19553', '1559445');
   expect(m.summary).toBe('Jersey won by 123 runs');
   expect(m.innings.map((i) => [i.period, i.team, i.runs, i.wickets])).toEqual([[1, 'Jersey', 320, 9], [2, 'Kenya', 197, 10]]);
@@ -141,7 +141,7 @@ test('the scorecard is built from rosters, innings in order, with dismissals whe
 
 test('cricket match page shows the result and a scorecard tab, without team links', async () => {
   window.location.hash = '#/cricket/match/19553/1559445';
-  global.fetch = jest.fn(() => respond(summary()));
+  global.fetch = vi.fn(() => respond(summary()));
   render(<App />);
   expect(await screen.findByText('Jersey won by 123 runs')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Scorecard' })).toBeInTheDocument();
@@ -198,7 +198,7 @@ const liveSummary = () => {
 };
 
 test('a live cricket match shows who is batting and bowling, and the last two overs', async () => {
-  global.fetch = jest.fn(() => respond(liveSummary()));
+  global.fetch = vi.fn(() => respond(liveSummary()));
   const m = await fetchMatch('19553', '1559445');
   expect(m.live).toMatchObject({
     team: 'Kenya',

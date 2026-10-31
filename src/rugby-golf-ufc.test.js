@@ -20,7 +20,7 @@ test('rugby ids are prefixed in the app and bare at ESPN', async () => {
   expect(routeHref({ view: 'match', league: 'rugby.270559', id: '604406' })).toBe('#/rugby/match/rugby.270559/604406');
   expect(parseRoute('#/rugby/match/rugby.270559/604406')).toMatchObject({ sport: 'rugby', league: 'rugby.270559', id: '604406' });
 
-  global.fetch = jest.fn(() => respond({ events: [] }));
+  global.fetch = vi.fn(() => respond({ events: [] }));
   await fetchMatches('rugby.270559', '2026-10-25');
   expect(global.fetch.mock.calls[0][0]).toBe('https://site.api.espn.com/apis/site/v2/sports/rugby/270559/scoreboard?dates=20261025');
 });
@@ -40,7 +40,7 @@ test('rugby tables show played, won, drawn, lost, points difference, bonus point
       { name: 'points', displayValue: String(pts) },
     ],
   });
-  global.fetch = jest.fn((url) =>
+  global.fetch = vi.fn((url) =>
     respond(url.includes('/standings') ? { children: [{ name: 'Top 14', standings: { entries: [entry('b', 2, 70), entry('a', 1, 81)] } }] } : { events: [] })
   );
   render(<App />);
@@ -143,7 +143,7 @@ test('UFC cards: sections by start time, main event first, result and records on
     competitors: [a, b],
     ...extra,
   });
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       leagues: [{ calendar: [{ startDate: '2026-10-24T17:00Z' }] }],
       events: [
@@ -187,7 +187,7 @@ test('golf and UFC have no table tab; golfers and drivers cannot be followed', a
   expect(canFollow('mma')).toBe(true);
 
   window.location.hash = '#/mma/matches/all';
-  global.fetch = jest.fn(() => respond({ events: [] }));
+  global.fetch = vi.fn(() => respond({ events: [] }));
   render(<App />);
   expect(await screen.findAllByRole('link', { name: 'Fights' })).not.toHaveLength(0);
   expect(screen.queryByRole('link', { name: 'Table' })).toBeNull();

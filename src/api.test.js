@@ -24,7 +24,7 @@ const event = (id, date, home, away, { state = 'post', detail = 'FT', homeWin, a
 });
 
 test('maps ESPN zone notes onto table badges in order, with relegation last', async () => {
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       children: [
         {
@@ -60,7 +60,7 @@ test('builds last-five league form, oldest first, skipping unplayed matches', as
     event('5', '2026-10-29T15:00Z', ['A', 0], ['B', 0], { state: 'pre' }),
   ];
   // The same month can come back from more than one request: no duplicates.
-  global.fetch = jest.fn(() => respond({ events: month }));
+  global.fetch = vi.fn(() => respond({ events: month }));
 
   const form = await fetchLeagueForm('eng.1');
   expect(form.A.map((g) => g.result)).toEqual(['W', 'D', 'L']);
@@ -79,7 +79,7 @@ test('a level score decided on penalties counts as a win', () => {
 
 test('team info comes from the CORS-enabled schedule feed, not /teams/{id}', async () => {
   const team = { id: '4057', displayName: 'Frosinone', color: 'FACF08', standingSummary: '6th in Italian Serie A' };
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       team,
       events: [

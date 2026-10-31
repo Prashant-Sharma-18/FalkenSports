@@ -9,7 +9,7 @@ const respond = (body) => Promise.resolve({ ok: true, json: () => Promise.resolv
 beforeEach(() => {
   window.location.hash = '';
   localStorage.clear();
-  global.fetch = jest.fn(() => respond({ events: [], scores: [] }));
+  global.fetch = vi.fn(() => respond({ events: [], scores: [] }));
 });
 
 const go = async (hash) =>

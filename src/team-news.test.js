@@ -14,7 +14,7 @@ const story = (id, published, categories) => ({
 beforeEach(() => clearRequestCache());
 
 test("team news keeps the team's own stories, newest first, and drops league round-ups", async () => {
-  global.fetch = jest.fn(() =>
+  global.fetch = vi.fn(() =>
     respond({
       articles: [
         story(1, '2026-10-28T10:00Z', tags(364)),

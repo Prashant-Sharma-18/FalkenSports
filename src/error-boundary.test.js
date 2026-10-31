@@ -5,7 +5,7 @@ function Boom({ error }) {
   throw error;
 }
 
-beforeEach(() => jest.spyOn(console, 'error').mockImplementation(() => {}));
+beforeEach(() => vi.spyOn(console, 'error').mockImplementation(() => {}));
 afterEach(() => console.error.mockRestore());
 
 test('a broken screen shows a message instead of a blank app, and clears on navigation', () => {
