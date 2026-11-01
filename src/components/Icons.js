@@ -282,6 +282,15 @@ export const Bell = ({ off, ...props }) => (
 );
 
 // 3D sport icons, cut from one icon sheet (transparent PNGs, 96px).
+// Not in Lucide: a bat and ball, marking the side batting in a live cricket match.
+export const CricketBat = (props) => (
+  <Icon {...props}>
+    <path d="M17 3l4 4-10 10-4-4z" fill="currentColor" />
+    <path d="M9 15l-6 6" strokeWidth="3" />
+    <circle cx="5.5" cy="5.5" r="2.5" fill="currentColor" stroke="none" />
+  </Icon>
+);
+
 export const SPORT_ICONS = {
   football: footballImg,
   basketball: basketballImg,

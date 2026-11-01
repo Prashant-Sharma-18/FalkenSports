@@ -62,6 +62,44 @@ test('all cricket comes from the score panel, one group per series', async () =>
   expect(m.home.winner).toBe(false); // "false" string, not truthy
 });
 
+test('score rows mark the batting side, unescape results and keep a follow-on with the overs', async () => {
+  const lines = (batting) => [
+    { period: 1, isCurrent: 0, isBatting: !batting },
+    { period: 2, isCurrent: 1, isBatting: batting },
+  ];
+  const event = (id, state, summary, home, away) => ({
+    id,
+    date: '2026-10-31T23:30Z',
+    status: { type: { state, description: state === 'in' ? 'Stumps' : 'Result' } },
+    competitions: [{ class: { generalClassCard: 'First-class' }, status: { summary }, competitors: [home, away] }],
+  });
+  global.fetch = vi.fn(() =>
+    respond({
+      scores: [
+        {
+          leagues: [{ id: '8043', name: 'Sheffield Shield' }],
+          events: [
+            event('1', 'in', 'Queensland trail by 105 runs',
+              side('home', '1', 'Queensland', '202/5 (71 ov)', 'false', lines(true)),
+              side('away', '2', 'Victoria', '307', 'false', lines(false))),
+            event('2', 'post', 'Tasmania won by an inns &amp; 81 runs',
+              side('home', '3', 'Tasmania', '427', 'true', lines(false)),
+              side('away', '4', 'New South Wales', '202 & 144 (50.2 ov) (f/o)', 'false', lines(true))),
+          ],
+        },
+      ],
+    })
+  );
+  window.location.hash = '#/cricket/matches/all/2026-10-31';
+  render(<App />);
+  await screen.findByText('Queensland');
+  // Only the side batting in a live match gets the bat.
+  expect(screen.getAllByLabelText('Batting')).toHaveLength(1);
+  expect(screen.getByText('Queensland').parentElement.querySelector('.row-batting')).not.toBeNull();
+  expect(screen.getByText('Tasmania won by an inns & 81 runs')).toBeInTheDocument();
+  expect(screen.getByText('50.2 ov, f/o')).toBeInTheDocument();
+});
+
 test('cricket points tables are only shown when ranked cleanly from 1', async () => {
   const entry = (id, rank, pts) => ({
     team: { id, displayName: `Team ${id}` },

@@ -27,6 +27,8 @@ export function normalizeTeam(c = {}, sport) {
     winner: c.winner === true || c.winner === "true",
     // Season record ("12-4"): scoreboards use `records`, game summaries `record`.
     record: Array.isArray(records) ? records[0]?.summary : undefined,
+    // Cricket: batting in the current innings (shown while the match is on).
+    batting: sport === "cricket" ? (c.linescores || []).some((l) => l.isCurrent && l.isBatting) : undefined,
     // Basketball: the team's top scorer, e.g. "L. James 28".
     leader: topScorer ? `${topScorer.athlete?.shortName} ${topScorer.displayValue}` : null,
   };
@@ -78,6 +80,14 @@ export function situationOf(s, sport) {
   return null;
 }
 
+// Some cricket results arrive HTML-escaped ("won by an inns &amp; 81 runs").
+// &amp; goes last, so "&amp;lt;" stays the text "&lt;".
+const ENTITIES = { "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&amp;": "&" };
+
+function decodeEntities(text) {
+  return text ? text.replace(/&(lt|gt|quot|#39);/g, (e) => ENTITIES[e]).replace(/&amp;/g, "&") : text;
+}
+
 export function normalizeMatch(event, league) {
   const sport = sportOfLeague(league);
   const comp = event.competitions?.[0] || {};
@@ -108,7 +118,7 @@ export function normalizeMatch(event, league) {
     clock: status?.displayClock,
     venue: comp.venue?.fullName,
     // Cricket: "Jersey won by 123 runs", "T20" / "First-class", "7th Match".
-    summary: comp.status?.summary || null,
+    summary: decodeEntities(comp.status?.summary) || null,
     situation: status?.type?.state === "in" ? situationOf(comp.situation, sport) : null,
     format: comp.class?.generalClassCard || null,
     label: comp.description || null,

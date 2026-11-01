@@ -198,6 +198,53 @@
   border-color: var(--border-highlight);
 }
 
+/* ---- Game rows: the status in a column on the left ---- */
+/* Saves a line per game, so a screenful holds more of them. Rows with a round,
+   court or format beside the status (tennis, cricket, UFC) keep it on top:
+   their sets and innings need the width. */
+.layout-compact .match-row-card:not(.row-has-label) {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  column-gap: 12px;
+  row-gap: 7px;
+  align-items: center;
+}
+
+.layout-compact .match-row-card:not(.row-has-label) > * {
+  grid-column: 2;
+}
+
+.layout-compact .match-row-card:not(.row-has-label) .row-top {
+  grid-column: 1;
+  grid-row: 1;
+  align-self: stretch;
+  justify-content: center;
+  padding-right: 8px;
+  border-right: 1px solid var(--border-subtle);
+}
+
+/* "10:00 pm" and "Q3 5:32" wrap onto two short lines instead of widening the column. */
+.layout-compact .match-row-card:not(.row-has-label) .row-status {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 4px;
+  font-size: 0.7rem;
+  text-align: center;
+  white-space: normal;
+}
+
+/* Live games: a red edge, so they stand out in a long list. */
+.layout-compact .match-row-card.is-live {
+  background: linear-gradient(90deg, var(--live-soft), transparent 40%);
+  box-shadow: inset 3px 0 0 var(--live);
+}
+
+/* Home's Live now cards are all live: nothing to pick out. */
+.layout-compact .home-spot .match-row-card.is-live {
+  background: none;
+  box-shadow: none;
+}
+
 /* ---- Tables: the form column doesn't fit ---- */
 .layout-compact .standings .col-form {
   display: none;
@@ -219,7 +266,34 @@
 .layout-compact .bottom-nav-item {
   flex: 1;
   min-width: 0;
-  padding: 4px 0;
+  gap: 3px;
+  padding: 2px 0;
+}
+
+/* The current tab: a soft pill behind its icon, in place of the dot. */
+.layout-compact .nav-icon-wrapper {
+  width: 52px;
+  height: 28px;
+  border-radius: 999px;
+  transition: background-color 0.2s ease;
+}
+
+.layout-compact .bottom-nav-item.active .nav-icon-wrapper {
+  background: var(--accent-soft);
+}
+
+.layout-compact .bottom-nav-item.active .nav-label {
+  color: var(--accent-text);
+}
+
+.layout-compact .active-pill-dot {
+  display: none;
+}
+
+/* The badge sits on the icon's corner, not the pill's. */
+.layout-compact .nav-badge {
+  top: -2px;
+  right: 6px;
 }
 
 /* The desktop phone preview is a column in a wide window: keep its bar with it. */

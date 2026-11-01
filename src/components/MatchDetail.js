@@ -18,6 +18,7 @@ import {
   MapPin,
   Users,
   Shield,
+  CricketBat,
 } from "./Icons";
 import { BoxScore, Leaders, Linescore, PlayByPlay, Situation } from "./GameDetail";
 import { CricketScore, CricketSummary, Scorecard } from "./CricketDetail";
@@ -306,6 +307,13 @@ function Header({ match }) {
         )}
         <StarButton team={team} size={14} />
       </div>
+      {cricket && match.state === "in" && team.batting && (
+        <span className="hero-batting-tag" title="Batting now">
+          <CricketBat size={12} />
+          <span>Batting</span>
+        </span>
+      )}
+
       {/* Cricket scores are innings text, shown under each team rather than as digits. */}
       {cricket && started &&
         (team.score ? (

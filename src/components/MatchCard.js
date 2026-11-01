@@ -3,7 +3,7 @@ import { formatTime } from "../dates";
 import { useFavorites } from "../favorites";
 import { routeHref } from "../router";
 import TeamLogo from "./TeamLogo";
-import { Star } from "./Icons";
+import { CricketBat, Star } from "./Icons";
 import { splitCricketScore } from "./CricketDetail";
 import { Situation } from "./GameDetail";
 import { hasMatchPages, isUsStyle } from "../sports";
@@ -118,6 +118,11 @@ export default function MatchCard({ match }) {
         ) : (
           <span className="row-name">{name}</span>
         )}
+        {match.state === "in" && team.batting && (
+          <span className="row-batting" title="Batting" aria-label="Batting">
+            <CricketBat size={13} />
+          </span>
+        )}
         {fav && (
           <span className="row-fav" title="You follow them" aria-label="Followed">
             <Star size={11} filled />
@@ -153,10 +158,13 @@ export default function MatchCard({ match }) {
 
   return (
     <Row
-      className={`match-row-card ${match.state === "in" ? "is-live" : ""}`}
+      className={`match-row-card match-row-${match.sport} ${match.state === "in" ? "is-live" : ""} ${
+        label ? "row-has-label" : ""
+      }`}
       href={linked ? routeHref({ view: "match", league: match.league, id: match.id }) : undefined}
     >
-      {/* Status above the teams, so names get the card's full width. */}
+      {/* Status above the teams, so names get the card's full width (phones move it
+          to a left column unless there's a label: mobile.css). */}
       <div className="row-top">
         <StatusCell match={match} />
         {label && <span className="row-label">{label}</span>}
