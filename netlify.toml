@@ -4,7 +4,7 @@
   publish = "build"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
 
 # BBC Sport's RSS feeds, served from this site: BBC sends no CORS header, so
 # the browser can't read them from bbc.co.uk itself (src/api/news.js).

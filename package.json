@@ -22,10 +22,15 @@
     "preview": "vite preview --port 3000",
     "test": "vitest run",
     "test:watch": "vitest",
+    "lint": "eslint .",
     "check:feeds": "vitest run --config vitest.feeds.config.js"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@vitejs/plugin-react": "^4.7.0",
+    "eslint": "^10.14.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
     "jsdom": "^26.1.0",
     "vite": "^6.4.5",
     "vite-plugin-pwa": "^1.3.0",
