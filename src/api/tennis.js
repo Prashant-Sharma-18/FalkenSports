@@ -57,6 +57,12 @@ function tennisMatch(c, event, league) {
 
 // ESPN returns every tournament in play around a day with its whole draw;
 // keep that day's matches, one group per tournament and draw (singles, doubles).
+// ESPN leaves cancelled qualifying slots on the scoreboard as finished
+// "TBD v TBD" matches; hide them.
+function isCancelledPlaceholder(m) {
+  return m.home.name === "TBD" && m.away.name === "TBD" && (m.state === "post" || /cancel/i.test(m.detail));
+}
+
 export async function fetchTennis(league, dayKey, signal) {
   const data = await getJson(`${site(league)}/scoreboard${datesQuery(dayKey)}`, signal);
   const groups = (data.events || [])
@@ -69,6 +75,7 @@ export async function fetchTennis(league, dayKey, signal) {
           // Without a day (the current scoreboard), every match is kept.
           .filter((c) => !dayKey || toKey(new Date(c.date)) === dayKey)
           .map((c) => tennisMatch(c, event, league))
+          .filter((m) => !isCancelledPlaceholder(m))
           .sort((a, b) => a.date - b.date),
       }))
     )

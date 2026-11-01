@@ -228,6 +228,13 @@ body {
   padding: 0 16px;
 }
 
+/* Stack of sections, tables or cards with uniform vertical spacing */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 button {
   font-family: inherit;
   color: inherit;

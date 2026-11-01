@@ -97,6 +97,33 @@ test("tennis: one group per tournament and draw, that day's matches, tie-breaks 
   expect(groups[1].matches[0].home).toMatchObject({ name: 'Maximo Gonzalez / Andres Molteni', logo: 'arg.png' });
 });
 
+test('tennis hides cancelled TBD v TBD placeholder matches', async () => {
+  const day = {
+    events: [
+      {
+        id: '1',
+        name: 'Open',
+        groupings: [
+          {
+            grouping: { slug: 'singles', displayName: 'Singles' },
+            competitions: [
+              match('c1', '2026-10-29T10:00Z', [], 'Qualifying'),
+              match('c2', '2026-10-29T11:00Z', [
+                player(1, '10', 'Jannik Sinner', [{ value: 6, winner: true }]),
+                player(2, '20', 'Daniil Medvedev', [{ value: 4, winner: false }]),
+              ]),
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  global.fetch = vi.fn(() => respond(day));
+  const { groups } = await fetchMatches('atp', '2026-10-29');
+  expect(groups).toHaveLength(1);
+  expect(groups[0].matches.map((m) => m.id)).toEqual(['c2']);
+});
+
 test('tennis cards show sets and seeds, and are not links', async () => {
   window.location.hash = '#/tennis/matches/atp/2026-10-29';
   global.fetch = vi.fn(() => respond(tennisDay));

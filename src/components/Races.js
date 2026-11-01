@@ -153,7 +153,9 @@ export default function Races({ sport, league }) {
     <section className="stack">
       {data.map((season) => (
         <div key={season.league}>
-          <h2 className="group-heading">{leagueName(season.league)}</h2>
+          <div className="group-heading-wrapper">
+            <h2 className="group-heading">{leagueName(season.league)}</h2>
+          </div>
           {season.current ? (
             <Weekend weekend={season.current} />
           ) : (

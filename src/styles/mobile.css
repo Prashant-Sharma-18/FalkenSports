@@ -30,6 +30,10 @@
   padding-bottom: calc(78px + env(safe-area-inset-bottom));
 }
 
+.layout-compact .stack {
+  gap: 14px;
+}
+
 /* ---- Header: logo and three round buttons ---- */
 .layout-compact .header-inner {
   height: 52px;
