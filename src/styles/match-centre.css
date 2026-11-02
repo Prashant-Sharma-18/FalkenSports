@@ -113,6 +113,28 @@
   font-weight: 800;
 }
 
+.hero-reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 0.825rem;
+  font-weight: 700;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.hero-reveal-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(1.04);
+}
+
 .mh-format {
   font-family: var(--font-main);
   font-size: 0.9rem;

@@ -1,5 +1,6 @@
 import React from "react";
 import { START_SCREENS, useSportPrefs } from "../sportPrefs";
+import { useSpoilerShield } from "../spoilerShield";
 import { SPORTS } from "../sports";
 import { ArrowDown, ArrowUp, SportIcon } from "./Icons";
 
@@ -7,6 +8,7 @@ import { ArrowDown, ArrowUp, SportIcon } from "./Icons";
 // in what order, and which screen the app opens on.
 export default function SportSettings() {
   const { order, visible, isHidden, setHidden, move, start, setStart, reset } = useSportPrefs();
+  const { spoilersHidden, setSpoilersHidden } = useSpoilerShield();
 
   return (
     <section className="settings">
@@ -57,6 +59,26 @@ export default function SportSettings() {
             );
           })}
         </ol>
+      </div>
+
+      <div className="card settings-card">
+        <div className="settings-switch-row">
+          <div>
+            <h2 className="settings-title">Spoiler Shield</h2>
+            <p className="muted small settings-hint">
+              Hide scores and results until clicked so you can catch up on games without spoilers.
+            </p>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={spoilersHidden}
+              onChange={(e) => setSpoilersHidden(e.target.checked)}
+              aria-label="Spoiler Shield"
+            />
+            <span className="switch-track" aria-hidden="true" />
+          </label>
+        </div>
       </div>
 
       <div className="card settings-card">

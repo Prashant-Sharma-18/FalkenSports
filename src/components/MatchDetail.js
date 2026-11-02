@@ -19,6 +19,7 @@ import {
   Users,
   Shield,
   CricketBat,
+  Eye,
 } from "./Icons";
 import { BoxScore, Leaders, Linescore, PlayByPlay, Situation } from "./GameDetail";
 import { CricketScore, CricketSummary, Scorecard } from "./CricketDetail";
@@ -28,6 +29,7 @@ import Pitch, { pitchRows } from "./Pitch";
 import { colourVars, teamPaint } from "../teamColours";
 import { StatBars, TeamsKey, orient, sides } from "./CompareStats";
 import MatchPreview, { hasPreview } from "./MatchPreview";
+import { useSpoilerShield } from "../spoilerShield";
 
 const LIVE_REFRESH = 30 * 1000;
 
@@ -275,6 +277,8 @@ function Commentary({ match }) {
 }
 
 function Header({ match }) {
+  const { isScoreHidden, revealMatch } = useSpoilerShield();
+  const hidden = isScoreHidden(match);
   const started = match.state !== "pre";
   // US convention is "away at home", so the away team goes on the left.
   const usStyle = isUsStyle(match.sport);
@@ -315,7 +319,7 @@ function Header({ match }) {
       )}
 
       {/* Cricket scores are innings text, shown under each team rather than as digits. */}
-      {cricket && started &&
+      {cricket && started && !hidden &&
         (team.score ? (
           <CricketScore score={team.score} className="hero-cricket-score" />
         ) : (
@@ -350,7 +354,7 @@ function Header({ match }) {
       </h1>
       {/* Screen readers hear the score each time it changes while the page is open
           (cricket: the summary below, which is a live region itself). */}
-      {!cricket && (
+      {!cricket && !hidden && (
         <p className="sr-only" aria-live="polite" aria-atomic="true">
           {started && `${left.name} ${left.score ?? 0}, ${right.name} ${right.score ?? 0}`}
         </p>
@@ -364,7 +368,16 @@ function Header({ match }) {
       <div className="mh-main">
         {side(left)}
         <div className="mh-centre">
-          {cricket ? (
+          {hidden ? (
+            <button
+              type="button"
+              className="hero-reveal-btn"
+              onClick={() => revealMatch(match.id)}
+            >
+              <Eye size={13} />
+              <span>Reveal score</span>
+            </button>
+          ) : cricket ? (
             <span className="mh-kickoff mh-format">
               {started ? match.format || "Live" : match.date ? formatTime(match.date) : "TBD"}
             </span>
@@ -378,13 +391,13 @@ function Header({ match }) {
             <span className="mh-kickoff">{match.date ? formatTime(match.date) : "TBD"}</span>
           )}
           {/* Before kick-off the time above says it all. */}
-          {!(match.state === "pre" && match.date && !match.timeTbd) && <MatchStatus match={match} />}
+          {!hidden && !(match.state === "pre" && match.date && !match.timeTbd) && <MatchStatus match={match} />}
         </div>
         {side(right)}
       </div>
 
       {/* Scorers on their own row, a half each, so names never squeeze. */}
-      {(leftGoals.length > 0 || rightGoals.length > 0) && (
+      {(leftGoals.length > 0 || rightGoals.length > 0) && !hidden && (
         <div className="mh-scorers">
           {goalList(leftGoals)}
           <span className="mh-scorers-icon" aria-hidden="true">
@@ -394,7 +407,7 @@ function Header({ match }) {
         </div>
       )}
 
-      {cricket && (
+      {cricket && !hidden && (
         <p className="hero-summary" aria-live="polite" hidden={!match.summary}>
           {match.summary}
         </p>

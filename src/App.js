@@ -1,9 +1,10 @@
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { Newspaper, Radio, Sliders, Table2, Timer, Monitor, Search as SearchIcon, Smartphone, SportIcon, Star } from "./components/Icons";
+import { Eye, EyeOff, Newspaper, Radio, Sliders, Table2, Timer, Monitor, Search as SearchIcon, Smartphone, SportIcon, Star } from "./components/Icons";
 import { leagueName } from "./api";
 import { todayKey } from "./dates";
 import { FavoritesProvider } from "./favorites";
 import { SportPrefsProvider, useSportPrefs } from "./sportPrefs";
+import { SpoilerShieldProvider, useSpoilerShield } from "./spoilerShield";
 import { ThemeProvider } from "./theme";
 import { DEFAULT_SPORT, SPORTS, SPORT_IDS, hasRaces, isLeagueOf, isSport, leaguesOf, tableLabel } from "./sports";
 import ThemeToggle from "./components/ThemeToggle";
@@ -119,6 +120,7 @@ function Shell() {
   const navigatedInApp = useRef(false);
   const firstRoute = useRef(true);
   const tabs = tabsFor(sport);
+  const { spoilersHidden, toggleSpoilers } = useSpoilerShield();
 
   // Layout mode: standard responsive desktop dashboard (default) vs mobile-phone preview mode
   const [isAppMode, setIsAppMode] = useState(() => {
@@ -296,6 +298,21 @@ function Shell() {
 
             <button
               type="button"
+              className={`icon-btn spoiler-toggle ${spoilersHidden ? "active" : ""}`}
+              onClick={toggleSpoilers}
+              title={
+                spoilersHidden
+                  ? "Spoiler Shield ON: scores are hidden (click to show scores)"
+                  : "Spoiler Shield OFF: scores are visible (click to hide scores)"
+              }
+              aria-label={spoilersHidden ? "Spoiler Shield active: scores hidden" : "Spoiler Shield inactive"}
+              aria-pressed={spoilersHidden}
+            >
+              {spoilersHidden ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+
+            <button
+              type="button"
               className={`icon-btn app-mode-toggle ${isAppMode ? "active" : ""}`}
               onClick={toggleAppMode}
               title={isAppMode ? "Switch to Wide Desktop View" : "Switch to Mobile Phone View"}
@@ -448,7 +465,9 @@ export default function App() {
     <ThemeProvider>
       <FavoritesProvider>
         <SportPrefsProvider>
-          <Shell />
+          <SpoilerShieldProvider>
+            <Shell />
+          </SpoilerShieldProvider>
         </SportPrefsProvider>
       </FavoritesProvider>
     </ThemeProvider>

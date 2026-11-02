@@ -310,6 +310,12 @@
   border-color: rgba(239, 68, 68, 0.35);
 }
 
+.spoiler-toggle.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
 .live-summary {
   display: flex;
   align-items: center;
@@ -434,6 +440,13 @@
 .settings-move .icon-btn:disabled {
   opacity: 0.3;
   cursor: default;
+}
+
+.settings-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 /* On/off switch: a styled checkbox. */
