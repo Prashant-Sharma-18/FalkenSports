@@ -79,6 +79,51 @@
   font-weight: 700;
 }
 
+.comp-card-head.is-collapsible {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.16s ease;
+}
+
+.comp-card-head.is-collapsible:hover {
+  background: var(--surface-3);
+}
+
+.comp-card.is-collapsed {
+  box-shadow: none;
+}
+
+.comp-card.is-collapsed .comp-card-head {
+  border-bottom: none;
+}
+
+.comp-card-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: 2px;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.16s ease;
+  flex: none;
+}
+
+.comp-card-toggle:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.comp-card-head:hover .comp-card-toggle {
+  color: var(--text);
+}
+
 /* "Your teams" and a team's live games stand out in gold. */
 .comp-card-highlight {
   border-color: color-mix(in srgb, var(--star) 40%, var(--border));
@@ -145,21 +190,36 @@ a.match-row-card:hover {
 
 .row-status-pre {
   color: var(--text-secondary);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
+  font-weight: 600;
 }
 
 .row-status-done {
-  font-size: 0.68rem;
-  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
 }
 
 /* Live: a pulsing dot and the minute. Red is kept for live alone. */
 .row-status-live {
-  gap: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--live);
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--live-soft);
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .row-status-live .pulse {
@@ -175,8 +235,15 @@ a.match-row-card:hover {
 
 /* A break in play (stumps, half-time): live, but nothing happening. */
 .row-status-paused {
+  display: inline-flex;
+  align-items: center;
   color: var(--text-secondary);
   font-size: 0.7rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
 }
 
 /* The two sides. */
@@ -234,9 +301,44 @@ a.match-row-card:hover {
   font-variant-numeric: tabular-nums;
 }
 
-/* Finished games: the winner stands out, the loser steps back. */
+/* Spoiler Shield score reveal button on cards */
+.spoiler-score-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.16s ease;
+}
+
+.spoiler-score-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: scale(1.08);
+}
+
+/* Finished games: the winner stands out with an icon, the loser steps back. */
 .row-side.is-winner .row-name {
   font-weight: 800;
+}
+
+.row-winner-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--win-soft);
+  color: var(--win);
 }
 
 .row-side.is-loser .row-name,

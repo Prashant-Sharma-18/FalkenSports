@@ -15,7 +15,7 @@ import golfImg from "../assets/sports/golf.png";
 import mmaImg from "../assets/sports/mma.png";
 
 // Small inline icon set (paths from Lucide, ISC license) so we don't ship a whole icon package.
-function Icon({ size = 18, className, children }) {
+function Icon({ size = 18, className, strokeWidth = "2", children }) {
   return (
     <svg
       className={className}
@@ -24,7 +24,7 @@ function Icon({ size = 18, className, children }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth={strokeWidth}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -33,6 +33,12 @@ function Icon({ size = 18, className, children }) {
     </svg>
   );
 }
+
+export const Check = (props) => (
+  <Icon {...props}>
+    <polyline points="20 6 9 17 4 12" />
+  </Icon>
+);
 
 export const ChevronLeft = (props) => (
   <Icon {...props}>
@@ -43,6 +49,18 @@ export const ChevronLeft = (props) => (
 export const ChevronRight = (props) => (
   <Icon {...props}>
     <path d="m9 18 6-6-6-6" />
+  </Icon>
+);
+
+export const ChevronDown = (props) => (
+  <Icon {...props}>
+    <path d="m6 9 6 6 6-6" />
+  </Icon>
+);
+
+export const ChevronUp = (props) => (
+  <Icon {...props}>
+    <path d="m18 15-6-6-6 6" />
   </Icon>
 );
 
@@ -91,6 +109,22 @@ export const CalendarDays = (props) => (
     <rect width="18" height="18" x="3" y="4" rx="2" />
     <path d="M3 10h18" />
     <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
+  </Icon>
+);
+
+export const Eye = (props) => (
+  <Icon {...props}>
+    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0" />
+    <circle cx="12" cy="12" r="3" />
+  </Icon>
+);
+
+export const EyeOff = (props) => (
+  <Icon {...props}>
+    <path d="m10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49" />
+    <path d="M14.084 14.158a3 3 0 0 1-4.242-4.242" />
+    <path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143" />
+    <path d="m2 2 20 20" />
   </Icon>
 );
 

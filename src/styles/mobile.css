@@ -27,11 +27,15 @@
 
 .layout-compact .main {
   padding-top: 10px;
-  padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  padding-bottom: calc(92px + env(safe-area-inset-bottom));
 }
 
 .layout-compact .stack {
   gap: 14px;
+}
+
+.layout-compact .race-series + .race-series {
+  margin-top: 12px;
 }
 
 /* ---- Header: logo and three round buttons ---- */
@@ -198,39 +202,44 @@
   border-color: var(--border-highlight);
 }
 
-/* ---- Game rows: the status in a column on the left ---- */
-/* Saves a line per game, so a screenful holds more of them. Rows with a round,
-   court or format beside the status (tennis, cricket, UFC) keep it on top:
-   their sets and innings need the width. */
-.layout-compact .match-row-card:not(.row-has-label) {
-  display: grid;
-  grid-template-columns: 52px minmax(0, 1fr);
-  column-gap: 12px;
-  row-gap: 7px;
+/* ---- Game rows on mobile: status at the top, full width for teams & scores ---- */
+.layout-compact .match-row-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 14px 11px;
+}
+
+.layout-compact .row-top {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  width: 100%;
 }
 
-.layout-compact .match-row-card:not(.row-has-label) > * {
-  grid-column: 2;
+.layout-compact .row-sides {
+  width: 100%;
+  gap: 6px;
 }
 
-.layout-compact .match-row-card:not(.row-has-label) .row-top {
-  grid-column: 1;
-  grid-row: 1;
-  align-self: stretch;
-  justify-content: center;
-  padding-right: 8px;
-  border-right: 1px solid var(--border-subtle);
+.layout-compact .row-side {
+  width: 100%;
+  gap: 8px;
 }
 
-/* "10:00 pm" and "Q3 5:32" wrap onto two short lines instead of widening the column. */
-.layout-compact .match-row-card:not(.row-has-label) .row-status {
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 2px 4px;
-  font-size: 0.7rem;
-  text-align: center;
-  white-space: normal;
+.layout-compact .row-name {
+  font-size: 0.88rem;
+}
+
+.layout-compact .row-record {
+  font-size: 0.68rem;
+}
+
+.layout-compact .row-score {
+  font-size: 0.98rem;
+  padding-left: 6px;
 }
 
 /* Live games: a red edge, so they stand out in a long list. */
@@ -245,9 +254,178 @@
   box-shadow: none;
 }
 
-/* ---- Tables: the form column doesn't fit ---- */
+/* ---- Tables & Standings on Mobile ---- */
+.layout-compact .table-card {
+  border-radius: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.layout-compact .table-card-head {
+  padding: 10px 14px;
+}
+
+.layout-compact .table-card-head .table-head-title {
+  gap: 8px;
+  min-width: 0;
+}
+
+.layout-compact .table-card-head .group-title {
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.layout-compact .table-card-head .trophy-pill {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.layout-compact .table-head-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+.layout-compact .table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.layout-compact .table-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.layout-compact .standings {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.layout-compact .standings th,
+.layout-compact .standings td {
+  padding: 8px 3px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.layout-compact .standings th {
+  font-size: 0.675rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.layout-compact .standings th.col-rank,
+.layout-compact .standings td.rank-cell {
+  width: 30px;
+  min-width: 30px;
+  padding-left: 10px;
+  padding-right: 2px;
+  text-align: center;
+}
+
+.layout-compact .rank-badge {
+  width: 20px;
+  height: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+.layout-compact .standings th.col-team,
+.layout-compact .standings td.left {
+  text-align: left;
+  padding-left: 4px;
+  padding-right: 6px;
+  width: auto;
+}
+
+.layout-compact .table-team {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.layout-compact .table-team .team-logo,
+.layout-compact .table-team .logo-fallback {
+  width: 18px;
+  height: 18px;
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.layout-compact .table-team .team-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.layout-compact .table-team .full {
+  display: inline-block !important;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--text);
+  max-width: clamp(120px, 36vw, 220px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layout-compact .table-team .abbr {
+  display: none !important;
+}
+
+.layout-compact .standings .star-btn {
+  display: none;
+}
+
+.layout-compact .standings td {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.775rem;
+}
+
+.layout-compact .standings td.num-w,
+.layout-compact .standings td.num-d,
+.layout-compact .standings td.num-l {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.layout-compact .standings .gd-cell {
+  font-size: 0.775rem;
+  font-weight: 600;
+  min-width: 22px;
+}
+
+.layout-compact .standings th.pts,
+.layout-compact .standings td.pts {
+  font-weight: 800;
+  font-size: 0.84rem;
+  color: var(--text);
+  padding-right: 10px;
+}
+
+.layout-compact .standings .col-streak {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .layout-compact .standings .col-form {
   display: none;
+}
+
+.layout-compact .table-legend {
+  padding: 10px 14px;
+  gap: 6px 14px;
+  font-size: 0.72rem;
 }
 
 /* ---- Bottom bar: docked full width, not a floating pill ---- */

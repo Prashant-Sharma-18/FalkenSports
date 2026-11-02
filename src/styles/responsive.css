@@ -22,16 +22,6 @@
   .day.edge {
     display: none;
   }
-
-  .table-team .full {
-    display: none;
-  }
-
-  .table-team .abbr {
-    display: inline;
-    font-weight: 700;
-  }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -156,15 +146,6 @@
 
   .standings .star-btn {
     display: none;
-  }
-
-  .table-team .full {
-    display: none;
-  }
-
-  .table-team .abbr {
-    display: inline;
-    font-weight: 700;
   }
 
   .table-legend {
