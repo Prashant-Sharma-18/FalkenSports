@@ -152,7 +152,7 @@ export default function Races({ sport, league }) {
   return (
     <section className="stack">
       {data.map((season) => (
-        <div key={season.league}>
+        <div key={season.league} className="race-series">
           <div className="group-heading-wrapper">
             <h2 className="group-heading">{leagueName(season.league)}</h2>
           </div>

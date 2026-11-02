@@ -41,6 +41,11 @@
   border-radius: 3px;
 }
 
+/* Multi-series race view ("All"): separate series groups so headings don't sit tight against the preceding card. */
+.race-series + .race-series {
+  margin-top: 16px;
+}
+
 /* Race weekend */
 .weekend-card {
   padding: 18px 20px;
